@@ -1,0 +1,641 @@
+@section('this-page-scripts')
+    <script>
+        // Global variables
+        let currentLaporanId = {{ $id_laporan ?? 'null' }};
+        let kegiatanData = null;
+        let desaData = null;
+        let questionsData = [];
+        let uploadedFiles = {};
+        let fileUploadsInitialized = false;
+
+        $(document).ready(function() {
+            initializeForm();
+        });
+
+        function initializeForm() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const desaId = urlParams.get('desa_id');
+            const kegiatanId = urlParams.get('kegiatan_id');
+
+            if (desaId && kegiatanId) {
+                // 1. Load kegiatan terlebih dahulu
+                loadKegiatanData(desaId, kegiatanId, function() {
+                    // 2. Setelah kegiatan dimuat, cek apakah ada laporan yang sedang diedit
+                    if (currentLaporanId) {
+                        loadExistingLaporan(currentLaporanId);
+                    }
+                });
+            } else {
+                ResponseHandler.handleError('Parameter tidak lengkap. Silakan pilih kegiatan dari halaman daftar.');
+                $('#questionsContainer').html(`
+            <div class="alert alert-danger">
+                <h6>Parameter Tidak Lengkap</h6>
+                <p>Silakan pilih kegiatan dari halaman daftar laporan.</p>
+                <a href="{{ route('administrator.monev.laporan.index') }}" class="btn btn-primary">
+                    Kembali ke Daftar
+                </a>
+            </div>`);
+            }
+
+            // Inisialisasi lainnya
+            initializeFileUploads();
+
+            $('#saveDraftBtn, #saveDraftBottom').on('click', function() {
+                $('#statusDraft').prop('checked', true);
+                saveLaporan();
+            });
+
+            $('#submitLaporanBtn, #submitLaporanBottom').on('click', function() {
+                $('#statusSubmit').prop('checked', true);
+                saveLaporan();
+            });
+
+            $(document).on('input', 'textarea[name^="jawaban"]', updateProgress);
+        }
+
+        function initializeFileUploads() {
+            if (fileUploadsInitialized) return;
+
+            console.log('Initializing file upload handlers...');
+
+            // Event delegation untuk file input change
+            $(document).on('change', '.file-input', function(e) {
+                const file = e.target.files[0];
+                const questionId = $(this).data('question-id');
+                const requirementId = $(this).data('requirement-id');
+
+                if (file) {
+                    uploadFile(file, questionId, requirementId);
+                    // Reset input file
+                    $(this).val('');
+                }
+            });
+
+            // Handler untuk click pada upload area - FIXED: gunakan event delegation yang tepat
+            $(document).on('click', '.file-upload-area', function(e) {
+                // Cegah event bubbling yang menyebabkan rekursi
+                if (e.target !== this && !$(e.target).hasClass('file-upload-area')) {
+                    return;
+                }
+
+                const questionId = $(this).data('question-id');
+                const requirementId = $(this).data('requirement-id');
+                const fileInput = $(this).find('.file-input');
+
+                if (fileInput.length) {
+                    fileInput.click();
+                }
+            });
+
+            // Handler untuk remove file
+            $(document).on('click', '.remove-file', function(e) {
+                const fileId = $(this).data('file-id');
+                removeFile(fileId);
+            });
+
+            fileUploadsInitialized = true;
+        }
+
+        function loadExistingLaporan(laporanId) {
+            const url = `{{ route('administrator.monev.laporan.buat-laporan.get-data', ':id') }}`.replace(':id', laporanId);
+
+            console.log('Loading existing laporan from:', url);
+
+            AjaxHandler.sendGetRequest(url, function(response) {
+                console.log('Existing laporan response:', response);
+                if (response && response.status === 200 && response.data) {
+                    populateFormData(response.data);
+                } else {
+                    ResponseHandler.handleError('Gagal memuat data laporan: ' + (response ? response.message :
+                        'Response tidak valid'));
+                }
+            });
+        }
+
+        function loadKegiatanData(desaId, kegiatanId, callback = null) {
+            const url = "{{ route('administrator.monev.laporan.buat-laporan.get-kegiatan-data') }}" +
+                `?desa_id=${desaId}&kegiatan_id=${kegiatanId}`;
+
+            console.log('Loading kegiatan data:', {
+                desa_id: desaId,
+                kegiatan_id: kegiatanId
+            });
+
+            $.ajax({
+                url: url,
+                method: 'GET',
+                dataType: 'json',
+                success: function(response) {
+                    console.log('Response received:', response);
+
+                    if (response.status === 200 && response.data) {
+                        kegiatanData = response.data.kegiatan;
+                        desaData = response.data.desa;
+                        questionsData = response.data.pertanyaan || [];
+
+                        populateKegiatanInfo();
+                        renderQuestions();
+                        updateProgress();
+
+                        ResponseHandler.handleSuccess('Data kegiatan berhasil dimuat');
+
+                        if (typeof callback === 'function') {
+                            callback();
+                        }
+                    } else {
+                        ResponseHandler.handleError('Gagal memuat data kegiatan: ' + (response.message ||
+                            'Unknown error'));
+                    }
+                },
+                error: function(xhr) {
+                    console.error('AJAX Error:', xhr);
+                    let errorMessage = 'Terjadi kesalahan saat memuat data kegiatan';
+
+                    if (xhr.responseJSON && xhr.responseJSON.message) {
+                        errorMessage = xhr.responseJSON.message;
+                    }
+
+                    ResponseHandler.handleError(errorMessage);
+                }
+            });
+        }
+
+        function populateFormData(data) {
+            console.log('Populating form with data:', data);
+
+            if (data.laporan) {
+                const laporan = data.laporan;
+
+                $('#desa_id').val(laporan.desa_id);
+                $('#kegiatan_id').val(laporan.kegiatan_id);
+                $('#tahun').val(laporan.tahun);
+                $('#bulan').val(laporan.bulan);
+
+                // Populate jawaban jika ada data
+                if (data.jawaban && data.jawaban.length > 0) {
+                    console.log('Populating jawaban:', data.jawaban);
+                    data.jawaban.forEach(jawaban => {
+                        const textarea = $(`textarea[name="jawaban[${jawaban.pertanyaan_id}]"]`);
+                        if (textarea.length) {
+                            textarea.val(jawaban.jawaban_text);
+                        }
+                    });
+                }
+
+                // Populate dokumen jika ada data
+                if (data.dokumen && data.dokumen.length > 0) {
+                    console.log('Populating dokumen:', data.dokumen);
+
+                    // Buat mapping untuk mencari pertanyaan_id berdasarkan jawaban_id
+                    const jawabanToPertanyaanMap = {};
+                    if (data.jawaban && data.jawaban.length > 0) {
+                        data.jawaban.forEach(jawaban => {
+                            jawabanToPertanyaanMap[jawaban.id_jawaban] = jawaban.pertanyaan_id;
+                        });
+                    }
+
+                    data.dokumen.forEach(dokumen => {
+                        // Cari pertanyaan_id dari mapping
+                        const pertanyaanId = jawabanToPertanyaanMap[dokumen.jawaban_id];
+                        if (pertanyaanId) {
+                            const key = `${pertanyaanId}-${dokumen.persyaratan_id}`;
+                            if (!uploadedFiles[key]) uploadedFiles[key] = [];
+
+                            // Cek apakah file sudah ada untuk menghindari duplikasi
+                            const fileExists = uploadedFiles[key].some(file => file.id === dokumen.id_dokumen);
+                            if (!fileExists) {
+                                uploadedFiles[key].push({
+                                    id: dokumen.id_dokumen,
+                                    name: dokumen.nama_file,
+                                    size: dokumen.ukuran_file ? formatFileSize(dokumen.ukuran_file) :
+                                        'Unknown',
+                                    path: dokumen.path_file
+                                });
+                            }
+
+                            updateFilePreview(pertanyaanId, dokumen.persyaratan_id);
+                        }
+                    });
+                }
+
+                updateProgress();
+            }
+        }
+
+        function populateKegiatanInfo() {
+            if (!kegiatanData) return;
+            if (!desaData) return;
+
+            const urlParams = new URLSearchParams(window.location.search);
+            const desaId = urlParams.get('desa_id');
+
+            $('#info_desa').text(`Desa : ${desaData.nama_desa}`);
+            $('#info_kegiatan').text(kegiatanData.nama_kegiatan || '-');
+            $('#info_periode').text(`${kegiatanData.tahun || '-'} - ${kegiatanData.nama_bulan || '-'}`);
+            $('#info_batas_upload').text(kegiatanData.batas_akhir_upload ? `Tgl. ${kegiatanData.batas_akhir_upload}` : '-');
+            $('#info_dasar_hukum').text(kegiatanData.dasar_hukum || 'Tidak ada dasar hukum');
+
+            $('#desa_id').val(desaId);
+            $('#kegiatan_id').val(kegiatanData.id_kegiatan);
+            $('#tahun').val(kegiatanData.tahun);
+            $('#bulan').val(kegiatanData.bulan);
+        }
+
+        function renderQuestions() {
+            const container = $('#questionsContainer');
+            container.empty();
+
+            if (questionsData.length === 0) {
+                container.html(`
+                    <div class="text-center py-4">
+                        <i class="las la-question-circle fs-1 text-muted d-block mb-2"></i>
+                        <p class="text-muted">Tidak ada pertanyaan untuk kegiatan ini.</p>
+                    </div>
+                `);
+                return;
+            }
+
+            questionsData.forEach((question, index) => {
+                const questionHtml = `
+                    <div class="question-section" data-question-id="${question.id_pertanyaan}">
+                        <h6 class="mb-3">
+                            <span class="badge bg-primary me-2">${index + 1}</span>
+                            ${question.pertanyaan}
+                        </h6>
+                        
+                        <div class="mb-3">
+                            <label class="form-label">Jawaban:</label>
+                            <textarea class="form-control answer-textarea" 
+                                      name="jawaban[${question.id_pertanyaan}]" 
+                                      placeholder="Tulis jawaban Anda di sini..." 
+                                      rows="3"></textarea>
+                        </div>
+
+                        <div class="requirements-section">
+                            <label class="form-label mb-2">Dokumen Persyaratan:</label>
+                            ${renderRequirements(question.persyaratan, question.id_pertanyaan)}
+                        </div>
+                    </div>
+                `;
+                container.append(questionHtml);
+            });
+
+            updateProgress();
+        }
+
+        function renderRequirements(requirements, questionId) {
+            if (!requirements || requirements.length === 0) {
+                return `
+            <div class="alert alert-info py-2">
+                <small>Tidak ada persyaratan dokumen untuk pertanyaan ini.</small>
+            </div>`;
+            }
+
+            return requirements.map(req => {
+                const key = `${questionId}-${req.id_persyaratan}`;
+                const hasTemplate = !!req.template_persyaratan;
+
+                return `
+            <div class="mb-3 position-relative requirement-item" data-requirement-id="${req.id_persyaratan}">
+                <div class="d-flex justify-content-between align-items-center">
+                    <label for="file-${key}" class="form-label mb-0">
+                        ${req.nama_persyaratan}
+                        <span class="badge ${req.tipe === 'wajib' ? 'bg-danger' : 'bg-secondary'} ms-2">
+                            ${req.tipe === 'wajib' ? 'WAJIB' : 'TAMBAHAN'}
+                        </span>
+                        ${req.deskripsi ? `<br><small class="text-muted">${req.deskripsi}</small>` : ''}
+                    </label>
+                    <small class="form-text text-muted d-flex align-items-center gap-2">
+                        File saat ini: <div id="files-${questionId}-${req.id_persyaratan}" class="text-truncate" style="max-width: 250px;"></div>
+                    </small>
+                </div>
+
+                <div class="d-flex align-items-center mt-1">
+                    <input type="file" 
+                        class="form-control file-input"
+                        id="file-${key}"
+                        name="file-${key}"
+                        accept=".pdf,.doc,.docx,.xls,.xlsx,.jpg,.png"
+                        data-question-id="${questionId}"
+                        data-requirement-id="${req.id_persyaratan}" />
+
+                    <button type="button"
+                        class="btn btn-outline-primary ms-2 ${hasTemplate ? '' : 'd-none'}"
+                        id="btn_template_${key}"
+                        ${hasTemplate ? `onclick="window.open('${req.template_persyaratan}', '_blank')"` : ''}>
+                        Template
+                    </button>
+                </div>
+            </div>
+        `;
+            }).join('');
+        }
+
+
+        function uploadFile(file, questionId, requirementId) {
+            if (!validateFile(file)) return;
+
+            const formData = new FormData();
+            formData.append('file', file);
+            formData.append('question_id', questionId);
+            formData.append('requirement_id', requirementId);
+            formData.append('laporan_id', currentLaporanId);
+            formData.append('_token', '{{ csrf_token() }}');
+
+            const url = `{{ route('administrator.monev.laporan.buat-laporan.upload-file') }}`;
+
+            const uploadArea = $(
+                `.file-upload-area[data-question-id="${questionId}"][data-requirement-id="${requirementId}"]`);
+            uploadArea.html(`
+                <div class="text-center">
+                    <div class="spinner-border spinner-border-sm text-primary mb-2"></div>
+                    <p class="mb-0 text-muted">Mengupload PDF...</p>
+                </div>
+            `);
+
+            $.ajax({
+                url: url,
+                method: 'POST',
+                data: formData,
+                processData: false,
+                contentType: false,
+                success: function(response) {
+                    if (response.status === 200) {
+                        const key = `${questionId}-${requirementId}`;
+                        if (!uploadedFiles[key]) uploadedFiles[key] = [];
+                        uploadedFiles[key].push({
+                            id: response.data.file_id,
+                            name: file.name,
+                            size: formatFileSize(file.size),
+                            path: response.data.file_path
+                        });
+
+                        updateFilePreview(questionId, requirementId);
+                        resetUploadArea(questionId, requirementId);
+
+                        // Refresh requirements section to show "Lihat Dokumen" button
+                        refreshRequirementsSection(questionId);
+
+                        updateProgress();
+                        ResponseHandler.handleSuccess('File PDF berhasil diupload');
+                    } else {
+                        ResponseHandler.handleError('Gagal mengupload file PDF: ' + (response.message || ''));
+                        resetUploadArea(questionId, requirementId);
+                    }
+                },
+                error: function(xhr) {
+                    let errorMessage = 'Gagal mengupload file PDF';
+                    if (xhr.responseJSON && xhr.responseJSON.message) {
+                        errorMessage = xhr.responseJSON.message;
+                    }
+                    ResponseHandler.handleError(errorMessage);
+                    resetUploadArea(questionId, requirementId);
+                }
+            });
+        }
+
+        function updateFilePreview(questionId, requirementId) {
+            const key = `${questionId}-${requirementId}`;
+            const filesContainer = $(`#files-${questionId}-${requirementId}`);
+            filesContainer.empty();
+
+            if (!uploadedFiles[key] || uploadedFiles[key].length === 0) {
+                filesContainer.append(`<span class="text-muted">Belum ada file</span>`);
+                return;
+            }
+
+            const file = uploadedFiles[key][0]; // tampilkan file terakhir / tunggal
+            const fileSizeKB = file.size / 1024;
+            const fileSize = fileSizeKB > 1024 ?
+                `${(fileSizeKB / 1024).toFixed(2)} MB` :
+                `${fileSizeKB.toFixed(1)} KB`;
+
+            filesContainer.html(`
+        <a href="${file.path}" target="_blank" class="text-decoration-none d-flex align-items-center">
+            <i class="las la-file-pdf text-danger me-1"></i>
+            <span class="text-primary small fw-semibold text-truncate" title="${file.name}">
+                ${file.name}
+            </span>
+        </a>
+    `);
+        }
+
+
+
+
+        function refreshRequirementsSection(questionId) {
+            // Find the question section and re-render its requirements
+            const questionSection = $(`.question-section[data-question-id="${questionId}"]`);
+            const question = questionsData.find(q => q.id_pertanyaan == questionId);
+
+            if (question && questionSection.length) {
+                const requirementsHtml = renderRequirements(question.persyaratan, questionId);
+                questionSection.find('.requirements-section').html(`
+                    <label class="form-label mb-2">Dokumen Persyaratan:</label>
+                    ${requirementsHtml}
+                `);
+            }
+        }
+
+        // Event handler untuk tombol "Lihat Dokumen"
+        $(document).on('click', '.view-existing-files', function() {
+            const questionId = $(this).data('question-id');
+            const requirementId = $(this).data('requirement-id');
+            const filesContainer = $(`#files-${questionId}-${requirementId}`);
+
+            if (filesContainer.is(':visible')) {
+                filesContainer.hide();
+            } else {
+                filesContainer.show();
+            }
+        });
+
+        function validateFile(file) {
+            const validTypes = ['application/pdf'];
+            const maxSize = 5 * 1024 * 1024;
+
+            if (!validTypes.includes(file.type)) {
+                ResponseHandler.handleError('Hanya file PDF yang diizinkan.');
+                return false;
+            }
+
+            if (file.size > maxSize) {
+                ResponseHandler.handleError('Ukuran file terlalu besar. Maksimal 5MB.');
+                return false;
+            }
+
+            return true;
+        }
+
+        function resetUploadArea(questionId, requirementId) {
+            const uploadArea = $(
+                `.file-upload-area[data-question-id="${questionId}"][data-requirement-id="${requirementId}"]`);
+            uploadArea.html(`
+                <div class="upload-placeholder">
+                    <i class="las la-file-pdf fs-2 text-danger mb-2"></i>
+                    <p class="text-muted mb-1">Klik untuk upload PDF</p>
+                    <small class="text-muted">Format: PDF saja (Max: 5MB)</small>
+                </div>
+                <input type="file" class="file-input" 
+                       accept=".pdf"
+                       data-question-id="${questionId}"
+                       data-requirement-id="${requirementId}"
+                       style="display: none;">
+            `);
+        }
+
+        function removeFile(fileId) {
+            const url = `{{ route('administrator.monev.laporan.buat-laporan.remove-file', ':id') }}`.replace(':id', fileId);
+
+            AjaxHandler.sendDeleteRequest(url, function(response) {
+                if (response.status === 200) {
+                    let removedQuestionId = null;
+                    let removedRequirementId = null;
+
+                    // Remove file from uploadedFiles and get the questionId and requirementId
+                    for (let key in uploadedFiles) {
+                        const originalLength = uploadedFiles[key].length;
+                        uploadedFiles[key] = uploadedFiles[key].filter(file => {
+                            if (file.id === fileId) {
+                                removedQuestionId = key.split('-')[0];
+                                removedRequirementId = key.split('-')[1];
+                                return false;
+                            }
+                            return true;
+                        });
+
+                        // If we found and removed the file, update the preview
+                        if (uploadedFiles[key].length < originalLength) {
+                            updateFilePreview(key.split('-')[0], key.split('-')[1]);
+                        }
+                    }
+
+                    // Refresh requirements section to update "Lihat Dokumen" button visibility
+                    if (removedQuestionId) {
+                        refreshRequirementsSection(removedQuestionId);
+                    }
+
+                    updateProgress();
+                    ResponseHandler.handleSuccess('File berhasil dihapus');
+                } else {
+                    ResponseHandler.handleError('Gagal menghapus file');
+                }
+            });
+        }
+
+        function saveLaporan() {
+            const formData = new FormData();
+            const status = $('input[name="status"]:checked').val();
+
+            formData.append('laporan_id', currentLaporanId);
+            formData.append('desa_id', $('#desa_id').val());
+            formData.append('kegiatan_id', $('#kegiatan_id').val());
+            formData.append('tahun', $('#tahun').val());
+            formData.append('bulan', $('#bulan').val());
+            formData.append('status', status);
+            formData.append('catatan_laporan', $('#catatan_laporan').val());
+            formData.append('_token', '{{ csrf_token() }}');
+
+            $('textarea[name^="jawaban"]').each(function() {
+                const name = $(this).attr('name');
+                const value = $(this).val();
+                formData.append(name, value);
+            });
+
+            const url = `{{ route('administrator.monev.laporan.buat-laporan.store') }}`;
+
+            $('.btn').prop('disabled', true);
+            $('#saveDraftBtn, #saveDraftBottom').html(
+                '<span class="spinner-border spinner-border-sm me-1"></span>Menyimpan...');
+            $('#submitLaporanBtn, #submitLaporanBottom').html(
+                '<span class="spinner-border spinner-border-sm me-1"></span>Mengirim...');
+
+            $.ajax({
+                url: url,
+                method: 'POST',
+                data: formData,
+                processData: false,
+                contentType: false,
+                success: function(response) {
+                    if (response.status === 200) {
+                        currentLaporanId = response.data.laporan_id;
+
+                        if (status === 'submitted') {
+                            ResponseHandler.handleSuccess('Laporan berhasil disubmit!', function() {
+                                setTimeout(() => {
+                                    window.location.href =
+                                        `{{ route('administrator.monev.laporan.index') }}`;
+                                }, 2000);
+                            });
+                        } else {
+                            ResponseHandler.handleSuccess('Draft berhasil disimpan!');
+                            resetButtons();
+                        }
+                    } else {
+                        ResponseHandler.handleError('Gagal menyimpan laporan: ' + (response.message || ''));
+                        resetButtons();
+                    }
+                },
+                error: function(xhr) {
+                    let errorMessage = 'Gagal menyimpan laporan';
+                    if (xhr.responseJSON && xhr.responseJSON.message) {
+                        errorMessage = xhr.responseJSON.message;
+                    }
+                    ResponseHandler.handleError(errorMessage);
+                    resetButtons();
+                }
+            });
+        }
+
+        function updateProgress() {
+            let completed = 0;
+            let total = 0;
+
+            questionsData.forEach(question => {
+                total += 1;
+
+                const answer = $(`textarea[name="jawaban[${question.id_pertanyaan}]"]`).val();
+                if (answer && answer.trim() !== '') {
+                    completed += 0.5;
+                }
+
+                if (question.persyaratan) {
+                    question.persyaratan.forEach(req => {
+                        total += 0.5;
+                        const key = `${question.id_pertanyaan}-${req.id_persyaratan}`;
+                        if (uploadedFiles[key] && uploadedFiles[key].length > 0) {
+                            completed += 0.5;
+                        }
+                    });
+                }
+            });
+
+            const percentage = total > 0 ? Math.round((completed / total) * 100) : 0;
+            $('#formProgress').css('width', `${percentage}%`);
+            $('#progressText').text(`${percentage}% selesai`);
+
+            const canSubmit = percentage >= 80;
+            $('#submitLaporanBtn, #submitLaporanBottom').prop('disabled', !canSubmit);
+
+            if (percentage < 50) {
+                $('#progressText').addClass('text-warning').removeClass('text-success');
+            } else {
+                $('#progressText').addClass('text-success').removeClass('text-warning');
+            }
+        }
+
+        function resetButtons() {
+            $('.btn').prop('disabled', false);
+            $('#saveDraftBtn, #saveDraftBottom').html('<i class="las la-save me-1"></i>Simpan Draft');
+            $('#submitLaporanBtn, #submitLaporanBottom').html('<i class="las la-paper-plane me-1"></i>Submit Laporan');
+        }
+
+        function formatFileSize(bytes) {
+            if (!bytes || bytes === 0) return '0 Bytes';
+            const k = 1024;
+            const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+        }
+    </script>
+@endsection

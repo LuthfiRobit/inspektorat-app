@@ -1,0 +1,162 @@
+.nav-item-main {
+  margin-right: 20px;
+  /* Jarak antara item */
+}
+
+.nav-link-main {
+  color: black;
+  font-size: 1.25rem;
+  font-weight: bold;
+  position: relative;
+  transition: color 0.3s;
+}
+
+.nav-link-main::after {
+  content: "";
+  display: block;
+  width: 0;
+  height: 2px;
+  background: #007bff;
+  transition: width 0.3s;
+  position: absolute;
+  left: 50%;
+  bottom: -5px;
+  border-radius: 2px;
+}
+
+.nav-link-main:hover::after,
+.nav-link-main.active::after {
+  width: 100%;
+  left: 0;
+}
+
+.nav-link-main.active {
+  color: #007bff;
+}
+
+/* Profile image styling */
+.profile-img {
+  width: 30px;
+  /* Ensure the image is the desired size */
+  height: 30px;
+  /* Maintain aspect ratio */
+  border-radius: 50%;
+  /* Make the image circular */
+}
+
+.header-profile .nav-link {
+  background-color: #f0f0f0;
+  /* Match the theme toggle background */
+  border-radius: 50px;
+  /* Oval shape */
+  padding: 5px;
+  /* Add padding for better appearance */
+  transition: background-color 0.3s;
+  /* Smooth transition for hover effect */
+}
+
+.header-profile .nav-link:hover {
+  background-color: #e0e0e0;
+  /* Change background on hover */
+}
+
+.header-profile .nav-link.btn {
+  border-radius: 50px;
+  padding: 10px;
+  /* Adjust for better appearance */
+  transition: background-color 0.3s;
+}
+
+.header-profile .nav-link.btn:hover {
+  background-color: #e0e0e0;
+}
+
+/* Theme mode toggle styling */
+.dz-theme-mode {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  /* Match the size of the profile image */
+  height: 40px;
+  /* Match the size of the profile image */
+  border-radius: 50%;
+  /* Make it circular */
+  background-color: #f0f0f0;
+  /* Background color */
+  transition: background-color 0.3s;
+}
+
+.dz-theme-mode:hover {
+  background-color: #e0e0e0;
+  /* Change background on hover */
+}
+
+@media (max-width: 991.98px) {
+  /* Offcanvas menu for mobile */
+  .offcanvas {
+    /* width: 50%; */
+    max-width: 250px;
+    /* Sidebar width reduced to 50% */
+  }
+
+  .nav-link-main {
+    font-size: 1.1rem;
+  }
+
+  /* Navbar-toggler */
+  .navbar-toggler {
+    margin-right: 10px;
+  }
+
+  /* Notification and profile to the right */
+  .notification_dropdown,
+  .header-profile {
+    margin-left: auto;
+  }
+
+  /* Hide user text in mobile */
+  .header-profile img {
+    display: block;
+    width: 30px;
+    height: 30px;
+  }
+
+  .header-info {
+    display: none;
+  }
+}
+
+/* Custom Banner Section */
+.custom-banner-image-section {
+  max-height: 400px;
+  /* Adjust height as needed */
+  overflow: hidden;
+}
+
+.custom-banner-image-section .custom-image img {
+  max-height: 100%;
+  /* Make image cover the section */
+  object-fit: cover;
+  /* Ensure the image maintains aspect ratio */
+}
+
+.custom-overlay {
+  background: rgba(0, 0, 0, 0.5);
+  /* Darker overlay for better text visibility */
+}
+
+.custom-text-content h3 {
+  font-size: 2.5rem;
+  /* Adjust size as needed */
+}
+
+.custom-text-content span {
+  font-size: 1.2rem;
+  /* Adjust size as needed */
+}
+
+.custom-outline {
+  border: 1px solid #fff;
+  /* Customize button outline */
+}

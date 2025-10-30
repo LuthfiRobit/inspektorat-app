@@ -1,0 +1,312 @@
+<?php
+
+namespace App\Http\Controllers\Masters;
+
+use App\Http\Controllers\Controller;
+use App\Models\Petugas;
+use App\Services\LogActivityService;
+use App\Services\ResponseService;
+use App\Services\TransactionService;
+use App\Services\UserAccountService;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Str;
+use Yajra\DataTables\Facades\DataTables;
+
+class PetugasInspektoratController extends Controller
+{
+    protected $responseService;
+    protected $transactionService;
+    protected $logActivityService;
+    protected $userAccountService;
+    protected $scope = 'inspektorat';
+
+    public function __construct(ResponseService $responseService, TransactionService $transactionService, LogActivityService $logActivityService, UserAccountService $userAccountService)
+    {
+        $this->responseService = $responseService;
+        $this->transactionService = $transactionService;
+        $this->logActivityService = $logActivityService;
+        $this->userAccountService = $userAccountService;
+    }
+
+    /**
+     * Display the index view for Petugas Inspektorat.
+     */
+    public function index()
+    {
+        $this->logActivityService->log('Accessed the index view for Petugas Inspektorat');
+
+        return view('administration.masters.petugas.inspektorat.index');
+    }
+
+    /**
+     * Retrieve and return the list of Petugas Inspektorat for DataTables.
+     */
+    public function list(Request $request)
+    {
+        $filters = [
+            'filter_status'    => $request->input('filter_status', ''),
+            'filter_kecamatan' => $request->input('filter_kecamatan', ''),
+            'filter_desa'      => $request->input('filter_desa', ''),
+            'filter_jabatan'   => $request->input('filter_jabatan', ''),
+            'search'           => $request->input('search', ''),
+        ];
+
+        $query = Petugas::getFilters($filters, $this->scope);
+
+        $this->logActivityService->log('Fetched Petugas list', 'Filter: ' . json_encode($filters));
+
+        return DataTables::of($query)
+            ->addColumn(
+                'checkbox',
+                fn($row) =>
+                '<input type="checkbox" class="table-checkbox form-check-input" name="petugas_ids[]"   id="checkbox_' . $row->id_petugas . '"  value="' . $row->id_petugas . '">'
+            )
+            ->addColumn('aksi', function ($item) {
+                return '
+                <div class="btn-group">
+                    <button type="button" class="btn btn-outline-primary btn-xs dropdown-toggle" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                        <i class="fas fa-cogs"></i> Aksi
+                    </button>
+                    <div class="dropdown-menu">
+                        <a class="dropdown-item" href="javascript:void(0);" data-action="action_show" data-id="' . $item->id_petugas . '">
+                            <i class="fas fa-eye"></i> Lihat
+                        </a>
+                        <a class="dropdown-item" href="javascript:void(0);" data-action="action_edit" data-id="' . $item->id_petugas . '">
+                            <i class="fas fa-edit"></i> Edit
+                        </a>
+                    </div>
+                </div>';
+            })
+            ->editColumn(
+                'nip',
+                fn($item) =>
+                $item->nip ? e($item->nip) : '<span class="text-muted">-</span>'
+            )
+            ->editColumn('nama_lengkap', function ($row) {
+                if (strlen($row->nama_lengkap) > 30) {
+                    return '<span data-bs-toggle="tooltip" title="' . e($row->nama_lengkap) . '">' .
+                        e(Str::limit($row->nama_lengkap, 30)) . '</span>';
+                }
+                return e($row->nama_lengkap);
+            })
+            ->editColumn(
+                'no_telp',
+                fn($item) =>
+                $item->no_telp ? e($item->no_telp) : '<span class="text-muted">-</span>'
+            )
+            ->editColumn('jabatan', function ($row) {
+                if (strlen($row->jabatan) > 25) {
+                    return '<span data-bs-toggle="tooltip" title="' . e($row->jabatan) . '">' .
+                        e(Str::limit($row->jabatan, 25)) . '</span>';
+                }
+                return e($row->jabatan ?: '-');
+            })
+            ->addColumn('instansi', function ($item) {
+                if ($item->nama_kecamatan && $item->nama_desa) {
+                    return '<span>' . e($item->nama_desa) . '</span><br>
+                        <small class="text-muted">Kec. ' . e($item->nama_kecamatan) . '</small>';
+                } elseif ($item->nama_kecamatan) {
+                    return '<small class="text-muted">Kec. ' . e($item->nama_kecamatan) . '</small>';
+                } elseif ($item->nama_desa) {
+                    return e($item->nama_desa);
+                }
+                return '<span class="text-muted">-</span>';
+            })
+            ->editColumn(
+                'unit_kerja',
+                fn($item) =>
+                $item->unit_kerja ? e($item->unit_kerja) : '<span class="text-muted">-</span>'
+            )
+            ->editColumn('status', function ($row) {
+                $map = [
+                    'active'    => ['class' => 'light badge-success', 'label' => 'AKTIF'],
+                    'inactive'  => ['class' => 'light badge-danger', 'label' => 'NONAKTIF'],
+                ];
+
+                $badge = $map[$row->status] ?? ['class' => 'light badge-dark', 'label' => strtoupper($row->status ?? '-')];
+
+                return '<span class="badge ' . $badge['class'] . '">' . $badge['label'] . '</span>';
+            })
+            ->rawColumns([
+                'checkbox',
+                'aksi',
+                'nip',
+                'nama_lengkap',
+                'no_telp',
+                'jabatan',
+                'instansi',
+                'unit_kerja',
+                'status'
+            ])
+            ->make(true);
+    }
+
+    /**
+     * Display the create view for Petugas Inspektorat.
+     */
+    public function create()
+    {
+        $this->logActivityService->log('Accessed the create view for Petugas Inspektorat');
+        return view('administration.masters.petugas.inspektorat.create');
+    }
+
+    /**
+     * Store a new Petugas Inspektorat record in the database.
+     */
+    public function store(Request $request)
+    {
+        $validationRules = [
+            'nama_lengkap' => 'required|string|max:100',
+            'nip' => 'required|string|max:20|unique:petugas,nip', // Ubah jadi required
+            'jabatan' => 'required|string|max:100',
+            'unit_kerja' => 'nullable|string|max:100',
+            'no_telp' => 'nullable|string|max:15',
+            'email' => 'required|email|max:100|unique:users,email', // Ubah jadi required dan unique di users table
+            'alamat' => 'nullable|string',
+            'tanggal_awal' => 'nullable|date',
+            'tanggal_akhir' => 'nullable|date',
+            'foto_petugas' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+            'status' => 'required|in:active,inactive',
+        ];
+
+        $validator = Validator::make($request->all(), $validationRules);
+
+        if ($validator->fails()) {
+            $this->logActivityService->log('Validation failed during Petugas Inspektorat store', 'Errors: ' . json_encode($validator->errors()));
+            return $this->responseService->validationError($validator->errors());
+        }
+
+        $fileFields = [];
+        $oldFiles = [];
+
+        if ($request->hasFile('foto_petugas')) {
+            $fileFields = [
+                'foto_petugas' => 'petugas/foto',
+            ];
+        }
+
+        $this->logActivityService->log('Stored new Petugas Inspektorat', 'Data: ' . json_encode($request->all()));
+
+        return $this->transactionService->store(
+            $request,
+            new Petugas(),
+            $validationRules,
+            function ($request, $petugas) {
+                // Untuk inspektorat, kecamatan_id dan desa_id harus null
+                $petugas->kecamatan_id = null;
+                $petugas->desa_id = null;
+
+                // Create user account - langsung menggunakan data dari request
+                $user = $this->userAccountService->createPetugasAccount($petugas, $request->jabatan, $request->email, $request->status);
+                $petugas->user_id = $user->id_user;
+                $petugas->save(); // Simpan lagi dengan user_id
+            },
+            $fileFields,
+            $oldFiles
+        );
+    }
+
+    /**
+     * Display the details of a specific Petugas Inspektorat by ID.
+     */
+    public function show($id)
+    {
+        $petugas = Petugas::getRelationship($id);
+
+        if (!$petugas) {
+            return $this->responseService->error('Data not found', ResponseService::STATUS_NOT_FOUND);
+        }
+
+        $this->logActivityService->log('Viewed Petugas Inspektorat detail', 'ID: ' . $id);
+        return $this->responseService->success($petugas);
+    }
+
+    /**
+     * Display the edit view for Petugas Inspektorat.
+     */
+    public function edit($id)
+    {
+        $this->logActivityService->log('Accessed the edit view for Petugas Inspektorat');
+        return view('administration.masters.petugas.inspektorat.edit');
+    }
+
+    /**
+     * Update an existing Petugas Inspektorat record.
+     */
+    public function update(Request $request, $id)
+    {
+        $petugas = Petugas::whereNull('kecamatan_id')
+            ->whereNull('desa_id')
+            ->find($id);
+
+        if (!$petugas) {
+            $this->logActivityService->log('Petugas Inspektorat not found for update', 'ID: ' . $id);
+            return $this->responseService->error('Data not found', ResponseService::STATUS_NOT_FOUND);
+        }
+        $validationRules = [
+            'nama_lengkap'  => 'required|string|max:100',
+            'nip'           => 'required|string|max:20|unique:petugas,nip,' . $id . ',id_petugas',
+            'jabatan'       => 'required|string|max:100',
+            'unit_kerja'    => 'nullable|string|max:100',
+            'no_telp'       => 'nullable|string|max:15',
+            'email'         => 'required|email|max:100|unique:users,email,' . $petugas->user_id . ',id_user',
+            'alamat'        => 'nullable|string',
+            'tanggal_awal'  => 'nullable|date',
+            'tanggal_akhir' => 'nullable|date',
+            'foto_petugas'  => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+            'status'        => 'required|in:active,inactive',
+        ];
+
+        $validator = Validator::make($request->all(), $validationRules);
+
+        if ($validator->fails()) {
+            $this->logActivityService->log(
+                'Validation failed during Petugas Inspektorat update',
+                'Errors: ' . json_encode($validator->errors())
+            );
+            return $this->responseService->validationError($validator->errors());
+        }
+
+        // 🔹 Siapkan file-field jika ada upload baru
+        $fileFields = [];
+        $oldFiles = [];
+
+        if ($request->hasFile('foto_petugas')) {
+            $fileFields = [
+                'foto_petugas' => 'petugas/foto',
+            ];
+
+            if ($petugas->foto_petugas) {
+                $oldFiles = [
+                    'foto_petugas' => $petugas->foto_petugas,
+                ];
+            }
+        }
+
+        // 🔹 Jalankan transaksi update
+        return $this->transactionService->update(
+            $request,
+            $petugas,
+            $validationRules,
+            function ($request, $petugas) {
+                // Update akun user berdasarkan jabatan & status
+                $this->userAccountService->updatePetugasAccount(
+                    $petugas,
+                    $request->jabatan,
+                    $request->email,
+                    $request->status
+                );
+            },
+            $fileFields,
+            $oldFiles,
+            function () use ($id, $request) {
+                // Logging hanya setelah transaksi berhasil
+                $this->logActivityService->log(
+                    'Updated Petugas Inspektorat',
+                    'ID: ' . $id . ' Data: ' . json_encode($request->except(['foto_petugas']))
+                );
+            }
+        );
+    }
+}
