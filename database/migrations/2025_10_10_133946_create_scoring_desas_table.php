@@ -15,6 +15,7 @@ return new class extends Migration
             $table->increments('id_scoring');
             $table->unsignedSmallInteger('desa_id');
             $table->unsignedInteger('laporan_id');
+            $table->unsignedSmallInteger('kegiatan_id');
             $table->smallInteger('tahun');
             $table->tinyInteger('bulan');
             $table->integer('total_persyaratan_wajib')->default(0);
@@ -28,10 +29,12 @@ return new class extends Migration
             // Foreign keys
             $table->foreign('desa_id')->references('id_desa')->on('desa')->onDelete('cascade');
             $table->foreign('laporan_id')->references('id_laporan')->on('laporan_kegiatan')->onDelete('cascade');
+            $table->foreign('kegiatan_id')->references('id_kegiatan')->on('kegiatan')->onDelete('cascade');
 
             // Indexes
             $table->index(['desa_id', 'tahun', 'bulan']);
             $table->index(['tahun', 'bulan', 'peringkat']);
+            $table->index(['kegiatan_id', 'peringkat']);
             $table->index('total_skor');
         });
     }
