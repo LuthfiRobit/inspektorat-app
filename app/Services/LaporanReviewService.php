@@ -13,10 +13,14 @@ use Illuminate\Support\Facades\Log;
 class LaporanReviewService
 {
     protected $logActivityService;
+    protected $keterlambatanService;
+    protected $scoringDesaService;
 
-    public function __construct(LogActivityService $logActivityService)
+    public function __construct(LogActivityService $logActivityService, KeterlambatanService $keterlambatanService, ScoringDesaService $scoringDesaService)
     {
         $this->logActivityService = $logActivityService;
+        $this->keterlambatanService = $keterlambatanService; // Tambahkan ini
+        $this->scoringDesaService = $scoringDesaService; // Tambahkan ini
     }
 
     /**
@@ -45,6 +49,20 @@ class LaporanReviewService
             // Process dokumen review (status and revision notes) - TANPA BUAT VERSI BARU
             $this->processDokumenReview($laporan->id_laporan, $dokumenStatus, $catatanRevisi);
 
+            // ===== INTEGRASI BARU: Update scoring saat approve =====
+            if ($validatedData['status'] == 'approved') {
+                // Update scoring (karena status dokumen mungkin berubah)
+                $this->scoringDesaService->hitungScoring($laporan);
+
+                // Update peringkat
+                $this->scoringDesaService->updatePeringkat(
+                    $laporan->kegiatan_id,
+                    $laporan->tahun,
+                    $laporan->bulan
+                );
+            }
+
+            // ===== END INTEGRASI BARU =====
             return $laporan;
         });
     }
