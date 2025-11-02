@@ -15,7 +15,7 @@ return new class extends Migration
             $table->increments('id_jawaban');
             $table->unsignedInteger('laporan_id');
             $table->unsignedSmallInteger('pertanyaan_id');
-            $table->text('jawaban_text')->nullable();
+            $table->text('jawaban_text')->nullable(); //belum atau sudah
             $table->enum('status', ['draft', 'submitted', 'approved'])->default('draft');
             $table->timestamps();
 
