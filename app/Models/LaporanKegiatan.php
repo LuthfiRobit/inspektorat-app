@@ -144,7 +144,7 @@ class LaporanKegiatan extends Model
         }
 
         $comparisonDate = $this->tanggal_submit ?: now();
-        $gracePeriod = $this->tanggal_target->copy()->addDays(10);
+        $gracePeriod = $this->tanggal_target->copy()->addDays(1);
 
         return $comparisonDate->gt($gracePeriod);
     }
@@ -159,7 +159,7 @@ class LaporanKegiatan extends Model
         }
 
         $comparisonDate = $this->tanggal_submit ?: now();
-        $deadlineWithGrace = $this->tanggal_target->copy()->addDays(10);
+        $deadlineWithGrace = $this->tanggal_target->copy()->addDays(1);
 
         return max(0, $comparisonDate->diffInDays($deadlineWithGrace, false));
     }
@@ -263,7 +263,7 @@ class LaporanKegiatan extends Model
         ];
 
         // Add display fields using existing methods
-        $record['status_display'] = self::getStatusDisplay($record['status']);
+        $record['status_display'] = self::getStatusDisplayForReview($record['status']);
         $record['status_class'] = self::getStatusClass($record['status']);
         $record['timeline_status'] = self::calculateTimelineStatus($record);
         $record['priority_order'] = self::getPriorityOrder($record['status']);
@@ -272,9 +272,34 @@ class LaporanKegiatan extends Model
     }
 
     /**
-     * Get status display text
+     * Get status display text (default untuk user perspective)
+     * @deprecated - Use getStatusDisplayForUser() or getStatusDisplayForReview() instead
      */
     public static function getStatusDisplay($status)
+    {
+        return self::getStatusDisplayForUser($status);
+    }
+
+    /**
+     * Get status display text for user perspective (pelapor)
+     */
+    public static function getStatusDisplayForUser($status)
+    {
+        return match ($status) {
+            'draft' => 'Draft',
+            'submitted' => 'Menunggu Review',
+            'revision' => 'Perlu Revisi',
+            'approved' => 'Disetujui',
+            'rejected' => 'Ditolak',
+            'belum_dilaporkan' => 'Belum Dilaporkan',
+            default => 'Belum Dilaporkan'
+        };
+    }
+
+    /**
+     * Get status display text for review perspective (inspektorat)
+     */
+    public static function getStatusDisplayForReview($status)
     {
         return match ($status) {
             'draft' => 'Draft',
@@ -314,7 +339,7 @@ class LaporanKegiatan extends Model
 
         $tanggalTarget = Carbon::parse($record['tanggal_target']);
         $comparisonDate = $record['tanggal_submit'] ? Carbon::parse($record['tanggal_submit']) : now();
-        $gracePeriod = $tanggalTarget->copy()->addDays(10);
+        $gracePeriod = $tanggalTarget->copy()->addDays(1);
 
         if (in_array($record['status'], ['submitted', 'approved'])) {
             return $comparisonDate->gt($gracePeriod) ? 'Terlambat' : 'Tepat Waktu';
@@ -355,12 +380,12 @@ class LaporanKegiatan extends Model
         // Role-based filtering for desa
         $petugas = $user->petugas;
         if ($petugas) {
-            if ($petugas->kecamatan_id) {
-                // Kecamatan - show all desa in their kecamatan
-                $desaQuery->where('d.kecamatan_id', $petugas->kecamatan_id);
-            } elseif ($petugas->desa_id) {
+            if ($petugas->desa_id) {
                 // Desa - show only their desa
                 $desaQuery->where('d.id_desa', $petugas->desa_id);
+            } elseif ($petugas->kecamatan_id) {
+                // Kecamatan - show all desa in their kecamatan
+                $desaQuery->where('d.kecamatan_id', $petugas->kecamatan_id);
             }
         }
 
@@ -429,7 +454,7 @@ class LaporanKegiatan extends Model
                 ];
 
                 // Add display fields
-                $record['status_display'] = self::getStatusDisplay($record['status']);
+                $record['status_display'] = self::getStatusDisplayForUser($record['status']);
                 $record['status_class'] = self::getStatusClass($record['status']);
                 $record['timeline_status'] = self::calculateTimelineStatus($record);
                 $record['priority_order'] = self::getPriorityOrder($record['status']);
@@ -468,7 +493,12 @@ class LaporanKegiatan extends Model
      */
     private static function applyFilters($result, $filters)
     {
-        // Filter by status
+        // Filter untuk mengecualikan status submitted dan approved
+        $result = $result->filter(function ($item) {
+            return !in_array($item['status'], ['submitted', 'approved']);
+        });
+
+        // Filter by status (jika ada filter status tertentu)
         if (!empty($filters['filter_status'])) {
             $result = $result->filter(function ($item) use ($filters) {
                 if ($filters['filter_status'] === 'belum_dilaporkan') {
