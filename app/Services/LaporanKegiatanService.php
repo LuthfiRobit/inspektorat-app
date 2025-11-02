@@ -19,11 +19,15 @@ class LaporanKegiatanService
 {
     protected $fileUploadService;
     protected $logActivityService;
+    protected $keterlambatanService;
+    protected $scoringDesaService;
 
-    public function __construct(FileUploadService $fileUploadService, LogActivityService $logActivityService)
+    public function __construct(FileUploadService $fileUploadService, LogActivityService $logActivityService, KeterlambatanService $keterlambatanService, ScoringDesaService $scoringDesaService)
     {
         $this->fileUploadService = $fileUploadService;
         $this->logActivityService = $logActivityService;
+        $this->keterlambatanService = $keterlambatanService; // Tambahkan ini
+        $this->scoringDesaService = $scoringDesaService; // Tambahkan ini
     }
 
     /**
@@ -78,6 +82,23 @@ class LaporanKegiatanService
             // Save jawaban and process files
             $this->saveJawabanDanDokumen($laporan->id_laporan, $jawabanData, $files, $validatedData['status']);
 
+            // ===== INTEGRASI BARU: Hitung keterlambatan dan scoring =====
+            if ($validatedData['status'] == 'submitted') {
+                // Hitung keterlambatan
+                $this->keterlambatanService->updateKeterlambatan($laporan);
+
+                // Hitung scoring
+                $this->scoringDesaService->hitungScoring($laporan);
+
+                // Update peringkat untuk periode ini
+                $this->scoringDesaService->updatePeringkat(
+                    $laporan->kegiatan_id,
+                    $laporan->tahun,
+                    $laporan->bulan
+                );
+            }
+            // ===== END INTEGRASI BARU =====
+
             return $laporan;
         });
     }
@@ -112,6 +133,23 @@ class LaporanKegiatanService
             if ($oldStatus != $validatedData['status']) {
                 $this->updateAllCurrentDokumenStatus($laporan->id_laporan, $validatedData['status']);
             }
+
+            // ===== INTEGRASI BARU: Update keterlambatan dan scoring =====
+            if ($validatedData['status'] == 'submitted') {
+                // Update keterlambatan
+                $this->keterlambatanService->updateKeterlambatan($laporan);
+
+                // Update scoring
+                $this->scoringDesaService->hitungScoring($laporan);
+
+                // Update peringkat
+                $this->scoringDesaService->updatePeringkat(
+                    $laporan->kegiatan_id,
+                    $laporan->tahun,
+                    $laporan->bulan
+                );
+            }
+            // ===== END INTEGRASI BARU =====
 
             return $laporan;
         });
