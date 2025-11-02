@@ -16,6 +16,7 @@ class ScoringDesa extends Model
     protected $fillable = [
         'desa_id',
         'laporan_id',
+        'kegiatan_id',
         'tahun',
         'bulan',
         'total_persyaratan_wajib',
@@ -110,5 +111,33 @@ class ScoringDesa extends Model
             11 => 'November',
             12 => 'Desember'
         ][$this->bulan] ?? 'Unknown';
+    }
+
+    // Tambahkan relationship
+    public function kegiatan(): BelongsTo
+    {
+        return $this->belongsTo(Kegiatan::class, 'kegiatan_id', 'id_kegiatan');
+    }
+
+    // Scope untuk filter per kegiatan
+    public function scopeByKegiatan($query, $kegiatanId)
+    {
+        return $query->where('kegiatan_id', $kegiatanId);
+    }
+
+    // Scope untuk ranking per kegiatan
+    public function scopeRankedByKegiatan($query, $kegiatanId, $tahun = null, $bulan = null)
+    {
+        $query->where('kegiatan_id', $kegiatanId);
+
+        if ($tahun) {
+            $query->where('tahun', $tahun);
+        }
+
+        if ($bulan) {
+            $query->where('bulan', $bulan);
+        }
+
+        return $query->whereNotNull('peringkat')->orderBy('peringkat', 'ASC');
     }
 }
