@@ -62,8 +62,9 @@
                     <span class="nav-text">Monitoring</span>
                 </a>
                 <ul aria-expanded="false">
-                    <li><a href="#" class="fs-6">Riwayat Laporan</a></li>
-                    <li><a href="#" class="fs-6">Keterlambatan</a></li>
+                    <li><a href="{{ route('administrator.monitoring.riwayat.index') }}" class="fs-6">Riwayat
+                            Laporan</a></li>
+                    {{-- <li><a href="#" class="fs-6">Keterlambatan</a></li> --}}
                     <li><a href="#" class="fs-6">Scoring Desa</a></li>
                 </ul>
             </li>
