@@ -15,6 +15,7 @@ use App\Http\Controllers\Masters\TahunAnggaranController;
 use App\Http\Controllers\Monev\LaporanHistoryController;
 use App\Http\Controllers\Monev\LaporanKegiatanController;
 use App\Http\Controllers\Monev\LaporanReviewController;
+use App\Http\Controllers\Monitor\RiwayatLaporanController;
 use App\Http\Controllers\RBAC\PermissionController;
 use App\Http\Controllers\RBAC\RoleController;
 use App\Http\Controllers\RBAC\UserController;
@@ -169,6 +170,16 @@ Route::middleware(['auth', 'checkPermission'])->prefix('administrator')->name('a
             Route::get('/list', [LaporanReviewController::class, 'list'])->name('list');
             Route::get('/review', [LaporanReviewController::class, 'review'])->name('review');
             Route::post('/submit', [LaporanReviewController::class, 'submit'])->name('submit');
+        });
+    });
+
+    // Monitoring
+    Route::prefix('monitoring')->name('monitoring.')->group(function () {
+        Route::prefix('riwayat')->name('riwayat.')->group(function () {
+            Route::get('/', [RiwayatLaporanController::class, 'index'])->name('index');
+            Route::get('/list', [RiwayatLaporanController::class, 'list'])->name('list');
+            Route::get('/detail', [RiwayatLaporanController::class, 'detail'])->name('detail');
+            Route::get('/get-data/{id}', [RiwayatLaporanController::class, 'getData'])->name('get-data');
         });
     });
 

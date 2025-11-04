@@ -15,7 +15,7 @@ return new class extends Migration
             $table->smallIncrements('id_pertanyaan');
             $table->unsignedSmallInteger('kegiatan_id')->index();
             $table->integer('urutan')->default(1)->index();
-            $table->text('pertanyaan');
+            $table->text('pertanyaan'); // nama persyaratan yang menampung banyak persyaratan "dokumen inti kegiatan"
             $table->enum('status', ['active', 'inactive'])->default('active')->index();
             $table->unsignedInteger('created_by')->nullable();
             $table->unsignedInteger('updated_by')->nullable();
