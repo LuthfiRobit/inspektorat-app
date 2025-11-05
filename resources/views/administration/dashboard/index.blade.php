@@ -1,225 +1,295 @@
 @extends('administration.layouts.app')
 
+@section('title', 'Dashboard Sistem Informasi Monitoring Desa | Inspektorat Kabupaten Probolinggo')
+@section('meta-description',
+    'Halaman dashboard Sistem Informasi Monitoring Desa Inspektorat Kabupaten Probolinggo.
+    Menyajikan ringkasan data dan pemantauan kegiatan desa secara real-time untuk mendukung pengawasan dan evaluasi.')
+
 @section('this-page-style')
-    <link href="{{ asset('templates/administration/vendor/simple-datatables/style.css') }}" rel="stylesheet">
+    <link href="{{ asset('templates/administration/vendor/datatables/css/jquery.dataTables.min.css') }}" rel="stylesheet" />
+    <link href="{{ asset('templates/administration/vendor/datatables/responsive/responsive.css') }}" rel="stylesheet" />
 @endsection
 
 @section('content')
     <!-- Content body start -->
-    <div class="pagetitle">
-        <h1>Dashboard</h1>
-        <nav>
-            <ol class="breadcrumb">
-                <li class="breadcrumb-item"><a href="#">Admin</a></li>
-                <li class="breadcrumb-item active">Dashboard</li>
-            </ol>
-        </nav>
-    </div><!-- End Page Title -->
+    <div class="content-body default-height">
+        <div class="container-fluid">
+            <!-- Section Heading -->
+            <div class="form-head mb-4 d-flex align-items-center gap-2">
+                <small class="text-muted">Dashboard -</small>
+                <h4 class="text-dark fw-semibold mb-0">Sistem Informasi Monitoring Desa</h4>
+            </div>
 
-    <section class="section dashboard">
-        <div class="row justify-content-center g-4">
+            <!-- Filter Section -->
+            <div class="row">
+                <div class="col-12">
+                    <div class="card">
+                        <div class="card-body">
+                            <div class="row g-3">
+                                <!-- Tahun Anggaran -->
+                                <div class="col-md-3">
+                                    <label class="form-label">Tahun Anggaran</label>
+                                    <select class="selectpicker form-control wide form-select-md" id="filter-tahun"
+                                        data-live-search="true" data-size="5" title="Pilih Tahun">
+                                        <option value="">Loading...</option>
+                                    </select>
+                                </div>
 
-            <!-- Desa Belum Laporan -->
-            <div class="col-xxl-2 col-md-4">
-                <div class="card info-card sales-card">
-                    <div class="card-body">
-                        <h5 class="card-title">Desa <span>| Belum Laporan</span></h5>
-                        <div class="d-flex align-items-center">
-                            <div class="card-icon rounded-circle d-flex align-items-center justify-content-center">
-                                <i class="bi bi-exclamation-triangle"></i> <!-- ikon warning -->
-                            </div>
-                            <div class="ps-3">
-                                <h6>80</h6>
+                                <!-- Periode Bulan -->
+                                <div class="col-md-3">
+                                    <label class="form-label">Periode Bulan</label>
+                                    <select class="selectpicker form-control wide form-select-md" id="filter-bulan"
+                                        data-live-search="true" data-size="5" title="Pilih Bulan">
+                                        <option value="">Semua Bulan</option>
+                                        <option value="1">Januari</option>
+                                        <option value="2">Februari</option>
+                                        <option value="3">Maret</option>
+                                        <option value="4">April</option>
+                                        <option value="5">Mei</option>
+                                        <option value="6">Juni</option>
+                                        <option value="7">Juli</option>
+                                        <option value="8">Agustus</option>
+                                        <option value="9">September</option>
+                                        <option value="10">Oktober</option>
+                                        <option value="11">November</option>
+                                        <option value="12">Desember</option>
+                                    </select>
+                                </div>
+
+                                <!-- Jenis Kegiatan -->
+                                <div class="col-md-3">
+                                    <label class="form-label">Jenis Kegiatan</label>
+                                    <select class="selectpicker form-control wide form-select-md" id="filter-jenis-kegiatan"
+                                        data-live-search="true" data-size="5" title="Pilih Jenis Kegiatan">
+                                        <option value="">Semua Jenis</option>
+                                    </select>
+                                </div>
+
+                                <!-- Filter Kecamatan -->
+                                <div class="col-md-3" id="filter-kecamatan-container">
+                                    <label class="form-label">Kecamatan</label>
+                                    <select class="selectpicker form-control wide form-select-md" id="filter-kecamatan"
+                                        data-live-search="true" data-size="5" title="Pilih Kecamatan">
+                                        <option value="">Semua Kecamatan</option>
+                                    </select>
+                                </div>
                             </div>
                         </div>
                     </div>
                 </div>
-            </div><!-- End Card -->
+            </div>
+            <div class="row g-2">
+                <!-- Total Kecamatan -->
+                <div class="col-sm-6 col-md-4 col-lg-2">
+                    <div class="media align-items-center bgl-primary rounded p-2 h-100">
+                        <span class="bg-white p-3 me-3 rounded d-flex justify-content-center align-items-center"
+                            style="width: 50px; height: 50px">
+                            <i class="fas fa-map-marked-alt" style="font-size: 20px; color: #0d6efd;"></i>
+                        </span>
+                        <div class="media-body">
+                            <h5 id="total_kecamatan" class="fs-16 text-black font-w600 mb-0">0</h5>
+                            <span class="fs-14">Total Kecamatan</span>
+                        </div>
+                    </div>
+                </div>
 
-            <!-- Kec Belum Tuntas -->
-            <div class="col-xxl-2 col-md-4">
-                <div class="card info-card sales-card">
-                    <div class="card-body">
-                        <h5 class="card-title">Kecamatan <span>| Belum Tuntas</span></h5>
-                        <div class="d-flex align-items-center">
-                            <div class="card-icon rounded-circle d-flex align-items-center justify-content-center">
-                                <i class="bi bi-building"></i> <!-- ikon gedung utk kecamatan -->
-                            </div>
-                            <div class="ps-3">
-                                <h6>6</h6>
+                <!-- Total Desa -->
+                <div class="col-sm-6 col-md-4 col-lg-2">
+                    <div class="media align-items-center bgl-info rounded p-2 h-100">
+                        <span class="bg-white p-3 me-3 rounded d-flex justify-content-center align-items-center"
+                            style="width: 50px; height: 50px">
+                            <i class="fas fa-home" style="font-size: 20px; color: #0dcaf0;"></i>
+                        </span>
+                        <div class="media-body">
+                            <h5 id="total_desa" class="fs-16 text-black font-w600 mb-0">0</h5>
+                            <span class="fs-14">Total Desa</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Total Kegiatan -->
+                <div class="col-sm-6 col-md-4 col-lg-2">
+                    <div class="media align-items-center bgl-success rounded p-2 h-100">
+                        <span class="bg-white p-3 me-3 rounded d-flex justify-content-center align-items-center"
+                            style="width: 50px; height: 50px">
+                            <i class="fas fa-tasks" style="font-size: 20px; color: #198754;"></i>
+                        </span>
+                        <div class="media-body">
+                            <h5 id="total_kegiatan" class="fs-16 text-black font-w600 mb-0">0</h5>
+                            <span class="fs-14">Total Kegiatan</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Total Laporan Disetujui -->
+                <div class="col-sm-6 col-md-4 col-lg-2">
+                    <div class="media align-items-center bgl-success rounded p-2 h-100">
+                        <span class="bg-white p-3 me-3 rounded d-flex justify-content-center align-items-center"
+                            style="width: 50px; height: 50px">
+                            <i class="fas fa-check-circle" style="font-size: 20px; color: #28a745;"></i>
+                        </span>
+                        <div class="media-body">
+                            <h5 id="total_laporan_approved" class="fs-16 text-black font-w600 mb-0">0</h5>
+                            <span class="fs-14">Laporan Disetujui</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Total Laporan Direvisi -->
+                <div class="col-sm-6 col-md-4 col-lg-2">
+                    <div class="media align-items-center bgl-warning rounded p-2 h-100">
+                        <span class="bg-white p-3 me-3 rounded d-flex justify-content-center align-items-center"
+                            style="width: 50px; height: 50px">
+                            <i class="fas fa-edit" style="font-size: 20px; color: #ffc107;"></i>
+                        </span>
+                        <div class="media-body">
+                            <h5 id="total_laporan_revisi" class="fs-16 text-black font-w600 mb-0">0</h5>
+                            <span class="fs-14">Laporan Direvisi</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Total Laporan Perlu Approval -->
+                <div class="col-sm-6 col-md-4 col-lg-2">
+                    <div class="media align-items-center bgl-secondary rounded p-2 h-100">
+                        <span class="bg-white p-3 me-3 rounded d-flex justify-content-center align-items-center"
+                            style="width: 50px; height: 50px">
+                            <i class="fas fa-hourglass-half" style="font-size: 20px; color: #6c757d;"></i>
+                        </span>
+                        <div class="media-body">
+                            <h5 id="total_laporan_pending" class="fs-16 text-black font-w600 mb-0">0</h5>
+                            <span class="fs-14">Perlu Approval</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="row mt-4">
+                <!-- Laporan Butuh Approval -->
+                <div class="col-sm-12 col-md-6 col-lg-6">
+                    <div class="card shadow-sm">
+                        <div class="card-header py-3 d-flex justify-content-between align-items-center">
+                            <h5 class="mb-0 fw-semibold text-dark">Laporan Butuh Approval</h5>
+                            <span class="badge bg-primary" id="count_butuh_approval">0</span>
+                        </div>
+                        <div class="card-body">
+                            <div class="table-responsive">
+                                <table class="table table-sm table-bordered table-hover align-middle mb-0"
+                                    id="table-butuh-approval">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th scope="col">#</th>
+                                            <th scope="col">Desa / Kecamatan</th>
+                                            <th scope="col">Kegiatan / Jenis</th>
+                                            <th scope="col">Tanggal</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                            <td colspan="4" class="text-center text-muted">Tidak ada laporan yang perlu
+                                                approval</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
                             </div>
                         </div>
                     </div>
                 </div>
-            </div><!-- End Card -->
 
-            <!-- Desa Belum Laporan Tahun Sebelumnya -->
-            <div class="col-xxl-3 col-md-4">
-                <div class="card info-card sales-card">
-                    <div class="card-body">
-                        <h5 class="card-title">Desa <span>| Tahun Sebelumnya</span></h5>
-                        <div class="d-flex align-items-center">
-                            <div class="card-icon rounded-circle d-flex align-items-center justify-content-center">
-                                <i class="bi bi-clock-history"></i> <!-- ikon histori utk tahun lalu -->
-                            </div>
-                            <div class="ps-3">
-                                <h6>76</h6>
+                <!-- Laporan Direvisi -->
+                <div class="col-sm-12 col-md-6 col-lg-6">
+                    <div class="card shadow-sm">
+                        <div class="card-header py-3 d-flex justify-content-between align-items-center">
+                            <h5 class="mb-0 fw-semibold text-dark">Laporan Direvisi</h5>
+                            <span class="badge bg-warning text-dark" id="count_direvisi">0</span>
+                        </div>
+                        <div class="card-body">
+                            <div class="table-responsive">
+                                <table class="table table-sm table-bordered table-hover align-middle mb-0"
+                                    id="table-direvisi">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th scope="col">#</th>
+                                            <th scope="col">Desa / Kecamatan</th>
+                                            <th scope="col">Kegiatan / Jenis</th>
+                                            <th scope="col">Tanggal</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                            <td colspan="4" class="text-center text-muted">Tidak ada laporan yang
+                                                direvisi</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
                             </div>
                         </div>
                     </div>
                 </div>
-            </div><!-- End Card -->
-
-            <!-- Desa Belum Laporan Tahun Berjalan -->
-            <div class="col-xxl-3 col-md-4">
-                <div class="card info-card sales-card">
-                    <div class="card-body">
-                        <h5 class="card-title">Desa <span>| Tahun Berjalan</span></h5>
-                        <div class="d-flex align-items-center">
-                            <div class="card-icon rounded-circle d-flex align-items-center justify-content-center">
-                                <i class="bi bi-calendar-check"></i> <!-- ikon kalender aktif -->
-                            </div>
-                            <div class="ps-3">
-                                <h6>5</h6>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div><!-- End Card -->
-
-            <!-- Desa Belum Laporan Tahun Berikutnya -->
-            <div class="col-xxl-3 col-md-4">
-                <div class="card info-card sales-card">
-                    <div class="card-body">
-                        <h5 class="card-title">Desa <span>| Tahun Berikutnya</span></h5>
-                        <div class="d-flex align-items-center">
-                            <div class="card-icon rounded-circle d-flex align-items-center justify-content-center">
-                                <i class="bi bi-calendar-event"></i> <!-- ikon kalender event utk tahun depan -->
-                            </div>
-                            <div class="ps-3">
-                                <h6>8</h6>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div><!-- End Card -->
-
+            </div>
         </div>
-
-
-        <!-- Row untuk tabel -->
-        <div class="row">
-            <div class="col-lg-6">
-                <div class="card">
-                    <div class="card-body">
-                        <h5 class="card-title">Desa Belum Laporan</h5>
-                        <div class="d-flex justify-content-between mb-2">
-                            <select class="form-select form-select-sm" style="width: auto;">
-                                <option>Show 5 rows</option>
-                                <option>Show 10 rows</option>
-                            </select>
-                            <input type="text" class="form-control form-control-sm" placeholder="search"
-                                style="width: 150px;">
-                        </div>
-                        <div class="table-responsive">
-                            <table class="table table-sm table-bordered">
-                                <thead class="table-light">
-                                    <tr>
-                                        <th>No</th>
-                                        <th>Desa</th>
-                                        <th>Kecamatan</th>
-                                        <th>Status</th>
-                                        <th>Aksi</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <tr>
-                                        <td>1</td>
-                                        <td>Karangan</td>
-                                        <td>Paiton</td>
-                                        <td>Aktif</td>
-                                        <td><a href="#">Edit</a> | <a href="#">Hapus</a></td>
-                                    </tr>
-                                    <tr>
-                                        <td>2</td>
-                                        <td>Siddodadi</td>
-                                        <td>Paiton</td>
-                                        <td>Aktif</td>
-                                        <td><a href="#">Edit</a> | <a href="#">Hapus</a></td>
-                                    </tr>
-                                </tbody>
-                            </table>
-                        </div>
-                        <nav>
-                            <ul class="pagination pagination-sm mb-0">
-                                <li class="page-item disabled"><a class="page-link">Previous</a></li>
-                                <li class="page-item active"><a class="page-link" href="#">1</a></li>
-                                <li class="page-item"><a class="page-link" href="#">2</a></li>
-                                <li class="page-item"><a class="page-link" href="#">Next</a></li>
-                            </ul>
-                        </nav>
-                    </div>
-                </div>
-            </div><!-- End Table -->
-
-            <div class="col-lg-6">
-                <div class="card">
-                    <div class="card-body">
-                        <h5 class="card-title">Desa Belum Laporan Tahun Sebelumnya</h5>
-                        <div class="d-flex justify-content-between mb-2">
-                            <select class="form-select form-select-sm" style="width: auto;">
-                                <option>Show 5 rows</option>
-                                <option>Show 10 rows</option>
-                            </select>
-                            <input type="text" class="form-control form-control-sm" placeholder="search"
-                                style="width: 150px;">
-                        </div>
-                        <div class="table-responsive">
-                            <table class="table table-sm table-bordered">
-                                <thead class="table-light">
-                                    <tr>
-                                        <th>No</th>
-                                        <th>Desa</th>
-                                        <th>Kecamatan</th>
-                                        <th>Status</th>
-                                        <th>Aksi</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <tr>
-                                        <td>1</td>
-                                        <td>Karangan</td>
-                                        <td>Paiton</td>
-                                        <td>Aktif</td>
-                                        <td><a href="#">Edit</a> | <a href="#">Hapus</a></td>
-                                    </tr>
-                                    <tr>
-                                        <td>2</td>
-                                        <td>Siddodadi</td>
-                                        <td>Paiton</td>
-                                        <td>Aktif</td>
-                                        <td><a href="#">Edit</a> | <a href="#">Hapus</a></td>
-                                    </tr>
-                                </tbody>
-                            </table>
-                        </div>
-                        <nav>
-                            <ul class="pagination pagination-sm mb-0">
-                                <li class="page-item disabled"><a class="page-link">Previous</a></li>
-                                <li class="page-item active"><a class="page-link" href="#">1</a></li>
-                                <li class="page-item"><a class="page-link" href="#">2</a></li>
-                                <li class="page-item"><a class="page-link" href="#">Next</a></li>
-                            </ul>
-                        </nav>
-                    </div>
-                </div>
-            </div><!-- End Table -->
-        </div>
-    </section>
-
-    <!-- Content body end -->
+    </div>
 @endsection
 
 @section('this-page-scripts')
-    <script src="{{ asset('templates/administration/vendor/simple-datatables/simple-datatables.js') }}"></script>
+    <script src="{{ asset('templates/assets/plugins/datatables/jquery.dataTables.min.js') }}"></script>
+    <script src="{{ asset('templates/administration/vendor/datatables/responsive/responsive.js') }}"></script>
+    <script src="{{ asset('templates/assets/plugins/datatables/lodash.min.js') }}"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // Contoh data dummy
+            const laporanApproval = [{
+                    desa: 'Desa Sukamaju',
+                    kecamatan: 'Kec. Gending',
+                    kegiatan: 'Pelatihan Aparatur',
+                    jenis: 'Pendidikan',
+                    tanggal: '2025-11-01'
+                },
+                {
+                    desa: 'Desa Ranuagung',
+                    kecamatan: 'Kec. Tiris',
+                    kegiatan: 'Perbaikan Irigasi',
+                    jenis: 'Infrastruktur',
+                    tanggal: '2025-11-03'
+                },
+            ];
+
+            const laporanRevisi = [{
+                desa: 'Desa Kedungdalem',
+                kecamatan: 'Kec. Dringu',
+                kegiatan: 'Kegiatan Posyandu',
+                jenis: 'Kesehatan',
+                tanggal: '2025-10-29'
+            }, ];
+
+            const tableApproval = document.querySelector('#table-butuh-approval tbody');
+            const tableRevisi = document.querySelector('#table-direvisi tbody');
+
+            // Isi tabel laporan butuh approval
+            if (laporanApproval.length) {
+                tableApproval.innerHTML = laporanApproval.map((item, i) => `
+            <tr>
+                <td>${i + 1}</td>
+                <td><strong>${item.desa}</strong><br><small>${item.kecamatan}</small></td>
+                <td>${item.kegiatan}<br><small class="text-muted">${item.jenis}</small></td>
+                <td>${item.tanggal}</td>
+            </tr>
+        `).join('');
+                document.getElementById('count_butuh_approval').textContent = laporanApproval.length;
+            }
+
+            // Isi tabel laporan direvisi
+            if (laporanRevisi.length) {
+                tableRevisi.innerHTML = laporanRevisi.map((item, i) => `
+            <tr>
+                <td>${i + 1}</td>
+                <td><strong>${item.desa}</strong><br><small>${item.kecamatan}</small></td>
+                <td>${item.kegiatan}<br><small class="text-muted">${item.jenis}</small></td>
+                <td>${item.tanggal}</td>
+            </tr>
+        `).join('');
+                document.getElementById('count_direvisi').textContent = laporanRevisi.length;
+            }
+        });
+    </script>
+
 @endsection
