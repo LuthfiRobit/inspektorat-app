@@ -22,6 +22,24 @@
         },
 
         /**
+         * Displays an informational message with an optional callback.
+         * @param {string} message - Info message to display.
+         * @param {Function|null} callback - Optional callback function after info is closed.
+         */
+        handleInfo: function(message, callback = null) {
+            Swal.fire({
+                icon: 'info',
+                title: 'Informasi',
+                text: message || 'Berikut informasi untuk Anda.',
+                showConfirmButton: true,
+                confirmButtonText: 'Oke',
+            }).then(() => {
+                if (typeof callback === 'function') callback();
+            });
+        },
+
+
+        /**
          * Displays an error message with an optional callback.
          * @param {string} message - Error message to display.
          * @param {Function|null} callback - Optional callback function after error.
