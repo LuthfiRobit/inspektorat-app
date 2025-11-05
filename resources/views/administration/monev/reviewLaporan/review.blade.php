@@ -211,7 +211,7 @@
 
                                 <!-- Status dan Catatan Review -->
                                 <div class="row mt-4">
-                                    <div class="col-md-6">
+                                    <div class="col-md-6 d-none">
                                         <div class="mb-3">
                                             <label class="form-label">Status Review:</label>
                                             <div>
@@ -232,7 +232,7 @@
                                             </div>
                                         </div>
                                     </div>
-                                    <div class="col-md-6">
+                                    <div class="col-md-12">
                                         <div class="mb-3">
                                             <label for="catatan_approval" class="form-label">Catatan Review:</label>
                                             <textarea class="form-control" id="catatan_approval" name="catatan_approval" rows="3"

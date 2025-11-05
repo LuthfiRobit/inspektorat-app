@@ -62,7 +62,7 @@
                     </div>
 
                     <div class="card-body">
-                        <div class="row mb-3 gy-2">
+                        {{-- <div class="row mb-3 gy-2">
                             <div class="col-12 col-md d-flex flex-wrap gap-2">
                                 <button class="btn-submit-batch btn btn-sm btn-success" data-bs-toggle="tooltip"
                                     title="Submit laporan yang dipilih">
@@ -83,7 +83,7 @@
                                     <i class="las la-file-excel me-1"></i>Export
                                 </button>
                             </div>
-                        </div>
+                        </div> --}}
 
                         <div class="table-responsive">
                             <table id="example" class="table table-sm align-middle table-striped gs-0 gy-2 nowrap"

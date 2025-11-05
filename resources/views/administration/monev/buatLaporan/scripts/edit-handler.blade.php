@@ -366,7 +366,7 @@
                                         ${question.pertanyaan}
                                     </h6>
                                 </div>
-                                <div class="d-flex align-items-center gap-3">
+                                <div class="d-flex align-items-center gap-3 d-none">
                                     <div class="form-check mb-0">
                                         <input class="form-check-input answer-radio" type="radio"
                                             name="jawaban[${question.id_pertanyaan}]"
