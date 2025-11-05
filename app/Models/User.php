@@ -122,6 +122,21 @@ class User extends Authenticatable
         })->exists();
     }
 
+    // Tambahkan method ini di User.php
+    public function hasPermissionTo($permissionName): bool
+    {
+        return $this->roles()->whereHas('permissions', function ($query) use ($permissionName) {
+            $query->where('permission_name', $permissionName);
+        })->exists();
+    }
+
+    public function hasAnyPermission(array $permissionNames): bool
+    {
+        return $this->roles()->whereHas('permissions', function ($query) use ($permissionNames) {
+            $query->whereIn('permission_name', $permissionNames);
+        })->exists();
+    }
+
     public function petugas(): HasOne
     {
         return $this->hasOne(Petugas::class, 'user_id', 'id_user');
