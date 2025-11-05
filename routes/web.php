@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Auth\AuthController;
+use App\Http\Controllers\Dashboard\DashboardController;
 use App\Http\Controllers\Masters\PertanyaanKegiatanController;
 use App\Http\Controllers\Masters\DesaController;
 use App\Http\Controllers\Masters\JenisKegiatanController;
@@ -37,9 +38,13 @@ Route::middleware('auth')->group(function () {
     Route::post('logout', [AuthController::class, 'logout'])->name('logout');
 });
 
-Route::get('dashboard', fn() => view('administration.dashboard.index'))->name('dashboard.index');
+// Route::get('dashboard', fn() => view('administration.dashboard.index'))->name('dashboard.index');
 
 Route::middleware(['auth', 'checkPermission'])->prefix('administrator')->name('administrator.')->group(function () {
+
+    Route::prefix('dashboard')->name('dashboard.')->group(function () {
+        Route::get('/', [DashboardController::class, 'index'])->name('index');
+    });
 
     // Master
     Route::prefix('master')->name('master.')->group(function () {
