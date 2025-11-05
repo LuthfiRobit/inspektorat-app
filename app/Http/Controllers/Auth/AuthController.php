@@ -74,7 +74,7 @@ class AuthController extends Controller
                 $this->logActivityService->log("User {$user->username} logged in.");
 
                 return $this->responseService->success([
-                    'redirect' => route('dashboard.index')
+                    'redirect' => route('administrator.dashboard.index')
                 ], 'Login berhasil');
             }
         }
