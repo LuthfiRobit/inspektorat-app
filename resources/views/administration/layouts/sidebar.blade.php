@@ -5,7 +5,7 @@
         <ul class="metismenu" id="menu">
             <!-- Dashboard (Accessible to all roles) -->
             <li>
-                <a class="ai-icon" href="#">
+                <a class="ai-icon" href="{{ route('administrator.dashboard.index') }}">
                     <i class="fas fa-tachometer-alt fw-bold"></i>
                     <span class="nav-text">Dashboard</span>
                 </a>
