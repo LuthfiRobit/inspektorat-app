@@ -57,7 +57,7 @@
                                     <i class="las la-times-circle me-1"></i>Nonaktifkan
                                 </button>
                             </div>
-                            <div class="col-12 col-md-auto d-flex flex-wrap gap-2 justify-content-md-end">
+                            {{-- <div class="col-12 col-md-auto d-flex flex-wrap gap-2 justify-content-md-end">
                                 <button class="btn btn-sm btn-outline-secondary" data-bs-toggle="modal"
                                     data-bs-target="#modalImport" data-bs-toggle="tooltip"
                                     title="Import data dari file Excel">
@@ -67,7 +67,7 @@
                                     title="Export data ke file Excel">
                                     <i class="las la-file-excel me-1"></i>Export
                                 </button>
-                            </div>
+                            </div> --}}
                         </div>
 
                         <!-- Tabel -->

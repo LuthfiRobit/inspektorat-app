@@ -24,8 +24,8 @@
                     <!-- Header -->
                     <div class="card-header d-sm-flex d-block border-0 pb-0 flex-wrap">
                         <div class="pr-3 me-auto mb-sm-0 mb-3">
-                            <h4 class="fs-20 text-black mb-1">List Persyaratan pertanyaan</h4>
-                            <span class="fs-12 text-muted">Kelola daftar persyaratan berdasarkan pertanyaan dan
+                            <h4 class="fs-20 text-black mb-1">List Dokumen Persyaratan </h4>
+                            <span class="fs-12 text-muted">Kelola daftar dokumen persyaratan berdasarkan pertanyaan dan
                                 status.</span>
                         </div>
                         <div class="d-flex align-items-center gap-1">
@@ -60,7 +60,7 @@
                     <!-- Body -->
                     <div class="card-body">
                         <!-- Tombol Aksi Massal -->
-                        <div class="row mb-3 gy-2">
+                        {{-- <div class="row mb-3 gy-2">
                             <div class="col-12 col-md d-flex flex-wrap gap-2">
                                 <button class="btn-update-status btn btn-sm btn-primary" data-status="active"
                                     title="Aktifkan pertanyaan yang dipilih">
@@ -81,7 +81,7 @@
                                     <i class="las la-file-excel me-1"></i>Export
                                 </button>
                             </div>
-                        </div>
+                        </div> --}}
 
                         <!-- Tabel Data -->
                         <div class="table-responsive">

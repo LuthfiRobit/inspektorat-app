@@ -88,14 +88,14 @@ class LaporanReviewController extends Controller
         return DataTables::of($data)
             ->addColumn('aksi', function ($row) {
                 // Tombol Detail - selalu tersedia
-                $btnDetail = '<a class="dropdown-item" href="javascript:void(0);" data-action="action_show" 
-                                data-kegiatan-id="' . $row['kegiatan_id'] . '" 
-                                data-desa-id="' . $row['desa_id'] . '" 
-                                data-tahun="' . $row['tahun'] . '" 
-                                data-bulan="' . $row['bulan'] . '"
-                                data-id-laporan="' . $row['id_laporan'] . '">
-                            <i class="fas fa-eye me-2"></i>Detail
-                        </a>';
+                // $btnDetail = '<a class="dropdown-item" href="javascript:void(0);" data-action="action_show" 
+                //                 data-kegiatan-id="' . $row['kegiatan_id'] . '" 
+                //                 data-desa-id="' . $row['desa_id'] . '" 
+                //                 data-tahun="' . $row['tahun'] . '" 
+                //                 data-bulan="' . $row['bulan'] . '"
+                //                 data-id-laporan="' . $row['id_laporan'] . '">
+                //             <i class="fas fa-eye me-2"></i>Detail
+                //         </a>';
 
                 // Tombol Review - hanya untuk status 'submitted'
                 $btnReview = '';
@@ -119,7 +119,8 @@ class LaporanReviewController extends Controller
                             </a>';
                 }
 
-                $dropdownItems = $btnDetail . $btnReview . $btnRevisi;
+                // $dropdownItems = $btnDetail . $btnReview . $btnRevisi;
+                $dropdownItems =  $btnReview . $btnRevisi;
 
                 // Jika tidak ada aksi khusus, tampilkan pesan
                 if (empty(trim(strip_tags($btnReview . $btnRevisi)))) {

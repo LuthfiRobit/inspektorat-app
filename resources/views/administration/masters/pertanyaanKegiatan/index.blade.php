@@ -61,7 +61,7 @@
                     <!-- Body -->
                     <div class="card-body">
                         <!-- Tombol Aksi Massal -->
-                        <div class="row mb-3 gy-2">
+                        {{-- <div class="row mb-3 gy-2">
                             <div class="col-12 col-md d-flex flex-wrap gap-2">
                                 <button class="btn-update-status btn btn-sm btn-primary" data-status="active"
                                     title="Aktifkan pertanyaan yang dipilih">
@@ -82,7 +82,7 @@
                                     <i class="las la-file-excel me-1"></i>Export
                                 </button>
                             </div>
-                        </div>
+                        </div> --}}
 
                         <!-- Tabel Data -->
                         <div class="table-responsive">
