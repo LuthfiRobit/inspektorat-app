@@ -46,56 +46,58 @@
         });
 
         function handleShow(data, rowData) {
+            ResponseHandler.handleInfo("Dalam Pengembangan.");
+
             const kegiatan = data.kegiatan;
             const laporan = data.laporan || {}; // Fallback jadi objek kosong jika null
             const pertanyaan = data.pertanyaan || [];
 
-            // Informasi Umum
-            $('#detail_tahun_anggaran').text(kegiatan.tahun || 'N/A');
-            $('#detail_periode').text(`${laporan.tahun || kegiatan.tahun} - ${kegiatan.nama_bulan || 'N/A'}`);
-            $('#detail_desa').html(rowData.nama_desa || 'N/A');
-            $('#detail_status').html(getStatusBadge(laporan.status));
+            // // Informasi Umum
+            // $('#detail_tahun_anggaran').text(kegiatan.tahun || 'N/A');
+            // $('#detail_periode').text(`${laporan.tahun || kegiatan.tahun} - ${kegiatan.nama_bulan || 'N/A'}`);
+            // $('#detail_desa').html(rowData.nama_desa || 'N/A');
+            // $('#detail_status').html(getStatusBadge(laporan.status));
 
-            // Informasi Kegiatan
-            $('#detail_jenis_kegiatan').text(kegiatan.nama_jenis || 'N/A');
-            $('#detail_kode_kegiatan').text(kegiatan.kode_kegiatan || 'N/A');
-            $('#detail_nama_kegiatan').text(kegiatan.nama_kegiatan || 'N/A');
-            $('#detail_dasar_hukum').text(kegiatan.dasar_hukum || 'Tidak ada dasar hukum');
+            // // Informasi Kegiatan
+            // $('#detail_jenis_kegiatan').text(kegiatan.nama_jenis || 'N/A');
+            // $('#detail_kode_kegiatan').text(kegiatan.kode_kegiatan || 'N/A');
+            // $('#detail_nama_kegiatan').text(kegiatan.nama_kegiatan || 'N/A');
+            // $('#detail_dasar_hukum').text(kegiatan.dasar_hukum || 'Tidak ada dasar hukum');
 
-            // Timeline
-            $('#detail_tanggal_mulai').text(
-                kegiatan.tanggal_mulai ? `Tgl. ${kegiatan.tanggal_mulai}` : 'N/A'
-            );
-            $('#detail_tanggal_selesai').text(
-                kegiatan.tanggal_selesai ? `Tgl. ${kegiatan.tanggal_selesai}` : 'N/A'
-            );
-            $('#detail_batas_upload').text(
-                kegiatan.batas_akhir_upload ? `Tgl. ${kegiatan.batas_akhir_upload}` : 'N/A'
-            );
-            $('#detail_tanggal_target').text(
-                laporan.tanggal_target ? `Tgl. ` + formatDateTime(laporan.tanggal_target) : 'N/A'
-            );
+            // // Timeline
+            // $('#detail_tanggal_mulai').text(
+            //     kegiatan.tanggal_mulai ? `Tgl. ${kegiatan.tanggal_mulai}` : 'N/A'
+            // );
+            // $('#detail_tanggal_selesai').text(
+            //     kegiatan.tanggal_selesai ? `Tgl. ${kegiatan.tanggal_selesai}` : 'N/A'
+            // );
+            // $('#detail_batas_upload').text(
+            //     kegiatan.batas_akhir_upload ? `Tgl. ${kegiatan.batas_akhir_upload}` : 'N/A'
+            // );
+            // $('#detail_tanggal_target').text(
+            //     laporan.tanggal_target ? `Tgl. ` + formatDateTime(laporan.tanggal_target) : 'N/A'
+            // );
 
-            // Timeline Status
-            const timelineStatus = calculateTimelineStatus(laporan);
-            $('#detail_status_timeline').html(timelineStatus);
+            // // Timeline Status
+            // const timelineStatus = calculateTimelineStatus(laporan);
+            // $('#detail_status_timeline').html(timelineStatus);
 
-            // Submit & Approval
-            $('#detail_tanggal_submit').text(
-                laporan.tanggal_submit ? formatDateTime(laporan.tanggal_submit) : 'Belum Submit'
-            );
-            $('#detail_tanggal_approve').text(
-                laporan.tanggal_approve ? formatDateTime(laporan.tanggal_approve) : 'Belum Approve'
-            );
-            $('#detail_catatan_approval').text(
-                laporan.catatan_approval || 'Tidak ada catatan'
-            );
+            // // Submit & Approval
+            // $('#detail_tanggal_submit').text(
+            //     laporan.tanggal_submit ? formatDateTime(laporan.tanggal_submit) : 'Belum Submit'
+            // );
+            // $('#detail_tanggal_approve').text(
+            //     laporan.tanggal_approve ? formatDateTime(laporan.tanggal_approve) : 'Belum Approve'
+            // );
+            // $('#detail_catatan_approval').text(
+            //     laporan.catatan_approval || 'Tidak ada catatan'
+            // );
 
-            // Pertanyaan
-            renderPertanyaanList(pertanyaan);
+            // // Pertanyaan
+            // renderPertanyaanList(pertanyaan);
 
-            // Tombol Laporkan
-            toggleLaporkanButton(laporan.status, laporan.id_laporan);
+            // // Tombol Laporkan
+            // toggleLaporkanButton(laporan.status, laporan.id_laporan);
         }
 
         function getStatusBadge(status) {
