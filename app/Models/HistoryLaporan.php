@@ -21,6 +21,22 @@ class HistoryLaporan extends Model
         'changed_by'
     ];
 
+    /**
+     * The attributes that should be cast.
+     *
+     * @var array<string, string>
+     */
+    protected $casts = [
+        'id_history_laporan' => 'integer',
+        'laporan_id'         => 'integer',
+        'status_sebelum'     => 'string',
+        'status_sesudah'     => 'string',
+        'catatan_perubahan'  => 'string',
+        'changed_by'         => 'integer',
+        'created_at'         => 'datetime',
+        'updated_at'         => 'datetime',
+    ];
+
     // Relationships
     public function laporan(): BelongsTo
     {

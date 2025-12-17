@@ -51,6 +51,24 @@ class JenisKegiatan extends Model
     ];
 
     /**
+     * The attributes that should be cast.
+     *
+     * @var array<string, string>
+     */
+    protected $casts = [
+        'id_jenis_kegiatan' => 'integer',
+        'tahun_anggaran_id' => 'integer',
+        'kode_jenis' => 'string',
+        'nama_jenis' => 'string',
+        'keterangan' => 'string',
+        'status' => 'string',
+        'created_by' => 'integer',
+        'updated_by' => 'integer',
+        'created_at' => 'datetime',
+        'updated_at' => 'datetime',
+    ];
+
+    /**
      * Boot method for the model to handle automatic user attribution.
      *
      * @return void
@@ -141,6 +159,7 @@ class JenisKegiatan extends Model
                 'jk.status',
                 'ta.tahun'
             )
+            ->orderBy('ta.tahun', 'DESC')
             ->orderBy('jk.created_at', 'DESC');
 
         // Filter status

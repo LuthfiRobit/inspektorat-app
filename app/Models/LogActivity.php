@@ -66,6 +66,22 @@ class LogActivity extends Model
     ];
 
     /**
+     * Casting kolom berdasarkan tipe data migration.
+     *
+     * @var array<string, string>
+     */
+    protected $casts = [
+        'id_log_activity' => 'integer',
+        'user_id' => 'integer',
+        'action' => 'string',
+        'description' => 'string',
+        'ip_address' => 'string',
+        'user_agent' => 'string',
+        'created_at' => 'datetime',
+        'updated_at' => 'datetime',
+    ];
+
+    /**
      * Get the user that owns the LogActivity.
      *
      * Defines a many-to-one relationship with the User model.

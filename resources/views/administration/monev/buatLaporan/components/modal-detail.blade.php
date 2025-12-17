@@ -1,171 +1,163 @@
 <!-- Modal Detail Start -->
-<div class="modal fade" id="modalDetail" tabindex="-1" role="dialog" aria-hidden="true" data-bs-backdrop="static">
-    <div class="modal-dialog modal-dialog-centered modal-xl" role="document">
+<div class="modal fade" id="modalDetail" tabindex="-1" data-bs-backdrop="static">
+    <div class="modal-dialog modal-dialog-centered modal-xl">
         <div class="modal-content">
+
             <div class="modal-header">
                 <h5 class="modal-title">Detail Laporan Kegiatan</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Tutup"></button>
             </div>
+
             <div class="modal-body">
-                <div class="row mb-3">
-                    <!-- Informasi Utama -->
-                    <div class="col-12 mb-4">
-                        <h6 class="border-bottom pb-2 mb-3 text-primary">Informasi Umum</h6>
-                        <div class="row">
-                            <div class="col-md-6 mb-2">
-                                <div class="row">
-                                    <div class="col-5 fw-bold">Tahun Anggaran</div>
-                                    <div class="col-7">: <span id="detail_tahun_anggaran"></span></div>
+
+                <!-- Loading -->
+                <div id="modalLoading" class="text-center py-5 d-none">
+                    <div class="spinner-border text-primary mb-3" role="status"></div>
+                    <div class="fw-semibold text-muted">Memuat detail...</div>
+                </div>
+
+                <!-- Content -->
+                <div id="modalContent">
+
+                    <!-- SECTION: DESA -->
+                    <div class="card mb-4 border-0 shadow-sm">
+                        <div class="card-header bg-white border-bottom fw-bold fs-6 py-3">
+                            <i class="las la-home me-1"></i> Informasi Desa
+                        </div>
+                        <div class="card-body">
+                            <div class="row g-3">
+                                <div class="col-sm-6">
+                                    <small class="text-muted d-block">Nama Desa</small>
+                                    <div class="fw-semibold" id="detail_desa">-</div>
                                 </div>
-                            </div>
-                            <div class="col-md-6 mb-2">
-                                <div class="row">
-                                    <div class="col-5 fw-bold">Periode</div>
-                                    <div class="col-7">: <span id="detail_periode"></span></div>
-                                </div>
-                            </div>
-                            {{-- <div class="col-md-6 mb-2">
-                                <div class="row">
-                                    <div class="col-5 fw-bold">Kecamatan</div>
-                                    <div class="col-7">: <span id="detail_kecamatan"></span></div>
-                                </div>
-                            </div> --}}
-                            <div class="col-md-6 mb-2">
-                                <div class="row">
-                                    <div class="col-5 fw-bold">Desa</div>
-                                    <div class="col-7">: <span id="detail_desa"></span></div>
-                                </div>
-                            </div>
-                            <div class="col-md-6 mb-2">
-                                <div class="row">
-                                    <div class="col-5 fw-bold">Status Laporan</div>
-                                    <div class="col-7">: <span id="detail_status"></span></div>
+                                <div class="col-sm-6">
+                                    <small class="text-muted d-block">Kecamatan</small>
+                                    <div class="fw-semibold" id="detail_kecamatan">-</div>
                                 </div>
                             </div>
                         </div>
                     </div>
 
-                    <!-- Informasi Kegiatan -->
-                    <div class="col-12 mb-4">
-                        <h6 class="border-bottom pb-2 mb-3 text-primary">Informasi Kegiatan</h6>
-                        <div class="row">
-                            <div class="col-12 mb-2">
-                                <div class="row">
-                                    <div class="col-3 fw-bold">Jenis Kegiatan</div>
-                                    <div class="col-9">: <span id="detail_jenis_kegiatan"></span></div>
-                                </div>
-                            </div>
-                            <div class="col-12 mb-2">
-                                <div class="row">
-                                    <div class="col-3 fw-bold">Kode Kegiatan</div>
-                                    <div class="col-9">: <span id="detail_kode_kegiatan"></span></div>
-                                </div>
-                            </div>
-                            <div class="col-12 mb-2">
-                                <div class="row">
-                                    <div class="col-3 fw-bold">Nama Kegiatan</div>
-                                    <div class="col-9">: <span id="detail_nama_kegiatan"></span></div>
-                                </div>
-                            </div>
-                            <div class="col-12 mb-2">
-                                <div class="row">
-                                    <div class="col-3 fw-bold">Dasar Hukum</div>
-                                    <div class="col-9">: <span id="detail_dasar_hukum"></span></div>
-                                </div>
-                            </div>
+                    <!-- SECTION: KEGIATAN -->
+                    <div class="card mb-4 border-0 shadow-sm">
+                        <div class="card-header bg-white border-bottom fw-bold fs-6 py-3">
+                            <i class="las la-tasks me-1"></i> Informasi Kegiatan
                         </div>
-                    </div>
 
-                    <!-- Timeline -->
-                    <div class="col-12 mb-4">
-                        <h6 class="border-bottom pb-2 mb-3 text-primary">Timeline</h6>
-                        <div class="row">
-                            <div class="col-md-4 mb-2">
-                                <div class="card bg-light border-0">
-                                    <div class="card-body text-center p-2">
+                        <div class="card-body">
+                            <div class="row g-3">
+
+                                <div class="col-sm-6">
+                                    <small class="text-muted d-block">Tahun Anggaran</small>
+                                    <div class="fw-semibold" id="detail_tahun">-</div>
+                                </div>
+
+                                <div class="col-sm-6">
+                                    <small class="text-muted d-block">Periode</small>
+                                    <div class="fw-semibold" id="detail_bulan">-</div>
+                                </div>
+
+                                <div class="col-sm-6">
+                                    <small class="text-muted d-block">Jenis Kegiatan</small>
+                                    <div class="fw-semibold" id="detail_jenis_kegiatan">-</div>
+                                </div>
+
+                                <div class="col-sm-6">
+                                    <small class="text-muted d-block">Kode Kegiatan</small>
+                                    <div class="fw-semibold" id="detail_kode_kegiatan">-</div>
+                                </div>
+
+                                <div class="col-12">
+                                    <small class="text-muted d-block">Nama Kegiatan</small>
+                                    <div class="fw-semibold" id="detail_nama_kegiatan">-</div>
+                                </div>
+
+                                <div class="col-12">
+                                    <small class="text-muted d-block">Dasar Hukum</small>
+                                    <div class="fw-semibold" id="detail_dasar_hukum">-</div>
+                                </div>
+                            </div>
+
+                            <!-- Divider -->
+                            <hr class="my-4">
+
+                            <!-- TIMELINE -->
+                            <h6 class="fw-bold mb-3">
+                                <i class="las la-clock me-1"></i> Timeline
+                            </h6>
+
+                            <div class="row g-3 text-center">
+                                <div class="col-sm-4">
+                                    <div class="p-3 border rounded bg-light">
                                         <small class="text-muted d-block">Tanggal Mulai</small>
-                                        <strong id="detail_tanggal_mulai" class="text-primary">-</strong>
+                                        <div class="fw-bold" id="detail_tanggal_mulai">-</div>
                                     </div>
                                 </div>
-                            </div>
-                            <div class="col-md-4 mb-2">
-                                <div class="card bg-light border-0">
-                                    <div class="card-body text-center p-2">
+
+                                <div class="col-sm-4">
+                                    <div class="p-3 border rounded bg-light">
                                         <small class="text-muted d-block">Tanggal Selesai</small>
-                                        <strong id="detail_tanggal_selesai" class="text-primary">-</strong>
+                                        <div class="fw-bold" id="detail_tanggal_selesai">-</div>
+                                    </div>
+                                </div>
+
+                                <div class="col-sm-4">
+                                    <div class="p-3 border rounded bg-light">
+                                        <small class="text-muted d-block">Batas Upload</small>
+                                        <div class="fw-bold text-danger" id="detail_batas_upload">-</div>
                                     </div>
                                 </div>
                             </div>
-                            <div class="col-md-4 mb-2">
-                                <div class="card bg-light border-0">
-                                    <div class="card-body text-center p-2">
-                                        <small class="text-muted d-block">Batas Akhir Upload</small>
-                                        <strong id="detail_batas_upload" class="text-danger">-</strong>
-                                    </div>
+
+                        </div>
+                    </div>
+
+                    <!-- SECTION: LAPORAN -->
+                    <div class="card mb-4 border-0 shadow-sm">
+                        <div class="card-header bg-white border-bottom fw-bold fs-6 py-3">
+                            <i class="las la-file-alt me-1"></i> Informasi Laporan
+                        </div>
+
+                        <div class="card-body">
+                            <div class="row g-3">
+                                <div class="col-sm-6">
+                                    <small class="text-muted d-block">Status Laporan</small>
+                                    <div class="fw-semibold" id="detail_status">-</div>
                                 </div>
-                            </div>
-                            <div class="col-md-6 mb-2">
-                                <div class="card bg-light border-0">
-                                    <div class="card-body text-center p-2">
-                                        <small class="text-muted d-block">Tanggal Target</small>
-                                        <strong id="detail_tanggal_target" class="text-warning">-</strong>
-                                    </div>
+
+                                <div class="col-sm-6">
+                                    <small class="text-muted d-block">Tanggal Target</small>
+                                    <div class="fw-semibold" id="detail_tanggal_target">-</div>
                                 </div>
-                            </div>
-                            <div class="col-md-6 mb-2">
-                                <div class="card bg-light border-0">
-                                    <div class="card-body text-center p-2">
-                                        <small class="text-muted d-block">Status Timeline</small>
-                                        <strong id="detail_status_timeline" class="text-info">-</strong>
-                                    </div>
+
+                                <div class="col-sm-6">
+                                    <small class="text-muted d-block">Tanggal Submit</small>
+                                    <div class="fw-semibold" id="detail_tanggal_submit">-</div>
+                                </div>
+
+                                <div class="col-sm-6">
+                                    <small class="text-muted d-block">Tanggal Approve</small>
+                                    <div class="fw-semibold" id="detail_tanggal_approve">-</div>
+                                </div>
+
+                                <div class="col-12">
+                                    <small class="text-muted d-block">Catatan Approval</small>
+                                    <div class="fw-semibold" id="detail_catatan_approval">-</div>
                                 </div>
                             </div>
                         </div>
                     </div>
 
-                    <!-- Informasi Submit & Approval -->
-                    <div class="col-12 mb-4">
-                        <h6 class="border-bottom pb-2 mb-3 text-primary">Status Laporan</h6>
-                        <div class="row">
-                            <div class="col-md-6 mb-2">
-                                <div class="row">
-                                    <div class="col-5 fw-bold">Tanggal Submit</div>
-                                    <div class="col-7">: <span id="detail_tanggal_submit"></span></div>
-                                </div>
-                            </div>
-                            <div class="col-md-6 mb-2">
-                                <div class="row">
-                                    <div class="col-5 fw-bold">Tanggal Approve</div>
-                                    <div class="col-7">: <span id="detail_tanggal_approve"></span></div>
-                                </div>
-                            </div>
-                            <div class="col-12 mb-2">
-                                <div class="row">
-                                    <div class="col-5 fw-bold">Catatan Approval</div>
-                                    <div class="col-7">: <span id="detail_catatan_approval"></span></div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Daftar Pertanyaan -->
-                    <div class="col-12">
-                        <h6 class="border-bottom pb-2 mb-3 text-primary">Daftar Pertanyaan</h6>
-                        <div id="detail_list_pertanyaan" class="bg-light p-3 rounded">
-                            <div class="text-center text-muted">
-                                <i class="las la-question-circle fs-2 d-block mb-2"></i>
-                                Memuat daftar pertanyaan...
-                            </div>
-                        </div>
-                    </div>
                 </div>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Tutup</button>
-                <button type="button" class="btn btn-primary btn-laporkan" style="display: none;">
-                    <i class="las la-edit me-1"></i>Laporkan
+                <button class="btn btn-secondary" data-bs-dismiss="modal">Tutup</button>
+
+                <button class="btn btn-primary btn-laporkan" style="display:none">
+                    <i class="las la-edit me-1"></i> Laporkan
                 </button>
             </div>
+
         </div>
     </div>
 </div>

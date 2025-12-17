@@ -21,11 +21,22 @@ class Keterlambatan extends Model
         'hari_keterlambatan'
     ];
 
+    /**
+     * The attributes that should be cast.
+     *
+     * @var array<string, string>
+     */
     protected $casts = [
-        'tanggal_target' => 'date',
-        'tanggal_upload' => 'date',
+        'id_keterlambatan'   => 'integer',
+        'laporan_id'         => 'integer',
+        'desa_id'            => 'integer',
+        'tanggal_target'     => 'date',
+        'tanggal_upload'     => 'date',
+        'hari_keterlambatan' => 'integer',
+        'created_at'         => 'datetime',
+        'updated_at'         => 'datetime',
     ];
-
+    
     // Relationships
     public function laporan(): BelongsTo
     {

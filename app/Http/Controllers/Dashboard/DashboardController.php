@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Dashboard;
 
 use App\Http\Controllers\Controller;
+use App\Services\DashboardService;
 use App\Services\LogActivityService;
 use App\Services\ResponseService;
 use App\Services\TransactionService;
@@ -14,6 +15,7 @@ class DashboardController extends Controller
     protected $responseService;
     protected $transactionService;
     protected $logActivityService;
+    protected $dashboardService;
 
     /**
      * DesaController constructor.
@@ -22,11 +24,12 @@ class DashboardController extends Controller
      * @param TransactionService $transactionService
      * @param LogActivityService $logActivityService
      */
-    public function __construct(ResponseService $responseService, TransactionService $transactionService,  LogActivityService $logActivityService)
+    public function __construct(ResponseService $responseService, TransactionService $transactionService,  LogActivityService $logActivityService, DashboardService $dashboardService)
     {
         $this->responseService = $responseService;
         $this->transactionService = $transactionService;
         $this->logActivityService = $logActivityService;
+        $this->dashboardService = $dashboardService;
     }
 
     /**
@@ -63,4 +66,78 @@ class DashboardController extends Controller
         $this->logActivityService->log('Accessed the Main Dashboard');
         return view('administration.dashboard.index');
     }
+
+    /**
+     * Get dashboard summary data (single endpoint for all roles)
+     */
+    public function getSummary(Request $request)
+    {
+        try {
+            $filters = $request->only([
+                'tahun', 
+                'bulan', 
+                'jenis_kegiatan_id',
+                'kecamatan_id', 
+                'desa_id'
+            ]);
+            
+            $data = $this->dashboardService->getSummary($filters);
+            
+            return response()->json([
+                'success' => true,
+                'data' => $data,
+                'message' => 'Data dashboard berhasil diambil'
+            ]);
+            
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Terjadi kesalahan: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+     /**
+     * Get recent laporan for tables
+     */
+    public function getRecentLaporan(Request $request, $type = 'pending')
+    {
+        try {
+            $filters = $request->only(['tahun', 'bulan', 'jenis_kegiatan_id']);
+            
+            $data = $this->dashboardService->getRecentLaporan($filters, $type, 5);
+            
+            return response()->json([
+                'success' => true,
+                'data' => $data,
+                'message' => 'Data laporan berhasil diambil'
+            ]);
+            
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Terjadi kesalahan: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    public function getUpcommingKegiatan(Request $request)
+{
+    try {
+        $filters = $request->only(['tahun', 'bulan', 'jenis_kegiatan_id', 'desa_id']);
+        $data = $this->dashboardService->getUpcommingKegiatan($filters);
+        
+        return response()->json([
+            'success' => true,
+            'data' => $data,
+            'message' => 'Data kegiatan berhasil diambil'
+        ]);
+        
+    } catch (\Exception $e) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Terjadi kesalahan: ' . $e->getMessage()
+        ], 500);
+    }
+}
 }

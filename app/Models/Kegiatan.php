@@ -61,10 +61,21 @@ class Kegiatan extends Model
      * @var array<string, string>
      */
     protected $casts = [
+        'id_kegiatan' => 'integer',
+        'tahun_anggaran_id' => 'integer',
+        'jenis_kegiatan_id' => 'integer',
+        'kode_kegiatan' => 'string',
+        'nama_kegiatan' => 'string',
         'bulan' => 'integer',
         'tanggal_mulai' => 'integer',
         'tanggal_selesai' => 'integer',
         'batas_akhir_upload' => 'integer',
+        'dasar_hukum' => 'string',
+        'status' => 'string',
+        'created_by' => 'integer',
+        'updated_by' => 'integer',
+        'created_at' => 'datetime',
+        'updated_at' => 'datetime',
     ];
 
     /**
@@ -266,7 +277,8 @@ class Kegiatan extends Model
      */
     public function getPeriodePelaksanaanAttribute(): ?string
     {
-        if (!$this->bulan) return null;
+        if (!$this->bulan)
+            return null;
 
         $periode = $this->nama_bulan;
 
@@ -341,7 +353,8 @@ class Kegiatan extends Model
         return $query->where('bulan', $bulan);
     }
 
-    public static function getRelationship(int $id): ?Collection
+    // Model Kegiatan
+    public static function getRelationship(int $id): ?array
     {
         $data = DB::table('kegiatan as k')
             ->select(
@@ -365,11 +378,13 @@ class Kegiatan extends Model
             ->where('k.id_kegiatan', $id)
             ->first();
 
-        if (!$data) return null;
+        if (!$data)
+            return null;
 
         $bulanMap = self::getBulanMap();
+        $dataArray = (array) $data;
+        $dataArray['nama_bulan'] = $bulanMap[$data->bulan] ?? null;
 
-        // Convert to Collection + tambahkan nama_bulan
-        return collect((array) $data)->put('nama_bulan', $bulanMap[$data->bulan] ?? null);
+        return $dataArray;
     }
 }

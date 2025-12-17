@@ -25,9 +25,24 @@ class DokumenPersyaratan extends Model
         'uploaded_by'
     ];
 
+    /**
+     * The attributes that should be cast.
+     *
+     * @var array<string, string>
+     */
     protected $casts = [
-        'is_current' => 'boolean',
+        'id_dokumen' => 'integer',
+        'jawaban_id' => 'integer',
+        'persyaratan_id' => 'integer',
+        'nama_file' => 'string',
+        'path_file' => 'string',
+        'status' => 'string',
+        'catatan_revisi' => 'string',
         'version' => 'integer',
+        'is_current' => 'boolean',
+        'created_by' => 'integer',
+        'created_at' => 'datetime',
+        'updated_at' => 'datetime',
     ];
 
     // Relationships

@@ -29,26 +29,6 @@
                                 status.</span>
                         </div>
                         <div class="d-flex align-items-center gap-1">
-                            <!-- Filter status -->
-                            <div>
-                                <select id="filter_status" class="selectpicker form-control wide form-select-md"
-                                    data-live-search="false" title="Filter status" required>
-                                    <option value="">Semua</option>
-                                    <option value="active">Aktif</option>
-                                    <option value="inactive">Tidak aktif</option>
-                                </select>
-                            </div>
-                            <!-- Filter kegiatan -->
-                            <div>
-                                <div>
-                                    <select id="filter_tipe" class="selectpicker form-control wide form-select-md"
-                                        data-live-search="false" title="Filter tipe">
-                                        <option value="">Semua</option>
-                                        <option value="wajib">Wajib</option>
-                                        <option value="tambahan">Tambahan</option>
-                                    </select>
-                                </div>
-                            </div>
                             <!-- Tombol tambah -->
                             <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal"
                                 data-bs-target="#modalCreate" title="Tambah pertanyaan kegiatan baru">
@@ -59,6 +39,51 @@
 
                     <!-- Body -->
                     <div class="card-body">
+                        <div class="row g-3 mb-4 align-items-end">
+
+                            <!-- Filter Pertanyaan -->
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold">Pertanyaan</label>
+                                <select id="filter_pertanyaan" class="selectpicker form-control wide form-select-md"
+                                    data-live-search="true" data-size="5" title="Pilih Pertanyaan">
+                                    <option value="">Semua Pertanyaan</option>
+                                    @foreach ($pertanyaanList as $item)
+                                        <option value="{{ $item->id_pertanyaan }}">{{ $item->pertanyaan }} | {{ $item->nama_kegiatan }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+
+                            <!-- Filter Tipe -->
+                            <div class="col-md-2">
+                                <label class="form-label fw-semibold">Tipe</label>
+                                <select id="filter_tipe" class="selectpicker form-control wide form-select-md"
+                                    data-live-search="false" title="Filter Tipe">
+                                    <option value="">Semua</option>
+                                    <option value="wajib">Wajib</option>
+                                    <option value="tambahan">Tambahan</option>
+                                </select>
+                            </div>
+
+                            <!-- Filter Status -->
+                            <div class="col-md-2">
+                                <label class="form-label fw-semibold">Status</label>
+                                <select id="filter_status" class="selectpicker form-control wide form-select-md"
+                                    data-live-search="false" title="Status" required>
+                                    <option value="">Semua</option>
+                                    <option value="active">Aktif</option>
+                                    <option value="inactive">Tidak aktif</option>
+                                </select>
+                            </div>
+
+                            <!-- Reset Button -->
+                            <div class="col-md-2 d-flex justify-content-end">
+                                <button id="btnResetFilter" class="btn btn-outline-secondary w-100">
+                                    <i class="fas fa-sync-alt me-1"></i> Reset
+                                </button>
+                            </div>
+
+                        </div>
+
                         <!-- Tombol Aksi Massal -->
                         {{-- <div class="row mb-3 gy-2">
                             <div class="col-12 col-md d-flex flex-wrap gap-2">

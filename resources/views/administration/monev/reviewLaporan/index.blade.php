@@ -31,25 +31,81 @@
 
                     <div class="card-body">
                         <!-- Filter Section -->
-                        <div class="row mb-4 gy-2">
-                            <div class="col-4">
+                        <div class="row g-3 mb-4 align-items-end">
+
+                            <!-- Filter Tahun -->
+                            <div class="col-md-2">
+                                <label class="form-label fw-semibold">Tahun</label>
                                 <select id="filter_tahun" class="selectpicker form-control wide form-select-md"
-                                    data-live-search="true" required aria-label="Filter tahun anggaran" data-size="5">
+                                    data-live-search="true" title="Pilih Tahun" data-size="5">
                                     <option value="">Semua Tahun</option>
+                                    @foreach ($tahunAnggaranList as $tahun)
+                                        <option value="{{ $tahun->id_tahun_anggaran }}">
+                                            {{ $tahun->tahun }} @if ($tahun->status === 'aktif')
+                                                (Aktif)
+                                            @endif
+                                        </option>
+                                    @endforeach
                                 </select>
                             </div>
-                            <div class="col-4">
+
+                            <!-- Filter Bulan -->
+                            <div class="col-md-2">
+                                <label class="form-label fw-semibold">Periode</label>
                                 <select id="filter_periode" class="selectpicker form-control wide form-select-md"
-                                    data-live-search="true" title="Filter Periode" data-size="5">
+                                    data-live-search="true" title="Pilih Bulan" data-size="5">
                                     <option value="">Semua Periode</option>
+                                    <option value="1">Januari</option>
+                                    <option value="2">Februari</option>
+                                    <option value="3">Maret</option>
+                                    <option value="4">April</option>
+                                    <option value="5">Mei</option>
+                                    <option value="6">Juni</option>
+                                    <option value="7">Juli</option>
+                                    <option value="8">Agustus</option>
+                                    <option value="9">September</option>
+                                    <option value="10">Oktober</option>
+                                    <option value="11">November</option>
+                                    <option value="12">Desember</option>
                                 </select>
                             </div>
-                            <div class="col-4">
+
+                            <!-- Filter Status -->
+                            <div class="col-md-2">
+                                <label class="form-label fw-semibold">Status</label>
+                                <select id="filter_status" class="selectpicker form-control wide form-select-md"
+                                    data-live-search="false" title="Filter Status">
+                                    <option value="">Semua Status</option>
+                                    <option value="belum_dilaporkan">Belum Dilaporkan</option>
+                                    <option value="draft">Draft</option>
+                                    <option value="submitted">Butuh Review</option>
+                                    <option value="revision">Sedang Direvisi</option>
+                                    <option value="approved">Disetujui</option>
+                                    <option value="rejected">Ditolak</option>
+                                </select>
+                            </div>
+
+                            <!-- Filter Desa -->
+                            <div class="col-md-4">
+                                <label class="form-label fw-semibold">Desa</label>
                                 <select id="filter_desa" class="selectpicker form-control wide form-select-md"
                                     data-live-search="true" title="Filter Desa" data-size="5">
                                     <option value="">Semua Desa</option>
+                                    @foreach ($desaList as $item)
+                                        <option value="{{ $item->id_desa }}">
+                                            {{ $item->nama_desa }} | {{ $item->nama_kecamatan }}
+                                        </option>
+                                    @endforeach
                                 </select>
                             </div>
+
+                            <!-- Reset Button -->
+                            <div class="col-md-2 d-flex justify-content-end">
+                                <button id="btnResetFilter" type="button" class="btn btn-outline-secondary w-100">
+                                    <i class="fas fa-sync-alt me-1"></i> Reset Filter
+                                </button>
+                            </div>
+
                         </div>
 
                         <!-- Table Section -->
@@ -103,12 +159,10 @@
                                         anggaran</em>,
                                     <em>periode</em>, <em>desa</em>, atau <em>status laporan</em>.
                                 </li>
-                                <li>Status <span class="badge badge-sm badge-success">Disetujui</span> menandakan laporan
-                                    telah direview
-                                    dan disetujui.</li>
-                                <li>Status <span class="badge badge-sm badge-warning">Perlu Revisi</span> menandakan laporan
+                                <li>Status <span class="badge light badge-warning">Sedang Direvisi</span> menandakan
+                                    laporan
                                     dikembalikan untuk perbaikan.</li>
-                                <li>Status <span class="badge badge-sm badge-secondary">Menunggu Review</span> menandakan
+                                <li>Status <span class="badge light badge-secondary">Menunggu Review</span> menandakan
                                     laporan siap
                                     untuk diperiksa oleh Anda.</li>
                             </ul>

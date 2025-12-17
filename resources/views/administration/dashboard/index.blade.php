@@ -26,19 +26,29 @@
                     <div class="card">
                         <div class="card-body">
                             <div class="row g-3">
+
                                 <!-- Tahun Anggaran -->
-                                <div class="col-md-3">
+                                <div class="col-md-2">
                                     <label class="form-label">Tahun Anggaran</label>
-                                    <select class="selectpicker form-control wide form-select-md" id="filter-tahun"
+                                    <select class="selectpicker form-control wide form-select-md" id="filter_tahun"
                                         data-live-search="true" data-size="5" title="Pilih Tahun">
-                                        <option value="">Loading...</option>
+
+                                        <option value="">Semua Tahun</option>
+                                        @foreach ($tahunAnggaranList as $tahun)
+                                            <option value="{{ $tahun->id_tahun_anggaran }}"
+                                                data-tahun="{{ $tahun->tahun }}">
+                                                {{ $tahun->tahun }} @if ($tahun->status === 'aktif')
+                                                    (Aktif)
+                                                @endif
+                                            </option>
+                                        @endforeach
                                     </select>
                                 </div>
 
                                 <!-- Periode Bulan -->
-                                <div class="col-md-3">
+                                <div class="col-md-2">
                                     <label class="form-label">Periode Bulan</label>
-                                    <select class="selectpicker form-control wide form-select-md" id="filter-bulan"
+                                    <select class="selectpicker form-control wide form-select-md" id="filter_bulan"
                                         data-live-search="true" data-size="5" title="Pilih Bulan">
                                         <option value="">Semua Bulan</option>
                                         <option value="1">Januari</option>
@@ -57,27 +67,42 @@
                                 </div>
 
                                 <!-- Jenis Kegiatan -->
-                                <div class="col-md-3">
+                                <div class="col-md-4">
                                     <label class="form-label">Jenis Kegiatan</label>
-                                    <select class="selectpicker form-control wide form-select-md" id="filter-jenis-kegiatan"
+                                    <select class="selectpicker form-control wide form-select-md" id="filter_jenis"
                                         data-live-search="true" data-size="5" title="Pilih Jenis Kegiatan">
                                         <option value="">Semua Jenis</option>
                                     </select>
                                 </div>
 
                                 <!-- Filter Kecamatan -->
-                                <div class="col-md-3" id="filter-kecamatan-container">
+                                <div class="col-md-3" id="filter_kecamatan-container">
                                     <label class="form-label">Kecamatan</label>
-                                    <select class="selectpicker form-control wide form-select-md" id="filter-kecamatan"
+                                    <select class="selectpicker form-control wide form-select-md" id="filter_kecamatan"
                                         data-live-search="true" data-size="5" title="Pilih Kecamatan">
                                         <option value="">Semua Kecamatan</option>
+                                        @foreach ($kecamatanList as $item)
+                                            <option value="{{ $item->id_kecamatan }}">
+                                                {{ $item->nama_kecamatan }}
+                                            </option>
+                                        @endforeach
                                     </select>
                                 </div>
+
+                                <!-- Tombol Reset (Icon + Tooltip) -->
+                                <div class="col-md-1 d-flex align-items-end">
+                                    <button id="reset_filter" class="btn btn-light btn-sm border" data-bs-toggle="tooltip"
+                                        data-bs-placement="top" title="Reset Filter">
+                                        <i class="bi bi-arrow-counterclockwise"></i>
+                                    </button>
+                                </div>
+
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
+
             <div class="row g-2">
                 <!-- Total Kecamatan -->
                 <div class="col-sm-6 col-md-4 col-lg-2">
@@ -234,62 +259,6 @@
     <script src="{{ asset('templates/assets/plugins/datatables/jquery.dataTables.min.js') }}"></script>
     <script src="{{ asset('templates/administration/vendor/datatables/responsive/responsive.js') }}"></script>
     <script src="{{ asset('templates/assets/plugins/datatables/lodash.min.js') }}"></script>
-    <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            // Contoh data dummy
-            const laporanApproval = [{
-                    desa: 'Desa Sukamaju',
-                    kecamatan: 'Kec. Gending',
-                    kegiatan: 'Pelatihan Aparatur',
-                    jenis: 'Pendidikan',
-                    tanggal: '2025-11-01'
-                },
-                {
-                    desa: 'Desa Ranuagung',
-                    kecamatan: 'Kec. Tiris',
-                    kegiatan: 'Perbaikan Irigasi',
-                    jenis: 'Infrastruktur',
-                    tanggal: '2025-11-03'
-                },
-            ];
-
-            const laporanRevisi = [{
-                desa: 'Desa Kedungdalem',
-                kecamatan: 'Kec. Dringu',
-                kegiatan: 'Kegiatan Posyandu',
-                jenis: 'Kesehatan',
-                tanggal: '2025-10-29'
-            }, ];
-
-            const tableApproval = document.querySelector('#table-butuh-approval tbody');
-            const tableRevisi = document.querySelector('#table-direvisi tbody');
-
-            // Isi tabel laporan butuh approval
-            if (laporanApproval.length) {
-                tableApproval.innerHTML = laporanApproval.map((item, i) => `
-            <tr>
-                <td>${i + 1}</td>
-                <td><strong>${item.desa}</strong><br><small>${item.kecamatan}</small></td>
-                <td>${item.kegiatan}<br><small class="text-muted">${item.jenis}</small></td>
-                <td>${item.tanggal}</td>
-            </tr>
-        `).join('');
-                document.getElementById('count_butuh_approval').textContent = laporanApproval.length;
-            }
-
-            // Isi tabel laporan direvisi
-            if (laporanRevisi.length) {
-                tableRevisi.innerHTML = laporanRevisi.map((item, i) => `
-            <tr>
-                <td>${i + 1}</td>
-                <td><strong>${item.desa}</strong><br><small>${item.kecamatan}</small></td>
-                <td>${item.kegiatan}<br><small class="text-muted">${item.jenis}</small></td>
-                <td>${item.tanggal}</td>
-            </tr>
-        `).join('');
-                document.getElementById('count_direvisi').textContent = laporanRevisi.length;
-            }
-        });
-    </script>
+    @include('administration.dashboard.scripts.index-handler')
 
 @endsection

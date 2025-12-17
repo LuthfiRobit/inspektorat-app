@@ -2,12 +2,11 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Support\Facades\Auth;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Auth;
 
 class Petugas extends Model
 {
@@ -58,9 +57,33 @@ class Petugas extends Model
     ];
 
     /**
-     * Boot method for the model to handle automatic user attribution.
+     * The attributes that should be cast.
      *
-     * @return void
+     * @var array<string, string>
+     */
+    protected $casts = [
+        'id_petugas' => 'integer',
+        'user_id' => 'integer',
+        'kecamatan_id' => 'integer',
+        'desa_id' => 'integer',
+        'nama_lengkap' => 'string',
+        'nip' => 'string',
+        'jabatan' => 'string',
+        'unit_kerja' => 'string',
+        'no_telp' => 'string',
+        'tanggal_awal' => 'date',
+        'tanggal_akhir' => 'date',
+        'alamat' => 'string',
+        'foto_petugas' => 'string',
+        'status' => 'string',
+        'created_by' => 'integer',
+        'updated_by' => 'integer',
+        'created_at' => 'datetime',
+        'updated_at' => 'datetime',
+    ];
+
+    /**
+     * Boot method for the model to handle automatic user attribution.
      */
     protected static function booted(): void
     {
@@ -80,8 +103,6 @@ class Petugas extends Model
 
     /**
      * Get the user associated with the Petugas.
-     *
-     * @return BelongsTo
      */
     public function user(): BelongsTo
     {
@@ -90,8 +111,6 @@ class Petugas extends Model
 
     /**
      * Get the kecamatan associated with the Petugas.
-     *
-     * @return BelongsTo
      */
     public function kecamatan(): BelongsTo
     {
@@ -100,8 +119,6 @@ class Petugas extends Model
 
     /**
      * Get the desa associated with the Petugas.
-     *
-     * @return BelongsTo
      */
     public function desa(): BelongsTo
     {
@@ -130,8 +147,6 @@ class Petugas extends Model
 
     /**
      * Get the user who created this Petugas.
-     *
-     * @return BelongsTo
      */
     public function creator(): BelongsTo
     {
@@ -140,8 +155,6 @@ class Petugas extends Model
 
     /**
      * Get the user who last updated this Petugas.
-     *
-     * @return BelongsTo
      */
     public function updater(): BelongsTo
     {
@@ -151,10 +164,9 @@ class Petugas extends Model
     /**
      * Retrieve filtered petugas data.
      *
-     * @param array<string, mixed> $filters
-     * @return Collection
+     * @param  array<string, mixed>  $filters
      */
-    public static function getFilters(array $filters = [], string $context = null): \Illuminate\Support\Collection
+    public static function getFilters(array $filters = [], ?string $context = null): \Illuminate\Support\Collection
     {
         $user = Auth::user();
         $petugasLogin = $user->petugas;
@@ -197,7 +209,7 @@ class Petugas extends Model
          */
         if ($petugasLogin) {
             // kalau user dari kecamatan → filter kecamatan
-            if ($petugasLogin->kecamatan_id && !$petugasLogin->desa_id) {
+            if ($petugasLogin->kecamatan_id && ! $petugasLogin->desa_id) {
                 $query->where('petugas.kecamatan_id', $petugasLogin->kecamatan_id);
             }
             // kalau user dari desa → filter desa
@@ -212,23 +224,23 @@ class Petugas extends Model
         /**
          * 🧭 Filter tambahan dari request
          */
-        if (!empty($filters['filter_status'])) {
+        if (! empty($filters['filter_status'])) {
             $query->where('petugas.status', $filters['filter_status']);
         }
 
-        if (!empty($filters['filter_kecamatan'])) {
+        if (! empty($filters['filter_kecamatan'])) {
             $query->where('petugas.kecamatan_id', $filters['filter_kecamatan']);
         }
 
-        if (!empty($filters['filter_desa'])) {
+        if (! empty($filters['filter_desa'])) {
             $query->where('petugas.desa_id', $filters['filter_desa']);
         }
 
-        if (!empty($filters['filter_jabatan'])) {
+        if (! empty($filters['filter_jabatan'])) {
             $query->where('petugas.jabatan', $filters['filter_jabatan']);
         }
 
-        if (!empty($filters['search'])) {
+        if (! empty($filters['search'])) {
             $search = $filters['search'];
             $query->where(function ($q) use ($search) {
                 $q->where('petugas.nama_lengkap', 'like', "%{$search}%")
@@ -245,11 +257,8 @@ class Petugas extends Model
         return $query->get();
     }
 
-
     /**
      * Get unique jabatan list.
-     *
-     * @return array
      */
     public static function getJabatanList(): array
     {
@@ -263,7 +272,7 @@ class Petugas extends Model
     /**
      * Scope a query to only include active petugas.
      *
-     * @param \Illuminate\Database\Eloquent\Builder $query
+     * @param  \Illuminate\Database\Eloquent\Builder  $query
      * @return \Illuminate\Database\Eloquent\Builder
      */
     public function scopeActive($query)
@@ -274,8 +283,8 @@ class Petugas extends Model
     /**
      * Scope a query to only include petugas by kecamatan.
      *
-     * @param \Illuminate\Database\Eloquent\Builder $query
-     * @param int $kecamatanId
+     * @param  \Illuminate\Database\Eloquent\Builder  $query
+     * @param  int  $kecamatanId
      * @return \Illuminate\Database\Eloquent\Builder
      */
     public function scopeByKecamatan($query, $kecamatanId)
@@ -286,8 +295,8 @@ class Petugas extends Model
     /**
      * Scope a query to only include petugas by desa.
      *
-     * @param \Illuminate\Database\Eloquent\Builder $query
-     * @param int $desaId
+     * @param  \Illuminate\Database\Eloquent\Builder  $query
+     * @param  int  $desaId
      * @return \Illuminate\Database\Eloquent\Builder
      */
     public function scopeByDesa($query, $desaId)
@@ -297,7 +306,7 @@ class Petugas extends Model
 
     public static function getRelationship(int $id): ?self
     {
-        $query =  self::query()
+        $query = self::query()
             ->select([
                 'petugas.id_petugas',
                 'petugas.user_id',
@@ -323,6 +332,7 @@ class Petugas extends Model
             ->leftJoin('users as u', 'u.id_user', '=', 'petugas.user_id')
             ->where('id_petugas', $id)
             ->first();
+
         return $query;
     }
 }

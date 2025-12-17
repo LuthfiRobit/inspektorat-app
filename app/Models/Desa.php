@@ -50,6 +50,23 @@ class Desa extends Model
     ];
 
     /**
+     * The attributes that should be cast.
+     *
+     * @var array<string, string>
+     */
+    protected $casts = [
+        'id_desa' => 'integer',
+        'kecamatan_id' => 'integer',
+        'kode_desa' => 'string',
+        'nama_desa' => 'string',
+        'status' => 'string',
+        'created_by' => 'integer',
+        'updated_by' => 'integer',
+        'created_at' => 'datetime',
+        'updated_at' => 'datetime',
+    ];
+
+    /**
      * Boot method for the model to handle automatic user attribution.
      *
      * @return void

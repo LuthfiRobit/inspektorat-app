@@ -21,7 +21,17 @@ class JawabanPertanyaan extends Model
         'status'
     ];
 
+    /**
+     * The attributes that should be cast.
+     *
+     * @var array<string, string>
+     */
     protected $casts = [
+        'id_jawaban' => 'integer',
+        'laporan_id' => 'integer',
+        'pertanyaan_id' => 'integer',
+        'jawaban_text' => 'string',
+        'status' => 'string',
         'created_at' => 'datetime',
         'updated_at' => 'datetime',
     ];

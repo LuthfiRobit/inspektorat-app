@@ -9,6 +9,7 @@
             data: function(d) {
                 d.filter_status = $('#filter_status').val();
                 d.filter_tahun = $('#filter_tahun').val();
+                d.filter_periode = $('#filter_periode').val(); // <--- ditambahkan
                 d.filter_desa = $('#filter_desa').val();
                 d.search = d.search.value;
             }
@@ -114,8 +115,18 @@
         optimizedSearch($(this).val());
     });
 
-    // Reload saat filter berubah
-    $('#filter_status, #filter_tahun, #filter_desa').change(() => {
+     // Reload saat filter berubah
+    $('#filter_status, #filter_tahun, #filter_periode, #filter_desa').on('change', function() {
+        table.ajax.reload();
+    });
+
+    // Reset filter
+    $('#btnResetFilter').on('click', function() {
+        $('#filter_status').val('');
+        $('#filter_tahun').val('');
+        $('#filter_periode').val(''); // <--- reset filter bulan
+        $('#filter_desa').val('');
+        $('.selectpicker').selectpicker('refresh');
         table.ajax.reload();
     });
 

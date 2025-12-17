@@ -33,10 +33,26 @@ class LaporanKegiatan extends Model
         'created_by',
     ];
 
+    /**
+     * The attributes that should be cast.
+     *
+     * @var array<string, string>
+     */
     protected $casts = [
+        'id_laporan' => 'integer',
+        'desa_id' => 'integer',
+        'kegiatan_id' => 'integer',
+        'tahun' => 'integer',
+        'bulan' => 'integer',
+        'status' => 'string',
         'tanggal_target' => 'date',
         'tanggal_submit' => 'datetime',
         'tanggal_approve' => 'datetime',
+        'approved_by' => 'integer',
+        'catatan_approval' => 'string',
+        'created_by' => 'integer',
+        'created_at' => 'datetime',
+        'updated_at' => 'datetime',
     ];
 
     protected static function booted(): void
@@ -253,6 +269,14 @@ class LaporanKegiatan extends Model
 
         if (!empty($filters['filter_desa'])) {
             $query->where('d.id_desa', $filters['filter_desa']);
+        }
+
+        if (!empty($filters['filter_periode'])) {
+            $query->where('laporan_kegiatan.bulan', $filters['filter_periode']);
+        }
+
+        if (!empty($filters['filter_status'])) {
+            $query->where('laporan_kegiatan.status', $filters['filter_status']);
         }
 
         if (!empty($filters['search'])) {
@@ -609,8 +633,10 @@ class LaporanKegiatan extends Model
         if (in_array($record['status'], ['submitted', 'approved'])) {
             return $comparisonDate->gt($gracePeriod) ? 'Terlambat' : 'Tepat Waktu';
         } else {
-            if (now()->gt($gracePeriod)) return 'Terlambat';
-            if (now()->gt($tanggalTarget)) return 'Tenggang';
+            if (now()->gt($gracePeriod))
+                return 'Terlambat';
+            if (now()->gt($tanggalTarget))
+                return 'Tenggang';
             return 'Menunggu';
         }
     }
@@ -717,6 +743,13 @@ class LaporanKegiatan extends Model
         // Filter by desa
         if (!empty($filters['filter_desa'])) {
             $result = $result->where('desa_id', $filters['filter_desa']);
+        }
+
+        // Filter by bulan/periode
+        if (!empty($filters['filter_periode'])) {
+            $result = $result->filter(function ($item) use ($filters) {
+                return $item['bulan'] == $filters['filter_periode'];
+            });
         }
 
         // Search filter
@@ -950,9 +983,11 @@ class LaporanKegiatan extends Model
 
         // Get pertanyaan with requirements
         $pertanyaanIds = $jawaban->pluck('pertanyaan_id');
-        $pertanyaan = PertanyaanKegiatan::with(['persyaratan' => function ($query) {
-            $query->where('status', 'active');
-        }])->whereIn('id_pertanyaan', $pertanyaanIds)->get();
+        $pertanyaan = PertanyaanKegiatan::with([
+            'persyaratan' => function ($query) {
+                $query->where('status', 'active');
+            }
+        ])->whereIn('id_pertanyaan', $pertanyaanIds)->get();
 
         return [
             'jawaban' => $jawaban,
@@ -969,7 +1004,8 @@ class LaporanKegiatan extends Model
     private static function buildHistoryLaporan($id_laporan)
     {
         $laporan = self::find($id_laporan);
-        if (!$laporan) return [];
+        if (!$laporan)
+            return [];
 
         $history = [];
 

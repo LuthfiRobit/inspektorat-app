@@ -7,6 +7,7 @@ use App\Models\LaporanKegiatan;
 use App\Models\ScoringDesa;
 use App\Models\Keterlambatan;
 use App\Repositories\ScoringDesaRepository;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
@@ -206,5 +207,146 @@ class ScoringDesaService
             'total_tepat_waktu' => $query->where('skor_ketepatan_waktu', 100)->count(),
             'total_terlambat' => $query->where('skor_ketepatan_waktu', 0)->count(),
         ];
+    }
+    /**
+     * GET DATA SCORING DESA DENGAN RANKING
+     * 
+     * @param array $filters
+     * @return \Illuminate\Support\Collection
+     */
+    public function getDesaData(array $filters = [])
+    {
+        $cacheKey = 'scoring_desa_' . md5(json_encode($filters));
+
+        return Cache::remember($cacheKey, now()->addMinutes(10), function () use ($filters) {
+            $data = $this->scoringRepo->getDesaScoring($filters);
+
+            // Hitung ranking
+            return $this->calculateRanking($data)
+                ->map(function ($item) {
+                    // Format data untuk response
+                    $item->persentase_dokumen_formatted = $this->formatPercentage($item->persentase_dokumen);
+                    $item->persentase_kegiatan_formatted = $this->formatPercentage($item->persentase_kegiatan);
+                    $item->total_skor_formatted = number_format($item->total_skor, 2);
+                    $item->peringkat_badge = $this->getRankBadge($item->peringkat);
+
+                    return $item;
+                });
+        });
+    }
+
+    /**
+     * GET DATA SCORING KECAMATAN DENGAN RANKING
+     * 
+     * @param array $filters
+     * @return \Illuminate\Support\Collection
+     */
+    public function getKecamatanData(array $filters = [])
+    {
+        $cacheKey = 'scoring_kecamatan_' . md5(json_encode($filters));
+
+        return Cache::remember($cacheKey, now()->addMinutes(10), function () use ($filters) {
+            $data = $this->scoringRepo->getKecamatanScoring($filters);
+
+            // Hitung ranking
+            return $this->calculateRanking($data)
+                ->map(function ($item) {
+                    // Format data untuk response
+                    $item->persentase_dokumen_formatted = $this->formatPercentage($item->persentase_dokumen);
+                    $item->persentase_kegiatan_formatted = $this->formatPercentage($item->persentase_kegiatan);
+                    $item->total_skor_formatted = number_format($item->total_skor, 2);
+                    $item->rata_kegiatan_formatted = number_format($item->rata_kegiatan_per_desa, 2);
+                    $item->peringkat_badge = $this->getRankBadge($item->peringkat);
+
+                    return $item;
+                });
+        });
+    }
+
+    /**
+     * CALCULATE RANKING BERDASARKAN TOTAL SKOR
+     * 
+     * @param \Illuminate\Support\Collection $data
+     * @return \Illuminate\Support\Collection
+     */
+    private function calculateRanking($data)
+    {
+        // Urutkan berdasarkan total_skor descending
+        $sortedData = $data->sortByDesc('total_skor');
+
+        // Beri peringkat
+        $rank = 1;
+        $previousScore = null;
+        $actualRank = 1;
+
+        return $sortedData->map(function ($item) use (&$rank, &$actualRank, &$previousScore) {
+            // Handle tied ranks (peringkat sama jika skor sama)
+            if ($previousScore !== null && $item->total_skor == $previousScore) {
+                $item->peringkat = $actualRank;
+            } else {
+                $item->peringkat = $rank;
+                $actualRank = $rank;
+            }
+
+            $previousScore = $item->total_skor;
+            $rank++;
+
+            return $item;
+        })->values(); // Reset keys
+    }
+
+    /**
+     * FORMAT PERSENTASE DENGAN WARNA
+     * 
+     * @param float $percentage
+     * @return string
+     */
+    private function formatPercentage($percentage)
+    {
+        $color = $this->getPercentageColor($percentage);
+        return '<span class="badge badge-' . $color . '">' . number_format($percentage, 2) . '%</span>';
+    }
+
+    /**
+     * GET COLOR CODE BERDASARKAN PERSENTASE
+     * 
+     * @param float $percentage
+     * @return string
+     */
+    private function getPercentageColor($percentage)
+    {
+        if ($percentage >= 80)
+            return 'success';
+        if ($percentage >= 60)
+            return 'warning';
+        return 'danger';
+    }
+
+    /**
+     * GET RANK BADGE DENGAN STYLING
+     * 
+     * @param int $rank
+     * @return string
+     */
+    private function getRankBadge($rank)
+    {
+        $badgeClass = match ($rank) {
+            1 => 'badge-gold',
+            2 => 'badge-silver',
+            3 => 'badge-bronze',
+            default => 'badge-secondary'
+        };
+
+        return '<span class="badge">' . $rank . '</span>';
+    }
+
+    /**
+     * CLEAR CACHE UNTUK REFRESH DATA
+     * 
+     * @return void
+     */
+    public function clearCache()
+    {
+        Cache::flush();
     }
 }

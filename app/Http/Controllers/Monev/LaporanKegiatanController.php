@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Monev;
 
 use App\Http\Controllers\Controller;
+use App\Models\Desa;
 use App\Models\Kegiatan;
 use App\Models\LaporanKegiatan;
 use App\Models\PertanyaanKegiatan;
@@ -61,6 +62,7 @@ class LaporanKegiatanController extends Controller
         $filters = [
             'filter_status' => $request->input('filter_status', ''),
             'filter_tahun' => $request->input('filter_tahun', ''),
+            'filter_periode' => $request->input('filter_periode', ''),
             'filter_desa' => $request->input('filter_desa', ''),
             'search' => $request->input('search', ''),
         ];
@@ -73,12 +75,12 @@ class LaporanKegiatanController extends Controller
         ]);
 
         return DataTables::of($data)
-            ->addColumn('checkbox', function ($row) {
-                $isDisabled = in_array($row['status'], ['submitted', 'approved', 'rejected', 'belum_dilaporkan']) ? 'disabled' : '';
-                $value = $row['status'] === 'belum_dilaporkan' ? '' : ($row['id_laporan'] ?? '');
-                return '<input type="checkbox" class="table-checkbox form-check-input" ' . $isDisabled .
-                    ' id="checkbox_' . ($row['id_laporan'] ?? 'new') . '" name="laporan_ids[]" value="' . $value . '">';
-            })
+            // ->addColumn('checkbox', function ($row) {
+            //     $isDisabled = in_array($row['status'], ['submitted', 'approved', 'rejected', 'belum_dilaporkan']) ? 'disabled' : '';
+            //     $value = $row['status'] === 'belum_dilaporkan' ? '' : ($row['id_laporan'] ?? '');
+            //     return '<input type="checkbox" class="table-checkbox form-check-input" ' . $isDisabled .
+            //         ' id="checkbox_' . ($row['id_laporan'] ?? 'new') . '" name="laporan_ids[]" value="' . $value . '">';
+            // })
             ->addColumn('aksi', function ($row) {
                 return $this->buildActionButtons($row);
             })
@@ -120,6 +122,28 @@ class LaporanKegiatanController extends Controller
         $this->logActivityService->log('Viewed Kegiatan dan Its Laporan detail', ['id' => $id]);
         return $this->responseService->success($data, 'Data laporan berhasil diambil');
     }
+
+    /**
+     * Get detail for modal detail Laporan Kegiatan
+     *
+     * Required request:
+     * - desa_id
+     * - kegiatan_id
+     * - laporan_id (nullable)
+     */
+    public function showRequest(Request $request)
+    {
+        $data = $this->laporanRepository->getDetail(
+            $request->desa_id,
+            $request->kegiatan_id,
+            $request->laporan_id
+        );
+
+        $this->logActivityService->log('Viewed Detail Laporan');
+
+        return $this->responseService->success($data, 'Detail berhasil diambil');
+    }
+
 
     /**
      * Display the create view for Laporan Kegiatan.
@@ -280,6 +304,7 @@ class LaporanKegiatanController extends Controller
     private function buildActionButtons($row)
     {
         $btnDetail = '<a class="dropdown-item" href="javascript:void(0);" data-action="action_show" 
+                            data-laporan-id="' . $row['id_laporan'] . '"
                             data-kegiatan-id="' . $row['kegiatan_id'] . '" 
                             data-desa-id="' . $row['desa_id'] . '" 
                             data-tahun="' . $row['tahun'] . '" 

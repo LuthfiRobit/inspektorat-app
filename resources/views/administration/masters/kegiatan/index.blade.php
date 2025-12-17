@@ -26,24 +26,6 @@
                             <span class="fs-12 text-muted">Kelola data kegiatan berdasarkan jenis kegiatan.</span>
                         </div>
                         <div class="d-flex align-items-center gap-1">
-                            <div>
-                                <select id="filter_status" class="selectpicker form-control wide form-select-md"
-                                    data-live-search="false" title="Filter status" required>
-                                    <option value="">Semua</option>
-                                    <option value="active">Aktif</option>
-                                    <option value="inactive">Tidak aktif</option>
-                                </select>
-                            </div>
-                            <div>
-                                <select id="filter_tahun" class="selectpicker form-control wide form-select-md"
-                                    data-live-search="true" required aria-label="Filter tahun anggaran" data-size="5"
-                                    placeholder="Pilih tahun">
-                                    <option value="">Semua</option>
-                                    {{-- @foreach ($tahunAnggaranList as $item)
-                                        <option value="{{ $item->id_tahun_anggaran }}">{{ $item->tahun }}</option>
-                                    @endforeach --}}
-                                </select>
-                            </div>
                             <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal"
                                 data-bs-target="#modalCreate" data-bs-toggle="tooltip" title="Tambah jenis kegiatan baru">
                                 <i class="las la-plus me-1"></i>Tambah
@@ -52,6 +34,75 @@
                     </div>
 
                     <div class="card-body">
+                        <div class="row g-3 mb-4 align-items-end">
+
+                            <!-- Filter Tahun -->
+                            <div class="col-md-3">
+                                <label class="form-label fw-semibold">Tahun</label>
+                                <select id="filter_tahun" class="selectpicker form-control wide form-select-md"
+                                    data-live-search="true" title="Pilih Tahun" data-size="5">
+                                    <option value="">Semua Tahun</option>
+                                    @foreach ($tahunAnggaranList as $tahun)
+                                        <option value="{{ $tahun->id_tahun_anggaran }}">
+                                            {{ $tahun->tahun }}
+                                            @if ($tahun->status === 'aktif')
+                                                (Aktif)
+                                            @endif
+                                        </option>
+                                    @endforeach
+                                </select>
+                            </div>
+
+                            <!-- Filter Bulan -->
+                            <div class="col-md-3">
+                                <label class="form-label fw-semibold">Periode</label>
+                                <select id="filter_bulan" class="selectpicker form-control wide form-select-md"
+                                    data-live-search="true" title="Pilih Bulan" data-size="5">
+                                    <option value="">Semua Periode</option>
+                                    <option value="1">Januari</option>
+                                    <option value="2">Februari</option>
+                                    <option value="3">Maret</option>
+                                    <option value="4">April</option>
+                                    <option value="5">Mei</option>
+                                    <option value="6">Juni</option>
+                                    <option value="7">Juli</option>
+                                    <option value="8">Agustus</option>
+                                    <option value="9">September</option>
+                                    <option value="10">Oktober</option>
+                                    <option value="11">November</option>
+                                    <option value="12">Desember</option>
+                                </select>
+                            </div>
+
+                            <!-- Filter Jenis -->
+                            <div class="col-md-3">
+                                <label class="form-label fw-semibold">Jenis</label>
+                                <select id="filter_jenis" class="selectpicker form-control wide form-select-md"
+                                    data-live-search="true" title="Pilih Jenis" data-size="5">
+                                    <option value="">Semua Jenis</option>
+                                </select>
+                            </div>
+
+                            <!-- Filter Status -->
+                            <div class="col-md-3">
+                                <label class="form-label fw-semibold">Status</label>
+                                <select id="filter_status" class="selectpicker form-control wide form-select-md"
+                                    data-live-search="false" title="Status" required>
+                                    <option value="">Semua</option>
+                                    <option value="active">Aktif</option>
+                                    <option value="inactive">Tidak aktif</option>
+                                </select>
+                            </div>
+
+                            <!-- Reset Button -->
+                            <div class="col-12 d-flex justify-content-end mt-2">
+                                <button id="btnResetFilter" type="button" class="btn btn-outline-secondary">
+                                    <i class="fas fa-sync-alt me-1"></i> Reset Filter
+                                </button>
+                            </div>
+
+                        </div>
+
                         {{-- <div class="row mb-3 gy-2">
                             <div class="col-12 col-md d-flex flex-wrap gap-2">
                                 <button class="btn-update-status btn btn-sm btn-primary" data-status="active"
@@ -92,7 +143,6 @@
                                         <th style="width: 10%;" class="text-center align-middle">Periode</th>
                                         <th style="width: 10%;" class="text-start align-middle">Kode Kegiatan</th>
                                         <th style="width: 20%;" class="text-start align-middle">Nama Kegiatan</th>
-                                        {{-- <th style="width: 20%;" class="text-start align-middle">Jenis Kegiatan</th> --}}
                                         <th style="width: 10%;" class="text-center align-middle">Pertanyaan</th>
                                         <th style="width: 10%;" class="text-center align-middle">Status</th>
                                     </tr>

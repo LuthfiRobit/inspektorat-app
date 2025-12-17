@@ -57,6 +57,19 @@ class UserRole extends Model
     ];
 
     /**
+     * The attributes that should be cast.
+     *
+     * @var array<string, string>
+     */
+    protected $casts = [
+        'id_user_role' => 'integer',
+        'user_id' => 'integer',
+        'role_id' => 'integer',
+        'created_at' => 'datetime',
+        'updated_at' => 'datetime',
+    ];
+
+    /**
      * Get the user that owns the UserRole.
      *
      * Defines a many-to-one relationship with the User model.

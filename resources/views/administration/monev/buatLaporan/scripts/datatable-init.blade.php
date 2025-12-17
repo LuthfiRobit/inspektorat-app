@@ -8,16 +8,18 @@
             data: function(d) {
                 d.filter_status = $('#filter_status').val();
                 d.filter_tahun = $('#filter_tahun').val();
+                d.filter_periode = $('#filter_periode').val(); // <--- ditambahkan
                 d.filter_desa = $('#filter_desa').val();
                 d.search = d.search.value;
             }
         },
-        columns: [{
-                data: 'checkbox',
-                orderable: false,
-                searchable: false,
-                className: 'text-center'
-            },
+        columns: [
+            // {
+            //     data: 'checkbox',
+            //     orderable: false,
+            //     searchable: false,
+            //     className: 'text-center'
+            // },
             {
                 data: 'aksi',
                 orderable: false,
@@ -91,9 +93,8 @@
         order: [
             [2, 'desc'],
             [3, 'desc']
-        ], // Default order by tahun desc, bulan desc
-        drawCallback: function(settings) {
-            // Enable tooltips after table redraw
+        ],
+        drawCallback: function() {
             $('[data-bs-toggle="tooltip"]').tooltip();
         }
     });
@@ -105,28 +106,32 @@
         }
     }, 500);
 
-    $('#example_filter input').unbind().on('input', function() {
+    $('#example_filter input').off('input').on('input', function() {
         optimizedSearch($(this).val());
     });
 
     // Reload saat filter berubah
-    $('#filter_status, #filter_tahun, #filter_desa').change(() => {
+    $('#filter_status, #filter_tahun, #filter_periode, #filter_desa').on('change', function() {
         table.ajax.reload();
     });
 
-    // Select all checkbox (hanya yang tidak disabled)
-    $('#selectAll').on('click', function() {
-        const isChecked = this.checked;
-        $('.table-checkbox:not(:disabled)').prop('checked', isChecked);
-    });
+    // // Select all checkbox
+    // $('#selectAll').on('click', function() {
+    //     $('.table-checkbox:not(:disabled)').prop('checked', this.checked);
+    // });
 
-    // Enable tooltips on page load
+    // Enable tooltip
     $(document).ready(function() {
         $('[data-bs-toggle="tooltip"]').tooltip();
     });
 
-    // Auto-refresh data every 60 seconds untuk update status real-time
-    // setInterval(() => {
-    //     table.ajax.reload(null, false);
-    // }, 60000);
+    // Reset filter
+    $('#btnResetFilter').on('click', function() {
+        $('#filter_status').val('');
+        $('#filter_tahun').val('');
+        $('#filter_periode').val(''); // <--- reset filter bulan
+        $('#filter_desa').val('');
+        $('.selectpicker').selectpicker('refresh');
+        table.ajax.reload();
+    });
 </script>

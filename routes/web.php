@@ -17,6 +17,8 @@ use App\Http\Controllers\Monev\LaporanHistoryController;
 use App\Http\Controllers\Monev\LaporanKegiatanController;
 use App\Http\Controllers\Monev\LaporanReviewController;
 use App\Http\Controllers\Monitor\RiwayatLaporanController;
+use App\Http\Controllers\Monitor\ScoringDesaController;
+use App\Http\Controllers\Monitor\ScoringKecamatanController;
 use App\Http\Controllers\RBAC\PermissionController;
 use App\Http\Controllers\RBAC\RoleController;
 use App\Http\Controllers\RBAC\UserController;
@@ -25,7 +27,8 @@ use App\Http\Controllers\System\PermissionSyncController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
-    return view('welcome');
+    // return view('welcome');
+    return redirect()->route('administrator.dashboard.index');
 });
 
 // Auth routes
@@ -44,6 +47,9 @@ Route::middleware(['auth', 'checkPermission'])->prefix('administrator')->name('a
 
     Route::prefix('dashboard')->name('dashboard.')->group(function () {
         Route::get('/', [DashboardController::class, 'index'])->name('index');
+        Route::get('/summary', [DashboardController::class, 'getSummary'])->name('summary');
+        Route::get('/recent-laporan/{type}', [DashboardController::class, 'getRecentLaporan'])->name('recent-laporan');
+        Route::get('/upcomming-kegiatan', [DashboardController::class, 'getUpcommingKegiatan'])->name('upcomming-kegiatan');
     });
 
     // Master
@@ -156,6 +162,7 @@ Route::middleware(['auth', 'checkPermission'])->prefix('administrator')->name('a
             Route::get('/', [LaporanKegiatanController::class, 'index'])->name('index');
             Route::get('/list', [LaporanKegiatanController::class, 'list'])->name('list');
             Route::get('/show/{id}', [LaporanKegiatanController::class, 'show'])->name('show');
+            Route::get('/show-request', [LaporanKegiatanController::class, 'showRequest'])->name('show-request');
 
             // CREATE
             Route::get('/create', [LaporanKegiatanController::class, 'create'])->name('create');
@@ -185,6 +192,18 @@ Route::middleware(['auth', 'checkPermission'])->prefix('administrator')->name('a
             Route::get('/list', [RiwayatLaporanController::class, 'list'])->name('list');
             Route::get('/detail', [RiwayatLaporanController::class, 'detail'])->name('detail');
             Route::get('/get-data/{id}', [RiwayatLaporanController::class, 'getData'])->name('get-data');
+        });
+
+        Route::prefix('scoring')->name('scoring.')->group(function () {
+            Route::prefix('desa')->name('desa.')->group(function () {
+                Route::get('/', [ScoringDesaController::class, 'index'])->name('index');
+                Route::get('/list', [ScoringDesaController::class, 'list'])->name('list');
+            });
+
+            Route::prefix('kecamatan')->name('kecamatan.')->group(function () {
+                Route::get('/', [ScoringKecamatanController::class, 'index'])->name('index');
+                Route::get('/list', [ScoringKecamatanController::class, 'list'])->name('list');
+            });
         });
     });
 

@@ -318,14 +318,14 @@
                                 <a href="{{ route('administrator.monitoring.riwayat.index') }}" class="btn btn-secondary">
                                     <i class="las la-arrow-left me-1"></i>Kembali ke Riwayat
                                 </a>
-                                <div class="d-flex gap-2">
+                                {{-- <div class="d-flex gap-2">
                                     <button type="button" class="btn btn-outline-primary" id="downloadLaporanBtn">
                                         <i class="las la-download me-1"></i>Download Laporan
                                     </button>
                                     <button type="button" class="btn btn-outline-success" id="printLaporanBtn">
                                         <i class="las la-print me-1"></i>Cetak Laporan
                                     </button>
-                                </div>
+                                </div> --}}
                             </div>
                         </div>
                     </div>

@@ -25,43 +25,90 @@
                                 Anda.</span>
                         </div>
                         <div class="d-flex align-items-center gap-1">
-                            <div>
-                                <select id="filter_status" class="selectpicker form-control wide form-select-md"
-                                    data-live-search="false" title="Filter Status" required>
-                                    <option value="">Semua Status</option>
-                                    <option value="belum_dilaporkan">Belum Dilaporkan</option>
-                                    <option value="draft">Draft</option>
-                                    <option value="terlambat">Terlambat</option>
-                                    <option value="tenggang">Masa Tenggang</option>
-                                    <option value="selesai">Selesai</option>
-                                </select>
-                            </div>
-                            <div>
-                                <select id="filter_tahun" class="selectpicker form-control wide form-select-md"
-                                    data-live-search="true" required aria-label="Filter tahun anggaran" data-size="5">
-                                    <option value="">Semua Tahun</option>
-                                    {{-- @foreach ($tahunAnggaranList as $item)
-                                        <option value="{{ $item->id_tahun_anggaran }}">{{ $item->tahun }}</option>
-                                    @endforeach --}}
-                                </select>
-                            </div>
-                            <div>
-                                <select id="filter_desa" class="selectpicker form-control wide form-select-md"
-                                    data-live-search="true" title="Filter Desa" data-size="5">
-                                    <option value="">Semua Desa</option>
-                                    {{-- @foreach ($desaList as $item)
-                                        <option value="{{ $item->id_desa }}">{{ $item->nama_desa }}</option>
-                                    @endforeach --}}
-                                </select>
-                            </div>
-                            <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal"
+                            {{-- <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal"
                                 data-bs-target="#modalCreate" data-bs-toggle="tooltip" title="Buat laporan baru">
                                 <i class="las la-plus me-1"></i>Buat Laporan
-                            </button>
+                            </button> --}}
                         </div>
                     </div>
 
                     <div class="card-body">
+                        <div class="row g-3 mb-4 align-items-end">
+
+                            <!-- Filter Tahun -->
+                            <div class="col-md-2">
+                                <label class="form-label fw-semibold">Tahun</label>
+                                <select id="filter_tahun" class="selectpicker form-control wide form-select-md"
+                                    data-live-search="true" title="Pilih Tahun" data-size="5">
+                                    <option value="">Semua Tahun</option>
+                                    @foreach ($tahunAnggaranList as $tahun)
+                                        <option value="{{ $tahun->id_tahun_anggaran }}">
+                                            {{ $tahun->tahun }} @if ($tahun->status === 'aktif')
+                                                (Aktif)
+                                            @endif
+                                        </option>
+                                    @endforeach
+                                </select>
+                            </div>
+
+                            <!-- Filter Bulan -->
+                            <div class="col-md-2">
+                                <label class="form-label fw-semibold">Periode</label>
+                                <select id="filter_periode" class="selectpicker form-control wide form-select-md"
+                                    data-live-search="true" title="Pilih Bulan" data-size="5">
+                                    <option value="">Semua Periode</option>
+                                    <option value="1">Januari</option>
+                                    <option value="2">Februari</option>
+                                    <option value="3">Maret</option>
+                                    <option value="4">April</option>
+                                    <option value="5">Mei</option>
+                                    <option value="6">Juni</option>
+                                    <option value="7">Juli</option>
+                                    <option value="8">Agustus</option>
+                                    <option value="9">September</option>
+                                    <option value="10">Oktober</option>
+                                    <option value="11">November</option>
+                                    <option value="12">Desember</option>
+                                </select>
+                            </div>
+
+                            <!-- Filter Status -->
+                            <div class="col-md-2">
+                                <label class="form-label fw-semibold">Status</label>
+                                <select id="filter_status" class="selectpicker form-control wide form-select-md"
+                                    data-live-search="false" title="Filter Status">
+                                    <option value="">Semua Status</option>
+                                    <option value="belum_dilaporkan">Belum Dilaporkan</option>
+                                    <option value="draft">Draft</option>
+                                    <option value="submitted">Menunggu Review</option>
+                                    <option value="revision">Perlu Revisi</option>
+                                    <option value="approved">Disetujui</option>
+                                    <option value="rejected">Ditolak</option>
+                                </select>
+                            </div>
+
+                            <!-- Filter Desa -->
+                            <div class="col-md-4">
+                                <label class="form-label fw-semibold">Desa</label>
+                                <select id="filter_desa" class="selectpicker form-control wide form-select-md"
+                                    data-live-search="true" title="Filter Desa" data-size="5">
+                                    <option value="">Semua Desa</option>
+                                    @foreach ($desaList as $item)
+                                        <option value="{{ $item->id_desa }}">
+                                            {{ $item->nama_desa }} | {{ $item->nama_kecamatan }}
+                                        </option>
+                                    @endforeach
+                                </select>
+                            </div>
+
+                            <!-- Reset Button -->
+                            <div class="col-md-2 d-flex justify-content-end">
+                                <button id="btnResetFilter" type="button" class="btn btn-outline-secondary w-100">
+                                    <i class="fas fa-sync-alt me-1"></i> Reset Filter
+                                </button>
+                            </div>
+
+                        </div>
                         {{-- <div class="row mb-3 gy-2">
                             <div class="col-12 col-md d-flex flex-wrap gap-2">
                                 <button class="btn-submit-batch btn btn-sm btn-success" data-bs-toggle="tooltip"
@@ -90,13 +137,13 @@
                                 style="width:100%;">
                                 <thead>
                                     <tr class="text-center text-muted text-uppercase">
-                                        <th style="width: 5%;" class="align-middle">
+                                        {{-- <th style="width: 5%;" class="align-middle">
                                             <span class="d-inline-flex align-items-center gap-1">
                                                 <input type="checkbox" class="form-check-input m-0" id="selectAll" />
                                                 <i class="bi bi-info-circle-fill text-primary" data-bs-toggle="tooltip"
                                                     title="Pilih beberapa laporan untuk aksi massal."></i>
                                             </span>
-                                        </th>
+                                        </th> --}}
                                         <th style="width: 10%;" class="align-middle">Aksi</th>
                                         <th style="width: 8%;" class="text-start align-middle">Tahun</th>
                                         <th style="width: 10%;" class="text-center align-middle">Periode</th>
@@ -120,14 +167,21 @@
                         <div class="alert alert-info mt-3">
                             <strong>Informasi:</strong>
                             <ul class="mb-0 mt-2">
-                                <li>Pilih kegiatan yang perlu dilaporkan untuk desa-desa di wilayah kecamatan Anda</li>
-                                <li>Status <span class="badge badge-sm badge-danger">Terlambat</span> menunjukkan batas
-                                    waktu telah lewat</li>
-                                <li>Status <span class="badge badge-sm badge-warning">Tenggang</span> menunjukkan mendekati
-                                    batas waktu</li>
-                                <li>Gunakan aksi massal untuk mengelola beberapa laporan sekaligus</li>
+                                <li>Pilih kegiatan yang perlu dilaporkan untuk desa-desa di wilayah kecamatan Anda.</li>
+                                <li>Halaman ini hanya menampilkan laporan yang <strong>belum dilaporkan</strong> dan laporan
+                                    yang <strong>perlu direvisi</strong>.</li>
+                                <li>Jika ada laporan dengan status <strong>Menunggu Review</strong>, untuk melihat detail
+                                    dan status review silakan kunjungi halaman
+                                    <a href="{{ route('administrator.monitoring.riwayat.index') }}" class="text-primary font-weight-bold"
+                                        title="Buka halaman monitoring laporan">Riwayat Laporan</a>.
+                                </li>
+                                <li>Status <span class="badge light badge-danger">Terlambat</span> menunjukkan batas
+                                    waktu telah lewat.</li>
+                                <li>Status <span class="badge light badge-warning">Tenggang</span> menunjukkan mendekati
+                                    batas waktu.</li>
                             </ul>
                         </div>
+
                     </div>
                 </div>
             </div>

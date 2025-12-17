@@ -22,9 +22,21 @@ class HistoryDokumen extends Model
         'changed_by'
     ];
 
+    /**
+     * The attributes that should be cast.
+     *
+     * @var array<string, string>
+     */
     protected $casts = [
-        'created_at' => 'datetime',
-        'updated_at' => 'datetime',
+        'id_history_dokumen' => 'integer',
+        'dokumen_id'         => 'integer',
+        'action'             => 'string',
+        'nama_file_sebelum'  => 'string',
+        'path_file_sebelum'  => 'string',
+        'catatan_perubahan'  => 'string',
+        'changed_by'         => 'integer',
+        'created_at'         => 'datetime',
+        'updated_at'         => 'datetime',
     ];
 
     // Relationships

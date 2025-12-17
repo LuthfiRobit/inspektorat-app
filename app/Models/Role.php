@@ -62,6 +62,20 @@ class Role extends Model
     protected $fillable = ['role_scope', 'role_name', 'role_description'];
 
     /**
+     * The attributes that should be cast.
+     *
+     * @var array<string, string>
+     */
+    protected $casts = [
+        'id_role' => 'integer',
+        'role_scope' => 'string',
+        'role_name' => 'string',
+        'role_description' => 'string',
+        'created_at' => 'datetime',
+        'updated_at' => 'datetime',
+    ];
+
+    /**
      * The users that belong to the Role.
      *
      * Defines a many-to-many relationship with the User model through the 'user_role' pivot table.

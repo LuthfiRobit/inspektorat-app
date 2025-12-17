@@ -19,18 +19,19 @@
 
             <!-- Master Data (Only accessible to Developer) -->
             @if (
-                $user->hasAnyPermission([
-                    'administrator.master.kecamatan.index',
-                    'administrator.master.desa.index',
-                    'administrator.master.petugas.inspektorat.index',
-                    'administrator.master.petugas.kecamatan.index',
-                    'administrator.master.petugas.desa.index',
-                    'administrator.master.tahun-anggaran.index',
-                    'administrator.master.jenis-kegiatan.index',
-                    'administrator.master.kegiatan.index',
-                    'administrator.master.pertanyaan-kegiatan.index',
-                    'administrator.master.persyaratan.index',
-                ]))
+                    $user->hasAnyPermission([
+                        'administrator.master.kecamatan.index',
+                        'administrator.master.desa.index',
+                        'administrator.master.petugas.inspektorat.index',
+                        'administrator.master.petugas.kecamatan.index',
+                        'administrator.master.petugas.desa.index',
+                        'administrator.master.tahun-anggaran.index',
+                        'administrator.master.jenis-kegiatan.index',
+                        'administrator.master.kegiatan.index',
+                        'administrator.master.pertanyaan-kegiatan.index',
+                        'administrator.master.persyaratan.index',
+                    ])
+                )
                 <li>
                     <a class="has-arrow ai-icon" href="javascript:void(0);" aria-expanded="false">
                         <i class="fas fa-database fw-bold"></i>
@@ -43,8 +44,7 @@
                         @endif
 
                         @if ($user->hasPermissionTo('administrator.master.kecamatan.index'))
-                            <li><a href="{{ route('administrator.master.kecamatan.index') }}"
-                                    class="fs-6">Kecamatan</a></li>
+                            <li><a href="{{ route('administrator.master.kecamatan.index') }}" class="fs-6">Kecamatan</a></li>
                         @endif
 
                         @if ($user->hasPermissionTo('administrator.master.desa.index'))
@@ -53,11 +53,12 @@
 
                         <!-- Petugas -->
                         @if (
-                            $user->hasAnyPermission([
-                                'administrator.master.petugas.inspektorat.index',
-                                'administrator.master.petugas.kecamatan.index',
-                                'administrator.master.petugas.desa.index',
-                            ]))
+                                $user->hasAnyPermission([
+                                    'administrator.master.petugas.inspektorat.index',
+                                    'administrator.master.petugas.kecamatan.index',
+                                    'administrator.master.petugas.desa.index',
+                                ])
+                            )
                             <li class="nav-label mt-2 text-uppercase small text-muted px-2">Petugas</li>
                         @endif
 
@@ -67,8 +68,8 @@
                         @endif
 
                         @if ($user->hasPermissionTo('administrator.master.petugas.kecamatan.index'))
-                            <li><a href="{{ route('administrator.master.petugas.kecamatan.index') }}"
-                                    class="fs-6">Kecamatan</a></li>
+                            <li><a href="{{ route('administrator.master.petugas.kecamatan.index') }}" class="fs-6">Kecamatan</a>
+                            </li>
                         @endif
 
                         @if ($user->hasPermissionTo('administrator.master.petugas.desa.index'))
@@ -78,13 +79,14 @@
 
                         <!-- Kegiatan & Kriteria -->
                         @if (
-                            $user->hasAnyPermission([
-                                'administrator.master.tahun-anggaran.index',
-                                'administrator.master.jenis-kegiatan.index',
-                                'administrator.master.kegiatan.index',
-                                'administrator.master.pertanyaan-kegiatan.index',
-                                'administrator.master.persyaratan.index',
-                            ]))
+                                $user->hasAnyPermission([
+                                    'administrator.master.tahun-anggaran.index',
+                                    'administrator.master.jenis-kegiatan.index',
+                                    'administrator.master.kegiatan.index',
+                                    'administrator.master.pertanyaan-kegiatan.index',
+                                    'administrator.master.persyaratan.index',
+                                ])
+                            )
                             <li class="nav-label mt-2 text-uppercase small text-muted px-2">Kegiatan & Kriteria</li>
                         @endif
 
@@ -104,13 +106,13 @@
                         @endif
 
                         @if ($user->hasPermissionTo('administrator.master.pertanyaan-kegiatan.index'))
-                            <li><a href="{{ route('administrator.master.pertanyaan-kegiatan.index') }}"
-                                    class="fs-6">Pertanyaan Kegiatan</a></li>
+                            <li><a href="{{ route('administrator.master.pertanyaan-kegiatan.index') }}" class="fs-6">Pertanyaan
+                                    Kegiatan</a></li>
                         @endif
 
                         @if ($user->hasPermissionTo('administrator.master.persyaratan.index'))
-                            <li><a href="{{ route('administrator.master.persyaratan.index') }}"
-                                    class="fs-6">Persyaratan Dokumen</a></li>
+                            <li><a href="{{ route('administrator.master.persyaratan.index') }}" class="fs-6">Persyaratan
+                                    Dokumen</a></li>
                         @endif
                     </ul>
                 </li>
@@ -152,18 +154,24 @@
 
                         {{-- Contoh menu tanpa permission check --}}
                         {{-- <li><a href="#" class="fs-6">Keterlambatan</a></li> --}}
-                        <li><a href="#" class="fs-6">Scoring Desa</a></li>
+                        {{-- <li><a href="#" class="fs-6">Scoring Desa</a></li> --}}
+                        <!-- Wilayah -->
+                        <li class="nav-label mt-2 text-uppercase small text-muted px-2">Scoring</li>
+
+                        <li><a href="{{ route('administrator.monitoring.scoring.desa.index') }}" class="fs-6">Desa</a></li>
+                        <li><a href="{{ route('administrator.monitoring.scoring.kecamatan.index') }}" class="fs-6">Kecamatan</a></li>
                     </ul>
                 </li>
             @endif
 
             <!-- Pengaturan Sistem (RBAC) -->
             @if (
-                $user->hasAnyPermission([
-                    'administrator.rbac.permission.index',
-                    'administrator.rbac.role.index',
-                    'administrator.rbac.user.index',
-                ]))
+                    $user->hasAnyPermission([
+                        'administrator.rbac.permission.index',
+                        'administrator.rbac.role.index',
+                        'administrator.rbac.user.index',
+                    ])
+                )
                 <li>
                     <a class="has-arrow ai-icon" href="javascript:void(0);" aria-expanded="false">
                         <i class="fas fa-users-cog fw-bold"></i>
@@ -171,8 +179,7 @@
                     </a>
                     <ul aria-expanded="false">
                         @if ($user->hasPermissionTo('administrator.rbac.permission.index'))
-                            <li><a href="{{ route('administrator.rbac.permission.index') }}"
-                                    class="fs-6">Permission</a></li>
+                            <li><a href="{{ route('administrator.rbac.permission.index') }}" class="fs-6">Permission</a></li>
                         @endif
 
                         @if ($user->hasPermissionTo('administrator.rbac.role.index'))

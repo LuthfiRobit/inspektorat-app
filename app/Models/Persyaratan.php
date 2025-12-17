@@ -53,6 +53,26 @@ class Persyaratan extends Model
     ];
 
     /**
+     * The attributes that should be cast.
+     *
+     * @var array<string, string>
+     */
+    protected $casts = [
+        'id_persyaratan'           => 'integer',
+        'pertanyaan_kegiatan_id'   => 'integer',
+        'urutan'                   => 'integer',
+        'nama_persyaratan'         => 'string',
+        'template_persyaratan'     => 'string',
+        'deskripsi'                => 'string',
+        'tipe'                     => 'string',
+        'status'                   => 'string',
+        'created_by'               => 'integer',
+        'updated_by'               => 'integer',
+        'created_at'               => 'datetime',
+        'updated_at'               => 'datetime',
+    ];
+
+    /**
      * Boot method for the model to handle automatic user attribution.
      *
      * @return void

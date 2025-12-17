@@ -25,4 +25,26 @@ class ScoringDesaRepository
             ->orderBy('peringkat', 'ASC')
             ->get();
     }
+
+   /**
+     * GET DATA SCORING DESA DENGAN FILTER
+     * 
+     * @param array $filters
+     * @return \Illuminate\Support\Collection
+     */
+    public function getDesaScoring(array $filters = [])
+    {
+        return ScoringDesa::getScoringDesa($filters);
+    }
+
+    /**
+     * GET DATA SCORING KECAMATAN DENGAN FILTER
+     * 
+     * @param array $filters
+     * @return \Illuminate\Support\Collection
+     */
+    public function getKecamatanScoring(array $filters = [])
+    {
+        return ScoringDesa::getScoringKecamatan($filters);
+    }
 }

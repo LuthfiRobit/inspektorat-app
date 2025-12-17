@@ -58,6 +58,20 @@ class Permission extends Model
     protected $fillable = ['permission_name', 'permission_description'];
 
     /**
+     * The attributes that should be cast.
+     *
+     * @var array<string, string>
+     */
+    protected $casts = [
+        'id_permission'        => 'integer',
+        'permission_name'      => 'string',
+        'permission_description'=> 'string',
+        'is_active'            => 'boolean',
+        'created_at'           => 'datetime',
+        'updated_at'           => 'datetime',
+    ];
+
+    /**
      * The roles that have this permission.
      *
      * Defines a many-to-many relationship with the Role model through the 'role_permission' pivot table.

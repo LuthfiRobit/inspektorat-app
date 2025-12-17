@@ -72,48 +72,38 @@ class RiwayatLaporanController extends Controller
 
         $data = LaporanKegiatan::getListHistory($user, $filters);
 
-        // return $data;
-
         $this->logActivityService->log('Fetched Laporan Kegiatan History', [
             'user_id' => $user->id_user,
             'filters' => $filters
         ]);
 
         return DataTables::of($data)
+
             ->addColumn('aksi', function ($row) {
-                // Tombol Detail - selalu tersedia untuk history
 
-                $btnDetail = '';
-                $url = route('administrator.monitoring.riwayat.detail') . '?desa_id=' . $row['desa_id'] . '&kegiatan_id=' . $row['kegiatan_id'] . '&id_laporan=' . $row['id_laporan'];
-                $icon = 'fas fa-eye me-2';
-                $text = 'Detail Laporan';
+                $url = route('administrator.monitoring.riwayat.detail')
+                    . '?desa_id=' . $row['desa_id']
+                    . '&kegiatan_id=' . $row['kegiatan_id']
+                    . '&id_laporan=' . $row['id_laporan'];
 
-                $btnDetail = '<a class="dropdown-item" href="' . $url . '">
-                                        <i class="' . $icon . ' me-2"></i>' . $text . '
-                                    </a>';
+                $btnDetail = '
+                <a class="dropdown-item" href="' . $url . '">
+                    <i class="fas fa-eye me-2"></i>Detail Laporan
+                </a>';
 
-                // Tombol Download/Lihat Dokumen - jika sudah approved
-                $btnDownload = '';
-                if ($row['status'] === 'approved' && $row['id_laporan']) {
-                    // $btnDownload = '<a class="dropdown-item" href="' . route('laporan.download', $row['id_laporan']) . '">
-                    //             <i class="fas fa-download me-2"></i>Download Laporan
-                    //         </a>';
-                    $btnDownload = '<a class="dropdown-item" href="#">
-                                <i class="fas fa-download me-2"></i>Download Laporan
-                            </a>';
-                }
-
-                $dropdownItems = $btnDetail . $btnDownload;
-
-                return '<div class="btn-group">
-                    <button type="button" class="btn btn-outline-primary btn-xs dropdown-toggle" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                return '
+                <div class="btn-group">
+                    <button type="button" 
+                            class="btn btn-outline-primary btn-xs dropdown-toggle" 
+                            data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                         <i class="fas fa-cogs"></i> Aksi
                     </button>
                     <div class="dropdown-menu">
-                        ' . $dropdownItems . '
+                        ' . $btnDetail . '
                     </div>
                 </div>';
             })
+
             ->editColumn('status_display', function ($row) {
                 $badgeClass = [
                     'success' => 'light badge-success',
@@ -121,11 +111,14 @@ class RiwayatLaporanController extends Controller
                     'warning' => 'light badge-warning',
                     'danger' => 'light badge-danger',
                     'secondary' => 'light badge-secondary',
-                    'light' => 'light badge-dark'
+                    'light' => 'light badge-dark',
                 ][$row['status_class']] ?? 'light badge';
 
-                return '<span class="badge ' . $badgeClass . '">' . $row['status_display'] . '</span>';
+                return '<span class="badge ' . $badgeClass . '">'
+                    . $row['status_display'] .
+                    '</span>';
             })
+
             ->editColumn('bulan', function ($row) {
                 $bulan = [
                     1 => 'Jan',
@@ -141,8 +134,10 @@ class RiwayatLaporanController extends Controller
                     11 => 'Nov',
                     12 => 'Des'
                 ];
+
                 return $bulan[$row['bulan']] ?? $row['bulan'];
             })
+
             ->editColumn('nama_kegiatan', function ($row) {
                 if (strlen($row['nama_kegiatan']) > 40) {
                     return '<span data-bs-toggle="tooltip" title="' . e($row['nama_kegiatan']) . '">'
@@ -150,41 +145,56 @@ class RiwayatLaporanController extends Controller
                 }
                 return $row['nama_kegiatan'];
             })
+
             ->editColumn('nama_desa', function ($row) {
-                return $row['nama_desa'] . ' <br><small class="text-muted">' . $row['nama_kecamatan'] . '</small>';
+                return $row['nama_desa']
+                    . ' <br><small class="text-muted">'
+                    . $row['nama_kecamatan']
+                    . '</small>';
             })
+
             ->addColumn('timeline', function ($row) {
+
                 $badgeClass = [
                     'Terlambat' => 'light badge-danger',
                     'Tenggang' => 'light badge-warning',
                     'Menunggu' => 'light badge-success',
-                    'Tepat Waktu' => 'light badge-primary'
+                    'Tepat Waktu' => 'light badge-primary',
                 ][$row['timeline_status']] ?? 'light badge';
 
                 $timelineInfo = '';
+
                 if (!empty($row['tanggal_target'])) {
-                    $tanggalTarget = \Carbon\Carbon::parse($row['tanggal_target'])->format('d M Y');
-                    $timelineInfo = '<small class="text-muted d-block" style="font-size: 0.7rem;">Target: ' . $tanggalTarget . '</small>';
+                    $timelineInfo .= '<small class="text-muted d-block" style="font-size: 0.7rem;">
+                                    Target: ' . \Carbon\Carbon::parse($row['tanggal_target'])->format('d M Y') . '
+                                  </small>';
                 }
 
                 if (!empty($row['tanggal_submit'])) {
-                    $tanggalSubmit = \Carbon\Carbon::parse($row['tanggal_submit'])->format('d M Y');
-                    $timelineInfo .= '<small class="text-muted d-block" style="font-size: 0.7rem;">Submit: ' . $tanggalSubmit . '</small>';
+                    $timelineInfo .= '<small class="text-muted d-block" style="font-size: 0.7rem;">
+                                    Submit: ' . \Carbon\Carbon::parse($row['tanggal_submit'])->format('d M Y') . '
+                                  </small>';
                 }
 
                 if (!empty($row['tanggal_approve'])) {
-                    $tanggalApprove = \Carbon\Carbon::parse($row['tanggal_approve'])->format('d M Y');
-                    $timelineInfo .= '<small class="text-success d-block" style="font-size: 0.7rem;">Approve: ' . $tanggalApprove . '</small>';
+                    $timelineInfo .= '<small class="text-success d-block" style="font-size: 0.7rem;">
+                                    Approve: ' . \Carbon\Carbon::parse($row['tanggal_approve'])->format('d M Y') . '
+                                  </small>';
                 }
 
-                return '<div class="text-center">
-                  <span class="badge ' . $badgeClass . ' mb-1">' . $row['timeline_status'] . '</span>
-                  <br>' . $timelineInfo . '
+                return '
+                <div class="text-center">
+                    <span class="badge ' . $badgeClass . ' mb-1">'
+                    . $row['timeline_status'] .
+                    '</span>
+                    <br>' . $timelineInfo . '
                 </div>';
             })
+
             ->rawColumns(['aksi', 'status_display', 'timeline', 'nama_kegiatan', 'nama_desa'])
             ->make(true);
     }
+
 
     /**
      * Display the detail view for existing History Laporan.

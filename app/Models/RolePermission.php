@@ -60,6 +60,19 @@ class RolePermission extends Model
     ];
 
     /**
+     * The attributes that should be cast.
+     *
+     * @var array<string, string>
+     */
+    protected $casts = [
+        'id_role_permission' => 'integer',
+        'role_id'            => 'integer',
+        'permission_id'      => 'integer',
+        'created_at'         => 'datetime',
+        'updated_at'         => 'datetime',
+    ];
+
+    /**
      * Get the role that owns the RolePermission.
      *
      * Defines a many-to-one relationship with the Role model.

@@ -49,6 +49,22 @@ class Kecamatan extends Model
     ];
 
     /**
+     * The attributes that should be cast.
+     *
+     * @var array<string, string>
+     */
+    protected $casts = [
+        'id_kecamatan' => 'integer',
+        'kode_kecamatan' => 'string',
+        'nama_kecamatan' => 'string',
+        'status' => 'string',
+        'created_by' => 'integer',
+        'updated_by' => 'integer',
+        'created_at' => 'datetime',
+        'updated_at' => 'datetime',
+    ];
+
+    /**
      * Boot method for the model to handle automatic user attribution.
      *
      * @return void

@@ -54,7 +54,14 @@ class TahunAnggaran extends Model
      * @var array<string, string>
      */
     protected $casts = [
+        'id_tahun_anggaran' => 'integer',
         'tahun' => 'integer',
+        'status' => 'string',
+        'keterangan' => 'string',
+        'created_by' => 'integer',
+        'updated_by' => 'integer',
+        'created_at' => 'datetime',
+        'updated_at' => 'datetime',
     ];
 
     /**

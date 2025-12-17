@@ -2,9 +2,12 @@
 
 namespace App\Repositories;
 
+use App\Models\Desa;
 use App\Models\LaporanKegiatan;
 use App\Models\JawabanPertanyaan;
 use App\Models\DokumenPersyaratan;
+use App\Models\Kegiatan;
+use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 
 class LaporanKegiatanRepository
@@ -37,5 +40,130 @@ class LaporanKegiatanRepository
                 JawabanPertanyaan::where('laporan_id', $laporanId)->pluck('id_jawaban')
             )->where('is_current', true)->get()
         ];
+    }
+
+    public function getDetail($desaId, $kegiatanId, $laporanId = null)
+    {
+        // ============================
+        // 1. Ambil desa
+        // ============================
+        $desa = Desa::getRelationship($desaId);
+        if (!$desa) {
+            throw new \Exception("Desa tidak ditemukan");
+        }
+
+        // ============================
+        // 2. Ambil kegiatan
+        // ============================
+        $kegiatan = Kegiatan::getRelationship($kegiatanId);
+        if (!$kegiatan) {
+            throw new \Exception("Kegiatan tidak ditemukan");
+        }
+
+        // ============================
+        // 3. Ambil laporan (jika ada)
+        // ============================
+        $laporan = $laporanId
+            ? LaporanKegiatan::where('id_laporan', $laporanId)->first()
+            : LaporanKegiatan::where('desa_id', $desaId)
+                ->where('kegiatan_id', $kegiatanId)
+                ->first();
+
+        // Tentukan tahun & bulan (fallback -> ke kegiatan)
+        // Perbaikan: Akses sebagai array karena getRelationship mengembalikan array
+        $tahun = $laporan->tahun ?? $kegiatan['tahun'];
+        $bulan = $laporan->bulan ?? $kegiatan['bulan'];
+
+        // ============================
+        // 4. Hitung tanggal target
+        // ============================
+        $tanggalTarget = $this->calculateTanggalTarget($kegiatan, $tahun, $bulan);
+
+        // ============================
+        // 5. Hitung timeline status
+        // ============================
+        $timeline = $this->calculateTimelineStatus($laporan, $tanggalTarget);
+
+        // ============================
+        // 6. Return structured data
+        // ============================
+        return [
+            'desa' => [
+                'id_desa' => $desa->id_desa,
+                'nama_desa' => $desa->nama_desa,
+                'kode_desa' => $desa->kode_desa,
+                'nama_kecamatan' => $desa->nama_kecamatan
+            ],
+
+            'kegiatan' => [
+                'id_kegiatan' => $kegiatan['id_kegiatan'],
+                'nama_kegiatan' => $kegiatan['nama_kegiatan'],
+                'kode_kegiatan' => $kegiatan['kode_kegiatan'],
+                'tahun_anggaran' => $kegiatan['tahun'],
+                'jenis_kegiatan' => $kegiatan['nama_jenis'],
+                'bulan' => $kegiatan['nama_bulan'],
+                'tanggal_mulai' => $kegiatan['tanggal_mulai'],
+                'tanggal_selesai' => $kegiatan['tanggal_selesai'],
+                'batas_akhir_upload' => $kegiatan['batas_akhir_upload'],
+                'dasar_hukum' => $kegiatan['dasar_hukum'],
+            ],
+
+            'laporan' => $laporan ? [
+                'id_laporan' => $laporan->id_laporan,
+                'status' => $laporan->status,
+                'tanggal_submit' => $laporan->tanggal_submit,
+                'tanggal_approve' => $laporan->tanggal_approve,
+                'catatan_approval' => $laporan->catatan_approval
+            ] : null,
+
+            'tanggal_target' => optional($tanggalTarget)->toDateString(),
+            'timeline_status' => $timeline['status'],
+            'days_until_deadline' => $timeline['days'],
+        ];
+    }
+
+    /**
+     * Hitung tanggal target dari kegiatan
+     */
+    private function calculateTanggalTarget($kegiatan, $tahun, $bulan)
+    {
+        // Perbaikan: Akses sebagai array
+        if (!$kegiatan['batas_akhir_upload']) {
+            return null;
+        }
+
+        $baseDate = Carbon::create($tahun, $bulan, 1);
+
+        // Perbaikan: Akses sebagai array
+        $tanggalSelesai = $kegiatan['tanggal_selesai'] ?: $baseDate->daysInMonth;
+        $tanggalSelesai = min($tanggalSelesai, $baseDate->daysInMonth);
+
+        // Perbaikan: Akses sebagai array
+        return Carbon::create($tahun, $bulan, $tanggalSelesai)
+            ->addDays($kegiatan['batas_akhir_upload'])
+            ->startOfDay();
+    }
+
+    /**
+     * Hitung status timeline
+     */
+    private function calculateTimelineStatus($laporan, $tanggalTarget)
+    {
+        if (!$tanggalTarget) {
+            return ['status' => 'Tidak Ada Target', 'days' => null];
+        }
+
+        $now = Carbon::now();
+        $days = $now->diffInDays($tanggalTarget, false);
+
+        if ($laporan && $laporan->status === 'approved') {
+            return ['status' => 'Selesai', 'days' => $days];
+        }
+
+        if ($days > 5)
+            return ['status' => 'Menunggu', 'days' => $days];
+        if ($days >= 0)
+            return ['status' => 'Tenggang', 'days' => $days];
+        return ['status' => 'Terlambat', 'days' => $days];
     }
 }
