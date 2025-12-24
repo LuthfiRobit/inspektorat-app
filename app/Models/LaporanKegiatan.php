@@ -9,6 +9,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class LaporanKegiatan extends Model
 {
@@ -355,6 +356,23 @@ class LaporanKegiatan extends Model
 
         $kegiatanList = $kegiatanQuery->get();
 
+        // NORMALIZE DATA TYPES - PERBAIKAN UTAMA
+        $kegiatanList = $kegiatanList->map(function ($kegiatan) {
+            // Cast semua nilai numerik ke tipe data yang tepat
+            $kegiatan->id_kegiatan = (int) $kegiatan->id_kegiatan;
+            $kegiatan->tahun_anggaran = (int) $kegiatan->tahun_anggaran;
+            $kegiatan->bulan = (int) $kegiatan->bulan;
+            $kegiatan->batas_akhir_upload = (int) $kegiatan->batas_akhir_upload;
+            $kegiatan->tanggal_selesai = $kegiatan->tanggal_selesai
+                ? (int) $kegiatan->tanggal_selesai
+                : null;
+            $kegiatan->tanggal_mulai = $kegiatan->tanggal_mulai
+                ? (int) $kegiatan->tanggal_mulai
+                : null;
+
+            return $kegiatan;
+        });
+
         // Step 3: Create combination of all desa and kegiatan
         $result = collect();
 
@@ -366,18 +384,30 @@ class LaporanKegiatan extends Model
                     ->where('lk.kegiatan_id', $kegiatan->id_kegiatan)
                     ->first();
 
-                // Calculate tanggal_target
-                $tanggalTarget = self::calculateTanggalTargetFromKegiatan($kegiatan, $kegiatan->tahun_anggaran, $kegiatan->bulan);
+                // Calculate tanggal_target dengan error handling
+                try {
+                    $tanggalTarget = self::calculateTanggalTargetFromKegiatan($kegiatan, $kegiatan->tahun_anggaran, $kegiatan->bulan);
+                } catch (\Exception $e) {
+                    Log::warning('Failed to calculate tanggal_target', [
+                        'desa_id' => $desa->id_desa,
+                        'kegiatan_id' => $kegiatan->id_kegiatan,
+                        'tahun' => $kegiatan->tahun_anggaran,
+                        'bulan' => $kegiatan->bulan,
+                        'batas_akhir_upload' => $kegiatan->batas_akhir_upload,
+                        'error' => $e->getMessage()
+                    ]);
+                    $tanggalTarget = null;
+                }
 
                 // Prepare the record
                 $record = [
                     'id_laporan' => $existingLaporan->id_laporan ?? null,
-                    'desa_id' => $desa->id_desa,
+                    'desa_id' => (int) $desa->id_desa,
                     'kegiatan_id' => $kegiatan->id_kegiatan,
                     'tahun' => $kegiatan->tahun_anggaran,
                     'bulan' => $kegiatan->bulan,
                     'status' => $existingLaporan->status ?? 'belum_dilaporkan',
-                    'tanggal_target' => $existingLaporan->tanggal_target ?? $tanggalTarget,
+                    'tanggal_target' => $existingLaporan->tanggal_target ?? ($tanggalTarget ? $tanggalTarget->format('Y-m-d') : null),
                     'tanggal_submit' => $existingLaporan->tanggal_submit ?? null,
                     'tanggal_approve' => $existingLaporan->tanggal_approve ?? null,
                     'nama_desa' => $desa->nama_desa,
@@ -392,12 +422,29 @@ class LaporanKegiatan extends Model
                     'tahun_anggaran' => $kegiatan->tahun_anggaran,
                 ];
 
-                // Add display fields
+                // Add display fields dengan validasi tambahan
                 $record['status_display'] = self::getStatusDisplayForUser($record['status']);
                 $record['status_class'] = self::getStatusClass($record['status']);
                 $record['timeline_status'] = self::calculateTimelineStatus($record);
+
+                // Pastikan tanggal_target valid sebelum menghitung days_until_deadline
+                if ($tanggalTarget && $tanggalTarget instanceof Carbon) {
+                    try {
+                        $record['days_until_deadline'] = $tanggalTarget->diffInDays(now(), false);
+                    } catch (\Exception $e) {
+                        Log::warning('Failed to calculate days_until_deadline', [
+                            'desa_id' => $desa->id_desa,
+                            'kegiatan_id' => $kegiatan->id_kegiatan,
+                            'tanggal_target' => $tanggalTarget,
+                            'error' => $e->getMessage()
+                        ]);
+                        $record['days_until_deadline'] = 0;
+                    }
+                } else {
+                    $record['days_until_deadline'] = 0;
+                }
+
                 $record['priority_order'] = self::getPriorityOrderForUser($record['status']);
-                $record['days_until_deadline'] = $tanggalTarget ? Carbon::parse($tanggalTarget)->diffInDays(now(), false) : 0;
 
                 $result->push($record);
             }
@@ -708,12 +755,45 @@ class LaporanKegiatan extends Model
             return null;
         }
 
-        $baseDate = Carbon::create($tahun, $bulan, 1);
-        $tanggalSelesai = $kegiatan->tanggal_selesai ?: $baseDate->daysInMonth;
-        $tanggalSelesai = min($tanggalSelesai, $baseDate->daysInMonth);
+        // CAST nilai untuk memastikan tipe data integer
+        $tahun = (int) $tahun;
+        $bulan = (int) $bulan;
+        $batasHari = (int) $kegiatan->batas_akhir_upload;
 
-        return Carbon::create($tahun, $bulan, $tanggalSelesai)
-            ->addDays($kegiatan->batas_akhir_upload);
+        // Validasi bulan dan tahun
+        if ($bulan < 1 || $bulan > 12) {
+            Log::error('Invalid bulan value', ['bulan' => $bulan, 'kegiatan_id' => $kegiatan->id_kegiatan]);
+            return null;
+        }
+
+        try {
+            $baseDate = Carbon::create($tahun, $bulan, 1);
+
+            // Tangani tanggal_selesai yang mungkin null atau string
+            $tanggalSelesai = $kegiatan->tanggal_selesai
+                ? (int) $kegiatan->tanggal_selesai
+                : $baseDate->daysInMonth;
+
+            // Validasi tanggal_selesai
+            if ($tanggalSelesai < 1 || $tanggalSelesai > $baseDate->daysInMonth) {
+                $tanggalSelesai = $baseDate->daysInMonth;
+            }
+
+            $tanggalSelesai = min($tanggalSelesai, $baseDate->daysInMonth);
+
+            return Carbon::create($tahun, $bulan, $tanggalSelesai)
+                ->addDays($batasHari);
+        } catch (\Exception $e) {
+            // Log error dan return null untuk mencegah crash
+            Log::error('Error calculateTanggalTarget: ' . $e->getMessage(), [
+                'kegiatan_id' => $kegiatan->id_kegiatan ?? null,
+                'tahun' => $tahun,
+                'bulan' => $bulan,
+                'tanggal_selesai' => $kegiatan->tanggal_selesai,
+                'batas_akhir_upload' => $kegiatan->batas_akhir_upload
+            ]);
+            return null;
+        }
     }
 
     /**
