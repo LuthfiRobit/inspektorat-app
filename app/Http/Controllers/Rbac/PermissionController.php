@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Controllers\RBAC;
+namespace App\Http\Controllers\Rbac;
 
 use App\Http\Controllers\Controller;
 use App\Models\Permission;
