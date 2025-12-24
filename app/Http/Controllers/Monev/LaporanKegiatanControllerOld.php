@@ -24,7 +24,7 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
 use Yajra\DataTables\Facades\DataTables;
 
-class LaporanKegiatanController extends Controller
+class LaporanKegiatanControllerOld extends Controller
 {
     protected $responseService;
     protected $transactionService;
