@@ -4,7 +4,7 @@
 <head>
     <!-- Judul Halaman -->
     <title>
-        Aplikasi Pembayaran Iuran Madrasah Ibtidaiyah Ihyauddiniyah Desa Kecik Besuk Probolinggo
+        SIDESA APK - Inspektorat Kabupaten Probolinggo
     </title>
 
     <meta name="csrf-token" content="{{ csrf_token() }}">
@@ -15,31 +15,27 @@
     <!-- Mode Rendering -->
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
     <!-- Penulis Halaman -->
-    <meta name="author" content="Madrasah Ibtidaiyah Ihyauddiniyah" />
+    <meta name="author" content="Inspektorat Kabupaten Probolinggo" />
     <!-- Pengindeksan Mesin Pencari -->
     <meta name="robots" content="index, follow" />
 
     <!-- Kata Kunci SEO -->
     <meta name="keywords"
-        content="Pembayaran Iuran, Madrasah Ibtidaiyah Ihyauddiniyah, Desa Kecik Besuk, Probolinggo, Aplikasi Pembayaran, Sistem Pembayaran Iuran, Pendidikan, Madrasah Ibtidaiyah, Manajemen Keuangan, Desain Responsif, UI Modern, Aplikasi Web, Sistem Administrasi, Pembayaran Mudah, Pengelolaan Iuran, Formulir Pembayaran, Pembayaran Online, Solusi Keuangan Madrasah" />
+        content="SIDESA APK, Inspektorat Kabupaten Probolinggo, Monev Kegiatan Desa, Monitoring Evaluasi, Pelaporan Desa, Sistem Monev, Digitalisasi Pemerintahan, Transparansi, Kraksaan, Jawa Timur, Aplikasi Web, Laporan Digital, Pelaporan Online" />
 
     <!-- Deskripsi Halaman -->
     <meta name="description"
-        content="Aplikasi Pembayaran Iuran untuk Madrasah Ibtidaiyah Ihyauddiniyah di Desa Kecik Besuk Probolinggo. Aplikasi ini memudahkan proses pembayaran iuran, melacak transaksi keuangan, dan mengelola administrasi dengan desain responsif dan fitur yang user-friendly." />
+        content="SIDESA APK adalah sistem monitoring dan evaluasi (monev) milik Inspektorat Kabupaten Probolinggo untuk mendukung pelaporan, pengawasan, dan evaluasi kegiatan desa secara digital dan efisien." />
 
     <!-- Metadata Open Graph -->
-    <meta property="og:title"
-        content="Aplikasi Pembayaran Iuran Madrasah Ibtidaiyah Ihyauddiniyah Desa Kecik Besuk Probolinggo" />
-    <meta property="og:description"
-        content="Aplikasi Pembayaran Iuran untuk Madrasah Ibtidaiyah Ihyauddiniyah di Desa Kecik Besuk Probolinggo. Aplikasi ini memudahkan proses pembayaran iuran, melacak transaksi keuangan, dan mengelola administrasi dengan desain responsif dan fitur yang user-friendly." />
-    <meta property="og:image" content="{{ asset('template/social-image.png') }}" />
+    <meta property="og:title" content="SIDESA APK - Inspektorat Kabupaten Probolinggo" />
+    <meta property="og:description" content="SIDESA APK adalah sistem monev milik Inspektorat Kabupaten Probolinggo untuk mendukung pelaporan dan evaluasi kegiatan desa secara transparan dan efisien." />
+    <meta property="og:image" content="{{ asset('templates/administration/images/Logo_Kabupaten_Probolinggo.svg') }}" />
 
     <!-- Twitter Card Metadata -->
-    <meta name="twitter:title"
-        content="Aplikasi Pembayaran Iuran Madrasah Ibtidaiyah Ihyauddiniyah Desa Kecik Besuk Probolinggo" />
-    <meta name="twitter:description"
-        content="Aplikasi Pembayaran Iuran untuk Madrasah Ibtidaiyah Ihyauddiniyah di Desa Kecik Besuk Probolinggo. Aplikasi ini memudahkan proses pembayaran iuran, melacak transaksi keuangan, dan mengelola administrasi dengan desain responsif dan fitur yang user-friendly." />
-    <meta name="twitter:image" content="{{ asset('template/social-image.png') }}" />
+    <meta name="twitter:title" content="SIDESA APK - Inspektorat Kabupaten Probolinggo" />
+    <meta name="twitter:description" content="SIDESA APK adalah sistem monev milik Inspektorat Kabupaten Probolinggo untuk mendukung pelaporan dan evaluasi kegiatan desa secara transparan dan efisien." />
+    <meta name="twitter:image" content="{{ asset('templates/administration/images/Logo_Kabupaten_Probolinggo.svg') }}" />
     <meta name="twitter:card" content="summary_large_image" />
     <!-- Meta end -->
 
@@ -48,7 +44,7 @@
 
     <!-- Favicon -->
     <link rel="icon" type="image/png" sizes="16x16"
-        href="{{ asset('templates/administration/images/logo_mi.png') }}" />
+        href="{{ asset('templates/administration/images/Logo_Kabupaten_Probolinggo.svg') }}" />
     @yield('this-page-style') <!-- Menyertakan Style
         tambahan dari halaman -->
 
@@ -69,11 +65,11 @@
             <div class="login-container p-4 p-md-5 rounded shadow-lg w-100"
                 style="background-color: rgba(255, 255, 255, 0.92); max-width: 420px;">
                 <div class="text-center mb-4">
-                    <h3 class="fw-bold">Selamat Datang Kembali</h3>
-                    <p class="text-muted small">Masukkan email/username dan kata sandi Anda untuk masuk ke sistem.</p>
+                    <h3 class="fw-bold">Selamat Datang di SIDESA APK</h3>
+                    <p class="text-muted small">Masukkan email/username dan kata sandi Anda untuk masuk ke SIDESA APK — Sistem Monev Kegiatan Desa.</p>
                 </div>
 
-                <h6 class="text-center mb-3"><span class="border-bottom pb-1">Login</span></h6>
+                <h6 class="text-center mb-3"><span class="border-bottom pb-1">Masuk ke SIDESA APK</span></h6>
 
                 <!-- Throttle Timer -->
                 <div class="alert alert-warning d-none" id="throttle-timer" role="alert">

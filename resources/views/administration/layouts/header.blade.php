@@ -1,7 +1,7 @@
  <!-- Nav header start -->
  <div class="nav-header">
      <!-- Brand logo with different images for various screen sizes -->
-     <a href="index.html" class="brand-logo">
+     <a href="/" class="brand-logo">
          <!-- Logo for abbreviated view (e.g., mobile) -->
          <!-- <img class="logo-abbr" src="images/logo.png" alt="" /> -->
          <img class="logo-abbr" src="{{ asset('templates/administration/images/Logo_Kabupaten_Probolinggo.svg') }}"

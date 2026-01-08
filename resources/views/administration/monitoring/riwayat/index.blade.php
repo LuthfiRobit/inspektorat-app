@@ -134,7 +134,7 @@
                         </div>
 
                         <!-- Catatan Tambahan -->
-                        <div class="alert alert-light border mt-3">
+                        {{-- <div class="alert alert-light border mt-3">
                             <strong>Catatan:</strong>
                             <ul class="mb-0 mt-2">
                                 <li>Gunakan filter di atas untuk menyaring laporan berdasarkan tahun, periode, desa, atau
@@ -144,7 +144,7 @@
                                 <li>Data pada halaman ini bersifat historis dan digunakan untuk pemantauan perkembangan
                                     kegiatan desa.</li>
                             </ul>
-                        </div>
+                        </div> --}}
 
                         <!-- Deskripsi Halaman -->
                         <div class="alert alert-primary mb-4">

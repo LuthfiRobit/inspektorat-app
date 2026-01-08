@@ -135,31 +135,29 @@
                             <li><a href="{{ route('administrator.monev.review.index') }}" class="fs-6">Review
                                     Laporan</a></li>
                         @endif
-                    </ul>
-                </li>
-            @endif
 
-            <!-- Monitoring & Evaluasi -->
-            @if ($user->hasAnyPermission(['administrator.monitoring.riwayat.index']))
-                <li>
-                    <a class="has-arrow ai-icon" href="javascript:void(0);" aria-expanded="false">
-                        <i class="fas fa-chart-line fw-bold"></i>
-                        <span class="nav-text">Monitoring</span>
-                    </a>
-                    <ul aria-expanded="false">
                         @if ($user->hasPermissionTo('administrator.monitoring.riwayat.index'))
                             <li><a href="{{ route('administrator.monitoring.riwayat.index') }}" class="fs-6">Riwayat
                                     Laporan</a></li>
                         @endif
+                    </ul>
+                </li>
+            @endif
 
-                        {{-- Contoh menu tanpa permission check --}}
-                        {{-- <li><a href="#" class="fs-6">Keterlambatan</a></li> --}}
-                        {{-- <li><a href="#" class="fs-6">Scoring Desa</a></li> --}}
-                        <!-- Wilayah -->
-                        <li class="nav-label mt-2 text-uppercase small text-muted px-2">Scoring</li>
-
-                        <li><a href="{{ route('administrator.monitoring.scoring.desa.index') }}" class="fs-6">Desa</a></li>
-                        <li><a href="{{ route('administrator.monitoring.scoring.kecamatan.index') }}" class="fs-6">Kecamatan</a></li>
+            <!-- Scoring -->
+            @if ($user->hasAnyPermission(['administrator.monitoring.scoring.desa.index', 'administrator.monitoring.scoring.kecamatan.index']))
+                <li>
+                    <a class="has-arrow ai-icon" href="javascript:void(0);" aria-expanded="false">
+                        <i class="fas fa-award fw-bold"></i>
+                        <span class="nav-text">Scoring</span>
+                    </a>
+                    <ul aria-expanded="false">
+                        @if ($user->hasPermissionTo('administrator.monitoring.scoring.desa.index'))
+                            <li><a href="{{ route('administrator.monitoring.scoring.desa.index') }}" class="fs-6">Desa</a></li>
+                        @endif
+                        @if ($user->hasPermissionTo('administrator.monitoring.scoring.kecamatan.index'))
+                            <li><a href="{{ route('administrator.monitoring.scoring.kecamatan.index') }}" class="fs-6">Kecamatan</a></li>
+                        @endif
                     </ul>
                 </li>
             @endif
@@ -216,7 +214,7 @@
 
         <!-- Footer with copyright information -->
         <div class="copyright">
-            <p><strong>Payment App</strong> © <span class="current-year"></span> All Rights Reserved</p>
+            <p><strong>SIDESA APK</strong> © <span class="current-year"></span> All Rights Reserved</p>
             <p>Developed by <a href="#" target="_blank">FAKULTAS TEKNIK UNUJA</a></p>
         </div>
     </div>

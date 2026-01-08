@@ -4,7 +4,7 @@
 <head>
     <!-- Judul Halaman -->
     <title>
-        Aplikasi Monitoring dan Evaluasi - Inspektorat Daerah Kabupaten Probolinggo
+        SIDESA APK - Inspektorat Kabupaten Probolinggo
     </title>
 
     <meta name="csrf-token" content="{{ csrf_token() }}">
@@ -15,29 +15,29 @@
     <!-- Mode Rendering -->
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
     <!-- Penulis Halaman -->
-    <meta name="author" content="Inspektorat Daerah Kabupaten Probolinggo" />
+    <meta name="author" content="Inspektorat Kabupaten Probolinggo" />
     <!-- Pengindeksan Mesin Pencari -->
     <meta name="robots" content="index, follow" />
 
     <!-- Kata Kunci SEO -->
     <meta name="keywords"
-        content="Inspektorat Probolinggo, Monitoring Evaluasi, Aplikasi Pemerintahan, Kabupaten Probolinggo, Sistem Administrasi, Evaluasi Kinerja, Pemerintahan Daerah, Transparansi, Kraksaan, Jawa Timur, Aplikasi Web, Sistem Monev, Inspektorat Daerah, Digitalisasi Pemerintahan, Manajemen Data, Laporan Digital, Pelaporan Online" />
+        content="SIDESA APK, Inspektorat Kabupaten Probolinggo, Monev Kegiatan Desa, Monitoring Evaluasi, Pelaporan Desa, Kabupaten Probolinggo, Sistem Monev, Digitalisasi Pemerintahan, Transparansi, Kraksaan, Jawa Timur, Aplikasi Web, Laporan Digital, Pelaporan Online" />
 
     <!-- Deskripsi Halaman -->
     <meta name="description"
-        content="Aplikasi Monitoring dan Evaluasi milik Inspektorat Daerah Kabupaten Probolinggo yang berlokasi di Jl. Raya Panglima Sudirman No.40, Kraksaan, Probolinggo, Jawa Timur. Sistem ini membantu pelaporan, evaluasi, dan pengawasan kegiatan pemerintahan secara digital dan efisien." />
+        content="SIDESA APK adalah sistem monitoring dan evaluasi (monev) milik Inspektorat Kabupaten Probolinggo untuk mendukung pelaporan, pengawasan, dan evaluasi kegiatan desa secara digital dan efisien." />
 
     <!-- Metadata Open Graph -->
-    <meta property="og:title" content="Aplikasi Monitoring dan Evaluasi - Inspektorat Daerah Kabupaten Probolinggo" />
+    <meta property="og:title" content="SIDESA APK - Inspektorat Kabupaten Probolinggo" />
     <meta property="og:description"
-        content="Sistem Monev berbasis web untuk Inspektorat Daerah Kabupaten Probolinggo. Mendukung pelaporan dan evaluasi program pemerintahan secara transparan dan efisien." />
-    <meta property="og:image" content="{{ asset('templates/administration/social-image.png') }}" />
+        content="SIDESA APK adalah sistem monev berbasis web milik Inspektorat Kabupaten Probolinggo untuk mendukung pelaporan dan evaluasi kegiatan desa secara transparan dan efisien." />
+    <meta property="og:image" content="{{ asset('templates/administration/images/Logo_Kabupaten_Probolinggo.svg') }}" />
 
     <!-- Twitter Card Metadata -->
-    <meta name="twitter:title" content="Aplikasi Monitoring dan Evaluasi - Inspektorat Daerah Kabupaten Probolinggo" />
+    <meta name="twitter:title" content="SIDESA APK - Inspektorat Kabupaten Probolinggo" />
     <meta name="twitter:description"
-        content="Sistem Monev berbasis web untuk Inspektorat Daerah Kabupaten Probolinggo. Mendukung pelaporan dan evaluasi program pemerintahan secara transparan dan efisien." />
-    <meta name="twitter:image" content="{{ asset('templates/administration/social-image.png') }}" />
+        content="SIDESA APK adalah sistem monev berbasis web milik Inspektorat Kabupaten Probolinggo untuk mendukung pelaporan dan evaluasi kegiatan desa secara transparan dan efisien." />
+    <meta name="twitter:image" content="{{ asset('templates/administration/images/Logo_Kabupaten_Probolinggo.svg') }}" />
     <meta name="twitter:card" content="summary_large_image" />
     <!-- Meta end -->
 
@@ -47,7 +47,7 @@
 
     <!-- Favicon -->
     <link rel="icon" type="image/png" sizes="16x16"
-        href="{{ asset('templates/administration/images/logo_mi.png') }}" />
+        href="{{ asset('templates/administration/images/Logo_Kabupaten_Probolinggo.svg') }}" />
 
     @yield('this-page-style') <!-- Menyertakan Style tambahan dari halaman -->
     @include('administration.layouts.style')
