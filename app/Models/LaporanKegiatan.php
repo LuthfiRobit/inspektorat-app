@@ -105,6 +105,14 @@ class LaporanKegiatan extends Model
     }
 
     /**
+     * Get the jawaban pertanyaan for the LaporanKegiatan.
+     */
+    public function jawaban_pertanyaan(): HasMany
+    {
+        return $this->hasMany(JawabanPertanyaan::class, 'laporan_id', 'id_laporan');
+    }
+
+    /**
      * Get laporan kegiatan with relationships for detail view
      *
      * @param int $id
