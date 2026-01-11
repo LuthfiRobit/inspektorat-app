@@ -21,7 +21,7 @@ class LaporanController extends Controller
      * @param TransactionService $transactionService
      * @param LogActivityService $logActivityService
      */
-    public function __construct(ResponseService $responseService, TransactionService $transactionService,  LogActivityService $logActivityService)
+    public function __construct(ResponseService $responseService, TransactionService $transactionService, LogActivityService $logActivityService)
     {
         $this->responseService = $responseService;
         $this->transactionService = $transactionService;
@@ -123,7 +123,7 @@ class LaporanController extends Controller
      */
     public function list(Request $request)
     {
-        Auth::loginUsingId(3); // atau Auth::login(User::find(1));
+        // Auth::loginUsingId(3); // atau Auth::login(User::find(1));
 
         $user = Auth::user();
 
