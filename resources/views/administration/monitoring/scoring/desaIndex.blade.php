@@ -30,6 +30,17 @@
                     </div>
 
                     <div class="card-body">
+                        <!-- Alert Peringkat User (Hidden by Default) -->
+                        <div id="userRankingAlert" class="alert alert-info d-none mb-4 fade show" role="alert">
+                            <div class="d-flex align-items-center">
+                                <i class="fa fa-trophy fs-3 me-3"></i>
+                                <div>
+                                    <h5 class="alert-heading fw-bold mb-1">Informasi Peringkat</h5>
+                                    <p class="mb-0" id="userRankingText">Memuat peringkat...</p>
+                                </div>
+                            </div>
+                        </div>
+
                         <!-- Filter Section -->
                         <div class="row g-3 mb-4 align-items-end">
 
@@ -102,15 +113,14 @@
                                         {{-- <th style="width: 8%;" class="text-start align-middle">Tahun</th> --}}
                                         <th width="5%" class="text-center align-middle">Aksi</th>
                                         <th width="15%" class="text-center align-middle">Desa</th>
-                                        <th width="15%" class="text-center align-middle">Kecamatan</th>
-                                        <th width="8%" class="text-center align-middle">Peringkat</th>
-                                        <th width="8%" class="text-center align-middle">Jumlah Kegiatan</th>
-                                        <th width="8%" class="text-center align-middle">Kegiatan Terlapor</th>
-                                        <th width="10%" class="text-center align-middle">Persentase Kegiatan</th>
-                                        <th width="8%" class="text-center align-middle">Kewajiban Dokumen</th>
-                                        <th width="8%" class="text-center align-middle">Dokumen Approve</th>
-                                        <th width="10%" class="text-center align-middle">Persentase Dokumen</th>
+                                        <th width="12%" class="text-center align-middle">Kecamatan</th>
+                                        <th width="5%" class="text-center align-middle">Peringk</th>
                                         <th width="8%" class="text-center align-middle">Total Skor</th>
+                                        <th width="10%" class="text-center align-middle">Waktu Submit</th>
+                                        <th width="8%" class="text-center align-middle">Kegiatan Terlapor</th>
+                                        <th width="8%" class="text-center align-middle">Belum Terlapor</th>
+                                        <th width="8%" class="text-center align-middle">Dok. Wajib</th>
+                                        <th width="8%" class="text-center align-middle">Dok. Tambahan</th>
                                     </tr>
                                 </thead>
                                 <tbody class="text-gray-800 fw-bolder fs-sm-8 fs-lg-6">
@@ -138,17 +148,59 @@
                         </div>
 
                         <!-- Deskripsi Halaman -->
+                        <!-- Deskripsi Halaman & Aturan Scoring -->
                         <div class="alert alert-primary mb-4">
-                            <strong>Tentang Halaman Ini:</strong>
-                            <ul class="mb-0 mt-2">
-                                <li>Halaman ini merupakan bagian dari <strong>Monitoring</strong> dengan sub-menu
-                                    <strong>Riwayat Scoring Desa</strong>.
-                                </li>
-                                <li>Digunakan untuk melihat daftar laporan scoring desa yang telah dibuat oleh desa di
-                                    wilayah kecamatan Anda.</li>
-                            </ul>
+                            <div class="d-flex align-items-start gap-3">
+                                <i class="fa fa-info-circle fs-3 mt-1"></i>
+                                <div>
+                                    <h5 class="alert-heading fw-bold mb-2">Informasi & Aturan Penilaian (Scoring)</h5>
+                                    <p class="mb-2">Halaman ini menampilkan peringkat kinerja desa berdasarkan ketepatan waktu dan kelengkapan administrasi.</p>
+                                    
+                                    <div class="row mt-3">
+                                        <div class="col-md-6">
+                                            <strong><i class="fa fa-calculator me-1"></i> Mekanisme Poin Ketepatan Waktu:</strong>
+                                            <ul class="mb-2 ps-3 small">
+                                                <li><strong>Tepat Waktu:</strong> Mendapatkan poin penuh <strong>1.0</strong>.</li>
+                                                <li><strong>Terlambat:</strong> Dikurangi <strong>0.1 poin</strong> untuk setiap hari keterlambatan.</li>
+                                                <li>Skor minimal untuk setiap kegiatan adalah 0.</li>
+                                            </ul>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <strong><i class="fa fa-trophy me-1"></i> Kriteria Pemeringkatan (Ranking):</strong>
+                                            <ol class="mb-0 ps-3 small">
+                                                <li><strong>Total Skor</strong> tertinggi.</li>
+                                                <li><strong>Waktu Submit</strong> tercepat (jika skor seri).</li>
+                                                <li><strong>Jumlah Dokumen Wajib</strong> yang disetujui terbanyak.</li>
+                                                <li><strong>Jumlah Dokumen Tambahan</strong> yang disetujui terbanyak.</li>
+                                            </ol>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- Modal Detail Scoring -->
+    <div class="modal fade" id="modalDetailScoring" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-xl">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Detail Scoring Desa</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body" id="modalDetailContent">
+                    <div class="text-center py-5">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                        <p class="mt-2 text-muted">Memuat data...</p>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Tutup</button>
                 </div>
             </div>
         </div>

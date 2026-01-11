@@ -31,6 +31,17 @@
                     </div>
 
                     <div class="card-body">
+                        <!-- Alert Peringkat Kecamatan (Hidden by Default) -->
+                        <div id="kecamatanRankingAlert" class="alert alert-info d-none mb-4 fade show" role="alert">
+                            <div class="d-flex align-items-center">
+                                <i class="fa fa-trophy fs-3 me-3"></i>
+                                <div>
+                                    <h5 class="alert-heading fw-bold mb-1">Informasi Peringkat</h5>
+                                    <p class="mb-0" id="kecamatanRankingText">Memuat peringkat...</p>
+                                </div>
+                            </div>
+                        </div>
+
                         <!-- Filter Section -->
                         <div class="row g-3 mb-4 align-items-end">
 
@@ -91,16 +102,14 @@
                                     <tr class="text-center text-muted text-uppercase">
                                         <th width="5%" class="text-center align-middle">Aksi</th>
                                         <th width="20%" class="text-center align-middle">Kecamatan</th>
-                                        <th width="8%" class="text-center align-middle">Jumlah Desa</th>
+                                        <th width="8%" class="text-center align-middle">Jml Desa</th>
                                         <th width="8%" class="text-center align-middle">Peringkat</th>
-                                        <th width="8%" class="text-center align-middle">Jumlah Kegiatan</th>
-                                        <th width="8%" class="text-center align-middle">Kegiatan Terlapor</th>
-                                        <th width="10%" class="text-center align-middle">Persentase Kegiatan</th>
-                                        <th width="8%" class="text-center align-middle">Kewajiban Dokumen</th>
-                                        <th width="8%" class="text-center align-middle">Dokumen Approve</th>
-                                        <th width="10%" class="text-center align-middle">Persentase Dokumen</th>
-                                        <th width="8%" class="text-center align-middle">Rata Kegiatan/Desa</th>
-                                        <th width="8%" class="text-center align-middle">Total Skor</th>
+                                        <th width="10%" class="text-center align-middle">Total Skor</th>
+                                        <th width="10%" class="text-center align-middle">Rata Skor/Desa</th>
+                                        <th width="10%" class="text-center align-middle">Terlapor (Total)</th>
+                                        <th width="10%" class="text-center align-middle">Belum (Total)</th>
+                                        {{-- <th width="10%" class="text-center align-middle">Persentase Kegiatan</th>
+                                        <th width="10%" class="text-center align-middle">Persentase Dokumen</th> --}}
                                     </tr>
                                 </thead>
                                 <tbody class="text-gray-800 fw-bolder fs-sm-8 fs-lg-6">
@@ -128,18 +137,80 @@
                         </div>
 
                         <!-- Deskripsi Halaman -->
+                        <!-- Deskripsi Halaman & Aturan Scoring -->
                         <div class="alert alert-primary mb-4">
-                            <strong>Tentang Halaman Ini:</strong>
-                            <ul class="mb-0 mt-2">
-                                <li>Halaman ini merupakan bagian dari <strong>Monitoring</strong> dengan sub-menu
-                                    <strong>Informasi Scoring Kecamatan</strong>.
-                                </li>
-                                <li>Digunakan untuk menampilkan dan memantau informasi scoring kecamatan berdasarkan
-                                    agregasi data dari seluruh desa di wilayah kecamatan, mencakup nilai skor dokumen,
-                                    jumlah kegiatan, dan status pelaporan.</li>
-                            </ul>
+                            <div class="d-flex align-items-start gap-3">
+                                <i class="fa fa-info-circle fs-3 mt-1"></i>
+                                <div>
+                                    <h5 class="alert-heading fw-bold mb-2">Informasi Scoring Kecamatan</h5>
+                                    <p class="mb-2">Halaman ini menampilkan rekapitulasi kinerja kecamatan berdasarkan agregasi nilai dari seluruh desa.</p>
+                                    
+                                    <div class="row mt-3">
+                                        <div class="col-md-6">
+                                            <strong><i class="fa fa-calculator me-1"></i> Mekanisme Penilaian:</strong>
+                                            <ul class="mb-2 ps-3 small">
+                                                <li><strong>Total Skor:</strong> Merupakan akumulasi (penjumlahan) dari total skor seluruh desa di wilayah kecamatan.</li>
+                                                <li><strong>Rata-rata Skor:</strong> Total Skor dibagi dengan jumlah desa yang aktif.</li>
+                                            </ul>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <strong><i class="fa fa-trophy me-1"></i> Pemeringkatan:</strong>
+                                            <ul class="mb-0 ps-3 small">
+                                                <li>Urutan peringkat kecamatan ditentukan berdasarkan <strong>Total Skor tertinggi</strong>.</li>
+                                                <li>Semakin banyak desa yang tertib administrasi dan tepat waktu, semakin tinggi skor kecamatan.</li>
+                                            </ul>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- Modal Detail Scoring Kecamatan -->
+    <div class="modal fade" id="modalDetailKecamatan" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-xl">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Detail Scoring Kecamatan</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body" id="modalDetailKecamatanContent">
+                    <div class="text-center py-5">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                        <p class="mt-2 text-muted">Memuat data...</p>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Tutup</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Reuse Desa Detail Modal (Nested or Separate) -->
+    <!-- We need this because the detail-kecamatan view has a button to open Desa Detail -->
+    <div class="modal fade" id="modalDetailScoring" tabindex="-1" aria-hidden="true" style="z-index: 1060;"> <!-- Higher Z-Index for nested -->
+        <div class="modal-dialog modal-xl">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Detail Scoring Desa</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body" id="modalDetailContent">
+                    <div class="text-center py-5">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                        <p class="mt-2 text-muted">Memuat data...</p>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Tutup</button>
                 </div>
             </div>
         </div>
