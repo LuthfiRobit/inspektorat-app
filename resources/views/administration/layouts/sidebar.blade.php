@@ -119,7 +119,7 @@
             @endif
 
             <!-- Pelaporan (Monev) -->
-            @if ($user->hasAnyPermission(['administrator.monev.laporan.index', 'administrator.monev.review.index']))
+            @if ($user->hasAnyPermission(['administrator.monev.laporan.index', 'administrator.monev.review.index','administrator.monitoring.riwayat.index']))
                 <li>
                     <a class="has-arrow ai-icon" href="javascript:void(0);" aria-expanded="false">
                         <i class="fas fa-file-alt fw-bold"></i>
