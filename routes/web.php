@@ -198,11 +198,13 @@ Route::middleware(['auth', 'checkPermission'])->prefix('administrator')->name('a
             Route::prefix('desa')->name('desa.')->group(function () {
                 Route::get('/', [ScoringDesaController::class, 'index'])->name('index');
                 Route::get('/list', [ScoringDesaController::class, 'list'])->name('list');
+                Route::get('/detail/{id}', [ScoringDesaController::class, 'detail'])->name('detail');
             });
 
             Route::prefix('kecamatan')->name('kecamatan.')->group(function () {
                 Route::get('/', [ScoringKecamatanController::class, 'index'])->name('index');
                 Route::get('/list', [ScoringKecamatanController::class, 'list'])->name('list');
+                Route::get('/detail/{id}', [ScoringKecamatanController::class, 'detail'])->name('detail');
             });
         });
     });
