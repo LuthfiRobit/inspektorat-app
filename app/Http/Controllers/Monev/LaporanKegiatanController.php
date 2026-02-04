@@ -136,7 +136,9 @@ class LaporanKegiatanController extends Controller
         $data = $this->laporanRepository->getDetail(
             $request->desa_id,
             $request->kegiatan_id,
-            $request->laporan_id
+            $request->laporan_id,
+            $request->bulan, // New Param
+            $request->tahun  // New Param
         );
 
         $this->logActivityService->log('Viewed Detail Laporan');

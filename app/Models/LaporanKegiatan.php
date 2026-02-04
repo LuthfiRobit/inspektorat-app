@@ -317,6 +317,19 @@ class LaporanKegiatan extends Model
      * @param array $filters
      * @return \Illuminate\Support\Collection
      */
+    /**
+     * Retrieve all kegiatan that need to be reported by desa under user's kecamatan
+     * 
+     * Urutan prioritas: 
+     * 1. Revision (perlu revisi segera)
+     * 2. Draft (sedang dikerjakan) 
+     * 3. Belum dilaporkan (tenggat waktu terdekat)
+     * 4. Rejected (ditolak)
+     *
+     * @param mixed $user
+     * @param array $filters
+     * @return \Illuminate\Support\Collection
+     */
     public static function getListForUser($user, array $filters = [])
     {
         // Step 1: Get all desa under user's jurisdiction
@@ -348,6 +361,10 @@ class LaporanKegiatan extends Model
                 'k.tanggal_mulai',
                 'k.tanggal_selesai',
                 'k.bulan',
+                // New Columns for Recurring Logic
+                'k.frekuensi_pelaporan',
+                'k.bulan_mulai',
+                'k.bulan_selesai',
                 'k.batas_akhir_upload',
                 'jk.nama_jenis as jenis_kegiatan',
                 'ta.tahun as tahun_anggaran'
@@ -364,19 +381,20 @@ class LaporanKegiatan extends Model
 
         $kegiatanList = $kegiatanQuery->get();
 
-        // NORMALIZE DATA TYPES - PERBAIKAN UTAMA
+        // NORMALIZE DATA TYPES
         $kegiatanList = $kegiatanList->map(function ($kegiatan) {
-            // Cast semua nilai numerik ke tipe data yang tepat
             $kegiatan->id_kegiatan = (int) $kegiatan->id_kegiatan;
             $kegiatan->tahun_anggaran = (int) $kegiatan->tahun_anggaran;
-            $kegiatan->bulan = (int) $kegiatan->bulan;
+            $kegiatan->bulan = (int) $kegiatan->bulan; // Base month from master
             $kegiatan->batas_akhir_upload = (int) $kegiatan->batas_akhir_upload;
-            $kegiatan->tanggal_selesai = $kegiatan->tanggal_selesai
-                ? (int) $kegiatan->tanggal_selesai
-                : null;
-            $kegiatan->tanggal_mulai = $kegiatan->tanggal_mulai
-                ? (int) $kegiatan->tanggal_mulai
-                : null;
+
+            // Normalize Recurring Fields
+            $kegiatan->frekuensi_pelaporan = $kegiatan->frekuensi_pelaporan ? (int) $kegiatan->frekuensi_pelaporan : null;
+            $kegiatan->bulan_mulai = $kegiatan->bulan_mulai ? (int) $kegiatan->bulan_mulai : null;
+            $kegiatan->bulan_selesai = $kegiatan->bulan_selesai ? (int) $kegiatan->bulan_selesai : null;
+
+            $kegiatan->tanggal_selesai = $kegiatan->tanggal_selesai ? (int) $kegiatan->tanggal_selesai : null;
+            $kegiatan->tanggal_mulai = $kegiatan->tanggal_mulai ? (int) $kegiatan->tanggal_mulai : null;
 
             return $kegiatan;
         });
@@ -386,75 +404,94 @@ class LaporanKegiatan extends Model
 
         foreach ($desaList as $desa) {
             foreach ($kegiatanList as $kegiatan) {
-                // Get existing laporan if any
-                $existingLaporan = DB::table('laporan_kegiatan as lk')
-                    ->where('lk.desa_id', $desa->id_desa)
-                    ->where('lk.kegiatan_id', $kegiatan->id_kegiatan)
-                    ->first();
 
-                // Calculate tanggal_target dengan error handling
-                try {
-                    $tanggalTarget = self::calculateTanggalTargetFromKegiatan($kegiatan, $kegiatan->tahun_anggaran, $kegiatan->bulan);
-                } catch (\Exception $e) {
-                    Log::warning('Failed to calculate tanggal_target', [
-                        'desa_id' => $desa->id_desa,
-                        'kegiatan_id' => $kegiatan->id_kegiatan,
-                        'tahun' => $kegiatan->tahun_anggaran,
-                        'bulan' => $kegiatan->bulan,
-                        'batas_akhir_upload' => $kegiatan->batas_akhir_upload,
-                        'error' => $e->getMessage()
-                    ]);
-                    $tanggalTarget = null;
-                }
+                // --- Determine Target Months based on Frequency ---
+                $targetMonths = [];
+                if ($kegiatan->frekuensi_pelaporan) {
+                    // Rutin: Generate sequence
+                    $startMonth = $kegiatan->bulan_mulai ?? 1;
+                    $endMonth = $kegiatan->bulan_selesai ?? 12;
+                    $step = $kegiatan->frekuensi_pelaporan;
 
-                // Prepare the record
-                $record = [
-                    'id_laporan' => $existingLaporan->id_laporan ?? null,
-                    'desa_id' => (int) $desa->id_desa,
-                    'kegiatan_id' => $kegiatan->id_kegiatan,
-                    'tahun' => $kegiatan->tahun_anggaran,
-                    'bulan' => $kegiatan->bulan,
-                    'status' => $existingLaporan->status ?? 'belum_dilaporkan',
-                    'tanggal_target' => $existingLaporan->tanggal_target ?? ($tanggalTarget ? $tanggalTarget->format('Y-m-d') : null),
-                    'tanggal_submit' => $existingLaporan->tanggal_submit ?? null,
-                    'tanggal_approve' => $existingLaporan->tanggal_approve ?? null,
-                    'nama_desa' => $desa->nama_desa,
-                    'kode_desa' => $desa->kode_desa,
-                    'nama_kecamatan' => $desa->nama_kecamatan,
-                    'nama_kegiatan' => $kegiatan->nama_kegiatan,
-                    'kode_kegiatan' => $kegiatan->kode_kegiatan,
-                    'tanggal_mulai' => $kegiatan->tanggal_mulai,
-                    'tanggal_selesai' => $kegiatan->tanggal_selesai,
-                    'batas_akhir_upload' => $kegiatan->batas_akhir_upload,
-                    'jenis_kegiatan' => $kegiatan->jenis_kegiatan,
-                    'tahun_anggaran' => $kegiatan->tahun_anggaran,
-                ];
-
-                // Add display fields dengan validasi tambahan
-                $record['status_display'] = self::getStatusDisplayForUser($record['status']);
-                $record['status_class'] = self::getStatusClass($record['status']);
-                $record['timeline_status'] = self::calculateTimelineStatus($record);
-
-                // Pastikan tanggal_target valid sebelum menghitung days_until_deadline
-                if ($tanggalTarget && $tanggalTarget instanceof Carbon) {
-                    try {
-                        $record['days_until_deadline'] = $tanggalTarget->diffInDays(now(), false);
-                    } catch (\Exception $e) {
-                        Log::warning('Failed to calculate days_until_deadline', [
-                            'desa_id' => $desa->id_desa,
-                            'kegiatan_id' => $kegiatan->id_kegiatan,
-                            'tanggal_target' => $tanggalTarget,
-                            'error' => $e->getMessage()
-                        ]);
-                        $record['days_until_deadline'] = 0;
+                    for ($m = $startMonth; $m <= $endMonth; $m += $step) {
+                        $targetMonths[] = $m;
                     }
                 } else {
-                    $record['days_until_deadline'] = 0;
+                    // Insidentil: Single month
+                    $targetMonths[] = $kegiatan->bulan;
                 }
 
-                $record['priority_order'] = self::getPriorityOrderForUser($record['status']);
+                // --- Iterate through each target month ---
+                foreach ($targetMonths as $targetBulan) {
+                    // Filter month if provided
+                    if (!empty($filters['filter_periode']) && $targetBulan != $filters['filter_periode']) {
+                        continue;
+                    }
 
-                $result->push($record);
+                    // Get existing laporan specifically for this month/year
+                    $existingLaporan = DB::table('laporan_kegiatan as lk')
+                        ->where('lk.desa_id', $desa->id_desa)
+                        ->where('lk.kegiatan_id', $kegiatan->id_kegiatan)
+                        ->where('lk.bulan', $targetBulan)
+                        ->where('lk.tahun', $kegiatan->tahun_anggaran)
+                        ->first();
+
+                    // Calculate tanggal_target
+                    try {
+                        $tanggalTarget = self::calculateTanggalTargetFromKegiatan($kegiatan, $kegiatan->tahun_anggaran, $targetBulan);
+                    } catch (\Exception $e) {
+                        Log::warning('Failed to calculate tanggal_target', [
+                            'desa_id' => $desa->id_desa,
+                            'kegiatan_id' => $kegiatan->id_kegiatan,
+                            'bulan' => $targetBulan,
+                            'error' => $e->getMessage()
+                        ]);
+                        $tanggalTarget = null;
+                    }
+
+                    // Prepare the record
+                    $record = [
+                        'id_laporan' => $existingLaporan->id_laporan ?? null,
+                        'desa_id' => (int) $desa->id_desa,
+                        'kegiatan_id' => $kegiatan->id_kegiatan,
+                        'tahun' => $kegiatan->tahun_anggaran,
+                        'bulan' => $targetBulan, // Use the expanded target month
+                        'status' => $existingLaporan->status ?? 'belum_dilaporkan',
+                        'tanggal_target' => $existingLaporan->tanggal_target ?? ($tanggalTarget ? $tanggalTarget->format('Y-m-d') : null),
+                        'tanggal_submit' => $existingLaporan->tanggal_submit ?? null,
+                        'tanggal_approve' => $existingLaporan->tanggal_approve ?? null,
+                        'nama_desa' => $desa->nama_desa,
+                        'kode_desa' => $desa->kode_desa,
+                        'nama_kecamatan' => $desa->nama_kecamatan,
+                        'nama_kegiatan' => $kegiatan->nama_kegiatan,
+                        'kode_kegiatan' => $kegiatan->kode_kegiatan,
+                        'tanggal_mulai' => $kegiatan->tanggal_mulai,
+                        'tanggal_selesai' => $kegiatan->tanggal_selesai,
+                        'batas_akhir_upload' => $kegiatan->batas_akhir_upload,
+                        'jenis_kegiatan' => $kegiatan->jenis_kegiatan,
+                        'tahun_anggaran' => $kegiatan->tahun_anggaran,
+                        'frekuensi_pelaporan' => $kegiatan->frekuensi_pelaporan, // Add info
+                    ];
+
+                    // Add display fields
+                    $record['status_display'] = self::getStatusDisplayForUser($record['status']);
+                    $record['status_class'] = self::getStatusClass($record['status']);
+                    $record['timeline_status'] = self::calculateTimelineStatus($record);
+
+                    if ($tanggalTarget && $tanggalTarget instanceof Carbon) {
+                        try {
+                            $record['days_until_deadline'] = $tanggalTarget->diffInDays(now(), false);
+                        } catch (\Exception $e) {
+                            $record['days_until_deadline'] = 0;
+                        }
+                    } else {
+                        $record['days_until_deadline'] = 0;
+                    }
+
+                    $record['priority_order'] = self::getPriorityOrderForUser($record['status']);
+
+                    $result->push($record);
+                }
             }
         }
 
@@ -503,6 +540,10 @@ class LaporanKegiatan extends Model
                 'k.tanggal_mulai',
                 'k.tanggal_selesai',
                 'k.bulan',
+                // New Columns
+                'k.frekuensi_pelaporan',
+                'k.bulan_mulai',
+                'k.bulan_selesai',
                 'k.batas_akhir_upload',
                 'jk.nama_jenis as jenis_kegiatan',
                 'ta.tahun as tahun_anggaran'
@@ -519,57 +560,89 @@ class LaporanKegiatan extends Model
 
         $kegiatanList = $kegiatanQuery->get();
 
+        // Normalize Recurring Fields
+        $kegiatanList->transform(function ($k) {
+            $k->id_kegiatan = (int) $k->id_kegiatan;
+            $k->frekuensi_pelaporan = $k->frekuensi_pelaporan ? (int) $k->frekuensi_pelaporan : null;
+            $k->bulan_mulai = $k->bulan_mulai ? (int) $k->bulan_mulai : null;
+            $k->bulan_selesai = $k->bulan_selesai ? (int) $k->bulan_selesai : null;
+            return $k;
+        });
+
         // Step 3: Create combination of all desa and kegiatan
         $result = collect();
 
         foreach ($desaList as $desa) {
             foreach ($kegiatanList as $kegiatan) {
-                // Get existing laporan if any
-                $existingLaporan = DB::table('laporan_kegiatan as lk')
-                    ->where('lk.desa_id', $desa->id_desa)
-                    ->where('lk.kegiatan_id', $kegiatan->id_kegiatan)
-                    ->first();
 
-                // Only include laporan with status submitted or approved
-                $status = $existingLaporan->status ?? 'belum_dilaporkan';
-                if (!in_array($status, ['submitted', 'approved'])) {
-                    continue;
+                // --- Determine Target Months based on Frequency ---
+                $targetMonths = [];
+                if ($kegiatan->frekuensi_pelaporan) {
+                    $startMonth = $kegiatan->bulan_mulai ?? 1;
+                    $endMonth = $kegiatan->bulan_selesai ?? 12;
+                    $step = $kegiatan->frekuensi_pelaporan;
+                    for ($m = $startMonth; $m <= $endMonth; $m += $step) {
+                        $targetMonths[] = $m;
+                    }
+                } else {
+                    $targetMonths[] = $kegiatan->bulan; // Insidentil
                 }
 
-                // Calculate tanggal_target
-                $tanggalTarget = self::calculateTanggalTargetFromKegiatan($kegiatan, $kegiatan->tahun_anggaran, $kegiatan->bulan);
+                // Iterate through months
+                foreach ($targetMonths as $targetBulan) {
+                    if (!empty($filters['filter_periode']) && $targetBulan != $filters['filter_periode']) {
+                        continue;
+                    }
 
-                // Prepare the record
-                $record = [
-                    'id_laporan' => $existingLaporan->id_laporan ?? null,
-                    'desa_id' => $desa->id_desa,
-                    'kegiatan_id' => $kegiatan->id_kegiatan,
-                    'tahun' => $kegiatan->tahun_anggaran,
-                    'bulan' => $kegiatan->bulan,
-                    'status' => $status,
-                    'tanggal_target' => $existingLaporan->tanggal_target ?? $tanggalTarget,
-                    'tanggal_submit' => $existingLaporan->tanggal_submit ?? null,
-                    'tanggal_approve' => $existingLaporan->tanggal_approve ?? null,
-                    'nama_desa' => $desa->nama_desa,
-                    'kode_desa' => $desa->kode_desa,
-                    'nama_kecamatan' => $desa->nama_kecamatan,
-                    'nama_kegiatan' => $kegiatan->nama_kegiatan,
-                    'kode_kegiatan' => $kegiatan->kode_kegiatan,
-                    'tanggal_mulai' => $kegiatan->tanggal_mulai,
-                    'tanggal_selesai' => $kegiatan->tanggal_selesai,
-                    'batas_akhir_upload' => $kegiatan->batas_akhir_upload,
-                    'jenis_kegiatan' => $kegiatan->jenis_kegiatan,
-                    'tahun_anggaran' => $kegiatan->tahun_anggaran,
-                ];
+                    // Get existing laporan
+                    $existingLaporan = DB::table('laporan_kegiatan as lk')
+                        ->where('lk.desa_id', $desa->id_desa)
+                        ->where('lk.kegiatan_id', $kegiatan->id_kegiatan)
+                        ->where('lk.bulan', $targetBulan) // Strict match
+                        ->where('lk.tahun', $kegiatan->tahun_anggaran)
+                        ->first();
 
-                // Add display fields
-                $record['status_display'] = self::getStatusDisplayForUser($record['status']);
-                $record['status_class'] = self::getStatusClass($record['status']);
-                $record['timeline_status'] = self::calculateTimelineStatus($record);
-                $record['priority_order'] = self::getPriorityOrderForHistory($record['status']);
-                $record['days_until_deadline'] = $tanggalTarget ? Carbon::parse($tanggalTarget)->diffInDays(now(), false) : 0;
+                    // Only include laporan with status submitted or approved
+                    $status = $existingLaporan->status ?? 'belum_dilaporkan';
+                    if (!in_array($status, ['submitted', 'approved'])) {
+                        continue;
+                    }
 
-                $result->push($record);
+                    // Calculate tanggal_target
+                    $tanggalTarget = self::calculateTanggalTargetFromKegiatan($kegiatan, $kegiatan->tahun_anggaran, $targetBulan);
+
+                    // Prepare the record
+                    $record = [
+                        'id_laporan' => $existingLaporan->id_laporan ?? null,
+                        'desa_id' => $desa->id_desa,
+                        'kegiatan_id' => $kegiatan->id_kegiatan,
+                        'tahun' => $kegiatan->tahun_anggaran,
+                        'bulan' => $targetBulan, // Specific month
+                        'status' => $status,
+                        'tanggal_target' => $existingLaporan->tanggal_target ?? $tanggalTarget,
+                        'tanggal_submit' => $existingLaporan->tanggal_submit ?? null,
+                        'tanggal_approve' => $existingLaporan->tanggal_approve ?? null,
+                        'nama_desa' => $desa->nama_desa,
+                        'kode_desa' => $desa->kode_desa,
+                        'nama_kecamatan' => $desa->nama_kecamatan,
+                        'nama_kegiatan' => $kegiatan->nama_kegiatan,
+                        'kode_kegiatan' => $kegiatan->kode_kegiatan,
+                        'tanggal_mulai' => $kegiatan->tanggal_mulai,
+                        'tanggal_selesai' => $kegiatan->tanggal_selesai,
+                        'batas_akhir_upload' => $kegiatan->batas_akhir_upload,
+                        'jenis_kegiatan' => $kegiatan->jenis_kegiatan,
+                        'tahun_anggaran' => $kegiatan->tahun_anggaran,
+                    ];
+
+                    // Add display fields
+                    $record['status_display'] = self::getStatusDisplayForUser($record['status']);
+                    $record['status_class'] = self::getStatusClass($record['status']);
+                    $record['timeline_status'] = self::calculateTimelineStatus($record);
+                    $record['priority_order'] = self::getPriorityOrderForHistory($record['status']);
+                    $record['days_until_deadline'] = $tanggalTarget ? Carbon::parse($tanggalTarget)->diffInDays(now(), false) : 0;
+
+                    $result->push($record);
+                }
             }
         }
 

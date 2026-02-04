@@ -33,7 +33,10 @@ class LaporanKegiatanService
     /**
      * Get kegiatan data with questions and requirements
      */
-    public function getKegiatanData($desaId, $kegiatanId)
+    /**
+     * Get kegiatan data with questions and requirements
+     */
+    public function getKegiatanData($desaId, $kegiatanId, $bulan = null, $tahun = null)
     {
         $desa = Desa::getRelationship($desaId);
         $kegiatan = Kegiatan::getRelationship($kegiatanId);
@@ -42,9 +45,25 @@ class LaporanKegiatanService
             return null;
         }
 
-        $pertanyaan = PertanyaanKegiatan::with(['persyaratan' => function ($query) {
-            $query->where('status', 'active')->orderBy('urutan');
-        }])
+        // Tentukan tahun & bulan context
+        // Jika tidak dikirim, default ke master kegiatan (logic lama)
+        // Tapi untuk recurring, kita butuh spesifik
+        $tahun = $tahun ?? $kegiatan['tahun'];
+        $bulan = $bulan ?? $kegiatan['bulan'];
+
+        // Map Nama Bulan untuk Context
+        $bulanNama = match ((int) $bulan) {
+            1 => 'Januari', 2 => 'Februari', 3 => 'Maret', 4 => 'April',
+            5 => 'Mei', 6 => 'Juni', 7 => 'Juli', 8 => 'Agustus',
+            9 => 'September', 10 => 'Oktober', 11 => 'November', 12 => 'Desember',
+            default => $kegiatan['nama_bulan'] // Fallback
+        };
+
+        $pertanyaan = PertanyaanKegiatan::with([
+            'persyaratan' => function ($query) {
+                $query->where('status', 'active')->orderBy('urutan');
+            }
+        ])
             ->where('kegiatan_id', $kegiatanId)
             ->where('status', 'active')
             ->orderBy('urutan')
@@ -52,7 +71,16 @@ class LaporanKegiatanService
 
         return [
             'desa' => $desa,
-            'kegiatan' => $kegiatan,
+            // Perkaya data kegiatan dengan context
+            'kegiatan' => array_merge($kegiatan, [
+                'bulan_context' => $bulan, // Integer
+                'tahun_context' => $tahun, // Integer
+            ]),
+            'context' => [
+                'bulan' => $bulan,
+                'bulan_nama' => $bulanNama,
+                'tahun' => $tahun,
+            ],
             'pertanyaan' => $pertanyaan
         ];
     }

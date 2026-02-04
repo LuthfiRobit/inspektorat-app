@@ -42,7 +42,7 @@ class LaporanKegiatanRepository
         ];
     }
 
-    public function getDetail($desaId, $kegiatanId, $laporanId = null)
+    public function getDetail($desaId, $kegiatanId, $laporanId = null, $bulan = null, $tahun = null)
     {
         // ============================
         // 1. Ambil desa
@@ -63,26 +63,42 @@ class LaporanKegiatanRepository
         // ============================
         // 3. Ambil laporan (jika ada)
         // ============================
-        $laporan = $laporanId
-            ? LaporanKegiatan::where('id_laporan', $laporanId)->first()
-            : LaporanKegiatan::where('desa_id', $desaId)
-                ->where('kegiatan_id', $kegiatanId)
-                ->first();
+        $laporanQuery = LaporanKegiatan::where('desa_id', $desaId)
+            ->where('kegiatan_id', $kegiatanId);
 
-        // Tentukan tahun & bulan (fallback -> ke kegiatan)
-        // Perbaikan: Akses sebagai array karena getRelationship mengembalikan array
-        $tahun = $laporan->tahun ?? $kegiatan['tahun'];
-        $bulan = $laporan->bulan ?? $kegiatan['bulan'];
+        if ($laporanId) {
+            $laporan = LaporanKegiatan::find($laporanId); // Strict by ID
+        } elseif ($bulan && $tahun) {
+            $laporan = $laporanQuery->where('bulan', $bulan)
+                ->where('tahun', $tahun)
+                ->first();
+        } else {
+            // Fallback minimal (should ideally not happen in new logic)
+            $laporan = $laporanQuery->first();
+        }
+
+        // Tentukan tahun & bulan (Prioritas: Laporan -> Input Params -> Master Kegiatan)
+        $tahun = $laporan->tahun ?? ($tahun ?? $kegiatan['tahun']);
+        $bulan = $laporan->bulan ?? ($bulan ?? $kegiatan['bulan']);
 
         // ============================
         // 4. Hitung tanggal target
         // ============================
+        // Note: $kegiatan is array from getRelationship
         $tanggalTarget = $this->calculateTanggalTarget($kegiatan, $tahun, $bulan);
 
         // ============================
         // 5. Hitung timeline status
         // ============================
         $timeline = $this->calculateTimelineStatus($laporan, $tanggalTarget);
+
+        // Map Nama Bulan
+        $bulanNama = match ((int) $bulan) {
+            1 => 'Januari', 2 => 'Februari', 3 => 'Maret', 4 => 'April',
+            5 => 'Mei', 6 => 'Juni', 7 => 'Juli', 8 => 'Agustus',
+            9 => 'September', 10 => 'Oktober', 11 => 'November', 12 => 'Desember',
+            default => '-'
+        };
 
         // ============================
         // 6. Return structured data
@@ -101,11 +117,21 @@ class LaporanKegiatanRepository
                 'kode_kegiatan' => $kegiatan['kode_kegiatan'],
                 'tahun_anggaran' => $kegiatan['tahun'],
                 'jenis_kegiatan' => $kegiatan['nama_jenis'],
-                'bulan' => $kegiatan['nama_bulan'],
+                'bulan_master' => $kegiatan['nama_bulan'], // Original master month
                 'tanggal_mulai' => $kegiatan['tanggal_mulai'],
                 'tanggal_selesai' => $kegiatan['tanggal_selesai'],
                 'batas_akhir_upload' => $kegiatan['batas_akhir_upload'],
                 'dasar_hukum' => $kegiatan['dasar_hukum'],
+                'frekuensi_pelaporan' => $kegiatan['frekuensi_pelaporan'] ?? null,
+                'bulan' => $kegiatan['bulan'], // Insidentil usage
+                'bulan_mulai' => $kegiatan['bulan_mulai'], // Rutin usage
+                'bulan_selesai' => $kegiatan['bulan_selesai'], // Rutin usage
+            ],
+
+            'context' => [
+                'bulan' => $bulan,
+                'bulan_nama' => $bulanNama,
+                'tahun' => $tahun,
             ],
 
             'laporan' => $laporan ? [
