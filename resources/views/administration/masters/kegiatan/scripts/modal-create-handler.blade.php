@@ -1,5 +1,5 @@
 <script>
-    $(document).ready(function() {
+    $(document).ready(function () {
         DropdownHelper.bindDependentDropdown(
             '#tahun_anggaran_id',
             '#jenis_kegiatan_id',
@@ -9,19 +9,47 @@
                 return `<option value="${item.id_jenis_kegiatan}" ${selected}>${item.kode_jenis} - ${item.nama_jenis}</option>`;
             }
         );
+
+        // Logic Toggle Jenis Pelaporan
+        $('input[name="jenis_pelaporan"]').on('change', function () {
+            const val = $(this).val();
+            if (val === 'insidentil') {
+                $('#groupInsidentil').removeClass('d-none');
+                $('#groupRutin').addClass('d-none');
+                // Reset fields
+                $('#frekuensi_pelaporan').val('').selectpicker('refresh');
+                $('#bulan_mulai').val(1).selectpicker('refresh');
+                $('#bulan_selesai').val(12).selectpicker('refresh');
+                $('#tanggal_mulai_rutin').val('');
+                $('#tanggal_selesai_rutin').val('');
+            } else {
+                $('#groupInsidentil').addClass('d-none');
+                $('#groupRutin').removeClass('d-none');
+                // Reset fields
+                $('#bulan').val('').selectpicker('refresh');
+                $('#tanggal_mulai_insidentil').val('');
+                $('#tanggal_selesai_insidentil').val('');
+            }
+        });
     });
 </script>
 
 <script defer>
-    $('#modalCreate').on('show.bs.modal', function() {
+    $('#modalCreate').on('show.bs.modal', function () {
         const form = $('#createForm');
         form[0].reset();
+
+        // Reset UI State to Default (Insidentil)
+        $('#jenisInsidentil').prop('checked', true);
+        $('#groupInsidentil').removeClass('d-none');
+        $('#groupRutin').addClass('d-none');
+
         form.find('.selectpicker').selectpicker('refresh');
         form.find('.invalid-feedback').remove();
         form.find('.form-control').removeClass('is-invalid');
     });
 
-    $('#createForm').on('submit', function(e) {
+    $('#createForm').on('submit', function (e) {
         e.preventDefault();
         const form = $(this);
         const url = "{{ route('administrator.master.kegiatan.store') }}";

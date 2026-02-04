@@ -1,11 +1,30 @@
 <script defer>
-    $('#modalEdit').on('show.bs.modal', function() {
+    $('#modalEdit').on('show.bs.modal', function () {
         const form = $('#editForm');
         form.find('.invalid-feedback').remove();
         form.find('.form-control').removeClass('is-invalid');
+        form.find('.form-control').removeClass('is-invalid');
     });
 
-    $('#editForm').on('submit', function(e) {
+    // Logic Toggle Jenis Pelaporan Edit
+    $('#editForm').on('change', 'input[name="jenis_pelaporan"]', function () {
+        const val = $(this).val();
+        if (val === 'insidentil') {
+            $('#edit_groupInsidentil').removeClass('d-none');
+            $('#edit_groupRutin').addClass('d-none');
+
+            // Clean Switch
+            $('#edit_frekuensi_pelaporan').val('').selectpicker('refresh');
+        } else {
+            $('#edit_groupInsidentil').addClass('d-none');
+            $('#edit_groupRutin').removeClass('d-none');
+
+            // Clean Switch
+            $('#edit_bulan').val('').selectpicker('refresh');
+        }
+    });
+
+    $('#editForm').on('submit', function (e) {
         e.preventDefault();
         const form = $(this);
         const id = form.attr('data-id');
@@ -35,7 +54,7 @@
         }
     });
 
-    $('#modalEdit').on('hidden.bs.modal', function() {
+    $('#modalEdit').on('hidden.bs.modal', function () {
         const form = $('#editForm');
         form[0].reset();
         $('.selectpicker').selectpicker('refresh');
