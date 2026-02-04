@@ -27,12 +27,20 @@
             elements: {},
             initialize() {
                 this.elements = {
-                    // Info displays
-                    infoDesa: $('#info_desa'),
-                    infoKegiatan: $('#info_kegiatan'),
-                    infoPeriode: $('#info_periode'),
-                    infoBatasUpload: $('#info_batas_upload'),
-                    infoDasarHukum: $('#info_dasar_hukum'),
+                    // Info displays (Updated to match New Professional Layout)
+                    detailDesa: $('#detail_desa'),
+                    detailKecamatan: $('#detail_kecamatan'),
+                    detailNamaKegiatan: $('#detail_nama_kegiatan'),
+                    detailTahun: $('#detail_tahun'),
+                    detailKodeKegiatan: $('#detail_kode_kegiatan'),
+                    detailJenisKegiatan: $('#detail_jenis_kegiatan'),
+                    detailBulan: $('#detail_bulan'), // Periode
+                    detailDasarHukum: $('#detail_dasar_hukum'),
+
+                    // Timeline Displays
+                    detailTanggalMulai: $('#detail_tanggal_mulai'),
+                    detailTanggalSelesai: $('#detail_tanggal_selesai'),
+                    detailBatasUpload: $('#detail_batas_upload'),
 
                     // Form elements
                     questionsContainer: $('#questionsContainer'),
@@ -55,22 +63,22 @@
         const Utils = {
             showErrorAlert(message) {
                 const alertHtml = `
-                <div class="alert alert-danger alert-dismissible fade show" role="alert">
-                    <i class="las la-exclamation-circle me-2"></i>
-                    ${message}
-                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-                </div>`;
+                    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                        <i class="las la-exclamation-circle me-2"></i>
+                        ${message}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>`;
                 $('#formAlerts').html(alertHtml);
             },
 
             showSuccessAlert(message, callback = null) {
                 const alertHtml = `
-                <div class="alert alert-success alert-dismissible fade show" role="alert">
-                    <i class="las la-check-circle me-2"></i>
-                    ${message}
-                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-                </div>
-            `;
+                    <div class="alert alert-success alert-dismissible fade show" role="alert">
+                        <i class="las la-check-circle me-2"></i>
+                        ${message}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                `;
                 $('#formAlerts').html(alertHtml);
 
                 if (typeof callback === 'function') {
@@ -97,6 +105,45 @@
             initializeTooltips() {
                 // Initialize Bootstrap tooltips
                 $('[data-bs-toggle="tooltip"]').tooltip();
+            },
+
+            // Helper: Format Date Specific (Tgl + Bulan(Int) + Tahun)
+            formatDateSpecific(tanggal, bulanInt, tahun) {
+                if (!tanggal || !bulanInt || !tahun) return 'N/A';
+
+                try {
+                    const monthIndex = parseInt(bulanInt) - 1; // 0-indexed
+                    const date = new Date(parseInt(tahun), monthIndex, parseInt(tanggal));
+
+                    if (isNaN(date.getTime())) return 'N/A';
+
+                    return "Tgl. " + date.getDate() + " " + date.toLocaleDateString('id-ID', { month: 'long' }) + " " + date.getFullYear();
+                } catch (error) {
+                    console.error("Error formatting date specific:", error);
+                    return 'N/A';
+                }
+            },
+
+            // Helper: Format Batas Upload Specific
+            formatBatasUploadSpecific(batasHari, tanggalSelesai, bulanInt, tahun) {
+                if (!batasHari) return 'Tidak ada batas';
+                if (!tanggalSelesai || !bulanInt || !tahun) return `${batasHari} hari setelah selesai`;
+
+                try {
+                    const monthIndex = parseInt(bulanInt) - 1;
+                    const selesaiDate = new Date(parseInt(tahun), monthIndex, parseInt(tanggalSelesai));
+
+                    if (isNaN(selesaiDate.getTime())) return `${batasHari} hari setelah selesai`;
+
+                    // Add days
+                    const deadlineDate = new Date(selesaiDate);
+                    deadlineDate.setDate(selesaiDate.getDate() + parseInt(batasHari));
+
+                    return "Tgl. " + deadlineDate.getDate() + " " + deadlineDate.toLocaleDateString('id-ID', { month: 'long' }) + " " + deadlineDate.getFullYear();
+                } catch (error) {
+                    console.error("Error formatting batas upload specific:", error);
+                    return `${batasHari} hari setelah selesai`;
+                }
             }
         };
 
@@ -106,16 +153,20 @@
                 const urlParams = new URLSearchParams(window.location.search);
                 const desaId = urlParams.get('desa_id');
                 const kegiatanId = urlParams.get('kegiatan_id');
+                const bulan = urlParams.get('bulan'); // Capture bulan
+                const tahun = urlParams.get('tahun'); // Capture tahun
 
                 if (desaId && kegiatanId) {
-                    await this.loadKegiatanData(desaId, kegiatanId);
+                    await this.loadKegiatanData(desaId, kegiatanId, bulan, tahun);
                 } else {
                     this.showParameterError();
                 }
             },
 
-            async loadKegiatanData(desaId, kegiatanId) {
-                const url = `${CONFIG.ROUTES.GET_KEGIATAN_DATA}?desa_id=${desaId}&kegiatan_id=${kegiatanId}`;
+            async loadKegiatanData(desaId, kegiatanId, bulan, tahun) {
+                let url = `${CONFIG.ROUTES.GET_KEGIATAN_DATA}?desa_id=${desaId}&kegiatan_id=${kegiatanId}`;
+                if (bulan) url += `&bulan=${bulan}`;
+                if (tahun) url += `&tahun=${tahun}`;
 
                 try {
                     const response = await $.ajax({
@@ -128,6 +179,7 @@
                         AppState.kegiatanData = response.data.kegiatan;
                         AppState.desaData = response.data.desa;
                         AppState.questionsData = response.data.pertanyaan || [];
+                        AppState.context = response.data.context || {}; // Store Context
 
                         this.populateKegiatanInfo();
                         Renderer.renderQuestions();
@@ -152,32 +204,75 @@
 
                 const urlParams = new URLSearchParams(window.location.search);
                 const desaId = urlParams.get('desa_id');
+                const kegiatan = AppState.kegiatanData;
+                const desa = AppState.desaData;
+                const context = AppState.context || {};
 
-                DOM.elements.infoDesa.text(`${AppState.desaData.nama_desa} - ${AppState.desaData.nama_kecamatan}`);
-                DOM.elements.infoKegiatan.text(AppState.kegiatanData.nama_kegiatan || '-');
-                DOM.elements.infoPeriode.text(
-                    `${AppState.kegiatanData.tahun || '-'} - ${AppState.kegiatanData.nama_bulan || '-'}`);
-                DOM.elements.infoBatasUpload.text(AppState.kegiatanData.batas_akhir_upload ?
-                    `Tgl. ${AppState.kegiatanData.batas_akhir_upload}` : '-');
-                DOM.elements.infoDasarHukum.text(AppState.kegiatanData.dasar_hukum || 'Tidak ada dasar hukum');
+                // 1. Info Header
+                DOM.elements.detailDesa.text(desa.nama_desa || '-');
+                DOM.elements.detailKecamatan.text(desa.nama_kecamatan || '-');
 
+                // 2. Info Kegiatan
+                DOM.elements.detailNamaKegiatan.text(kegiatan.nama_kegiatan || '-');
+                DOM.elements.detailTahun.text(context.tahun || kegiatan.tahun_anggaran || '-');
+                DOM.elements.detailKodeKegiatan.text(kegiatan.kode_kegiatan || '-');
+                DOM.elements.detailJenisKegiatan.text(kegiatan.nama_jenis || '-'); // From model join
+
+                // Logic Display Periode
+                let periodeText = kegiatan.bulan_master || 'N/A';
+                if (context.bulan_nama) {
+                    periodeText = context.bulan_nama;
+                }
+                if (kegiatan.frekuensi_pelaporan) {
+                    periodeText += ` (Rutin: Setiap ${kegiatan.frekuensi_pelaporan} Bulan)`;
+                }
+                DOM.elements.detailBulan.text(periodeText);
+                DOM.elements.detailDasarHukum.text(kegiatan.dasar_hukum || 'Tidak ada dasar hukum');
+
+                // 3. Timeline Logic (Reused)
+                const tahun = context.tahun || kegiatan.tahun_anggaran;
+                let startBulan, endBulan;
+
+                if (kegiatan.frekuensi_pelaporan) {
+                    // Rutin
+                    startBulan = kegiatan.bulan_mulai;
+                    endBulan = kegiatan.bulan_selesai;
+                } else {
+                    // Insidentil
+                    // Prefer context month if available (from URL), else fallback to kegiatan master month
+                    startBulan = context.bulan || kegiatan.bulan;
+                    endBulan = context.bulan || kegiatan.bulan;
+                }
+
+                // Render Dates
+                DOM.elements.detailTanggalMulai.text(
+                    Utils.formatDateSpecific(kegiatan.tanggal_mulai, startBulan, tahun)
+                );
+                DOM.elements.detailTanggalSelesai.text(
+                    Utils.formatDateSpecific(kegiatan.tanggal_selesai, endBulan, tahun)
+                );
+                DOM.elements.detailBatasUpload.text(
+                    Utils.formatBatasUploadSpecific(kegiatan.batas_akhir_upload, kegiatan.tanggal_selesai, endBulan, tahun)
+                );
+
+                // Hidden Fields
                 $('#desa_id').val(desaId);
-                $('#kegiatan_id').val(AppState.kegiatanData.id_kegiatan);
-                $('#tahun').val(AppState.kegiatanData.tahun);
-                $('#bulan').val(AppState.kegiatanData.bulan);
+                $('#kegiatan_id').val(kegiatan.id_kegiatan);
+                $('#tahun').val(tahun);
+                $('#bulan').val(startBulan); // Use specific month for reporting
             },
 
             showParameterError() {
                 Utils.showErrorAlert('Parameter tidak lengkap. Silakan pilih kegiatan dari halaman daftar.');
                 DOM.elements.questionsContainer.html(`
-                <div class="alert alert-danger">
-                    <h6>Parameter Tidak Lengkap</h6>
-                    <p>Silakan pilih kegiatan dari halaman daftar laporan.</p>
-                    <a href="{{ route('administrator.monev.laporan.index') }}" class="btn btn-primary">
-                        Kembali ke Daftar
-                    </a>
-                </div>
-            `);
+                    <div class="alert alert-danger">
+                        <h6>Parameter Tidak Lengkap</h6>
+                        <p>Silakan pilih kegiatan dari halaman daftar laporan.</p>
+                        <a href="{{ route('administrator.monev.laporan.index') }}" class="btn btn-primary">
+                            Kembali ke Daftar
+                        </a>
+                    </div>
+                `);
             }
         };
 
@@ -186,11 +281,11 @@
             renderQuestions() {
                 if (!AppState.questionsData?.length) {
                     DOM.elements.questionsContainer.html(`
-                    <div class="alert alert-warning">
-                        <h6>Tidak Ada Pertanyaan</h6>
-                        <p>Belum ada pertanyaan yang ditetapkan untuk kegiatan ini.</p>
-                    </div>
-                `);
+                        <div class="alert alert-warning">
+                            <h6>Tidak Ada Pertanyaan</h6>
+                            <p>Belum ada pertanyaan yang ditetapkan untuk kegiatan ini.</p>
+                        </div>
+                    `);
                     return;
                 }
 
@@ -203,50 +298,50 @@
 
             renderQuestion(question, index) {
                 return `
-                <div class="question-section mb-4" data-question-id="${question.id_pertanyaan}">
-                    <div class="d-flex justify-content-between align-items-start flex-wrap gap-2 mb-2">
-                        <div class="flex-grow-1">
-                            <h6 class="mb-0">
-                                <span class="badge bg-primary me-2">${index + 1}</span>
-                                ${question.pertanyaan}
-                            </h6>
-                        </div>
-                        <div class="d-flex align-items-center gap-3 d-none">
-                            <div class="form-check mb-0">
-                                <input class="form-check-input answer-radio" type="radio"
-                                    name="jawaban[${question.id_pertanyaan}]"
-                                    id="jawaban-sudah-${question.id_pertanyaan}"
-                                    value="sudah">
-                                <label class="form-check-label" for="jawaban-sudah-${question.id_pertanyaan}">
-                                    Sudah
-                                </label>
+                    <div class="question-section mb-4" data-question-id="${question.id_pertanyaan}">
+                        <div class="d-flex justify-content-between align-items-start flex-wrap gap-2 mb-2">
+                            <div class="flex-grow-1">
+                                <h6 class="mb-0">
+                                    <span class="badge bg-primary me-2">${index + 1}</span>
+                                    ${question.pertanyaan}
+                                </h6>
                             </div>
-                            <div class="form-check mb-0">
-                                <input class="form-check-input answer-radio" type="radio"
-                                    name="jawaban[${question.id_pertanyaan}]"
-                                    id="jawaban-belum-${question.id_pertanyaan}"
-                                    value="belum" checked>
-                                <label class="form-check-label" for="jawaban-belum-${question.id_pertanyaan}">
-                                    Belum
-                                </label>
+                            <div class="d-flex align-items-center gap-3 d-none">
+                                <div class="form-check mb-0">
+                                    <input class="form-check-input answer-radio" type="radio"
+                                        name="jawaban[${question.id_pertanyaan}]"
+                                        id="jawaban-sudah-${question.id_pertanyaan}"
+                                        value="sudah">
+                                    <label class="form-check-label" for="jawaban-sudah-${question.id_pertanyaan}">
+                                        Sudah
+                                    </label>
+                                </div>
+                                <div class="form-check mb-0">
+                                    <input class="form-check-input answer-radio" type="radio"
+                                        name="jawaban[${question.id_pertanyaan}]"
+                                        id="jawaban-belum-${question.id_pertanyaan}"
+                                        value="belum" checked>
+                                    <label class="form-check-label" for="jawaban-belum-${question.id_pertanyaan}">
+                                        Belum
+                                    </label>
+                                </div>
                             </div>
                         </div>
-                    </div>
 
-                    <div class="requirements-section mt-3">
-                        <label class="form-label mb-2">Dokumen Persyaratan:</label>
-                        ${this.renderRequirements(question.persyaratan, question.id_pertanyaan)}
+                        <div class="requirements-section mt-3">
+                            <label class="form-label mb-2">Dokumen Persyaratan:</label>
+                            ${this.renderRequirements(question.persyaratan, question.id_pertanyaan)}
+                        </div>
                     </div>
-                </div>
-            `;
+                `;
             },
 
             renderRequirements(requirements, questionId) {
                 if (!requirements?.length) {
                     return `
-                    <div class="alert alert-info py-2">
-                        <small>Tidak ada persyaratan dokumen untuk pertanyaan ini.</small>
-                    </div>`;
+                        <div class="alert alert-info py-2">
+                            <small>Tidak ada persyaratan dokumen untuk pertanyaan ini.</small>
+                        </div>`;
                 }
 
                 return requirements.map(req => {
@@ -255,37 +350,37 @@
                     const isRequired = req.tipe === 'wajib' ? 'required' : '';
 
                     return `
-                <div class="mb-3 position-relative requirement-item" data-requirement-id="${req.id_persyaratan}">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <label for="file-${key}" class="form-label mb-0">
-                            ${req.nama_persyaratan}
-                            <span class="badge ${req.tipe === 'wajib' ? 'bg-danger' : 'bg-secondary'} ms-2">
-                                ${req.tipe === 'wajib' ? 'WAJIB' : 'TAMBAHAN'}
-                            </span>
-                            ${req.deskripsi ? `<br><small class="text-muted">${req.deskripsi}</small>` : ''}
-                        </label>
-                    </div>
+                    <div class="mb-3 position-relative requirement-item" data-requirement-id="${req.id_persyaratan}">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <label for="file-${key}" class="form-label mb-0">
+                                ${req.nama_persyaratan}
+                                <span class="badge ${req.tipe === 'wajib' ? 'bg-danger' : 'bg-secondary'} ms-2">
+                                    ${req.tipe === 'wajib' ? 'WAJIB' : 'TAMBAHAN'}
+                                </span>
+                                ${req.deskripsi ? `<br><small class="text-muted">${req.deskripsi}</small>` : ''}
+                            </label>
+                        </div>
 
-                    <div class="d-flex align-items-center mt-1">
-                        <input type="file" 
-                            class="form-control file-input"
-                            id="file-${key}"
-                            name="files[${questionId}][${req.id_persyaratan}]"
-                            accept=".pdf,.doc,.docx,.xls,.xlsx,.jpg,.png"
-                            data-question-id="${questionId}"
-                            data-requirement-id="${req.id_persyaratan}"
-                            data-requirement-type="${req.tipe}"
-                            ${isRequired} />
+                        <div class="d-flex align-items-center mt-1">
+                            <input type="file" 
+                                class="form-control file-input"
+                                id="file-${key}"
+                                name="files[${questionId}][${req.id_persyaratan}]"
+                                accept=".pdf,.doc,.docx,.xls,.xlsx,.jpg,.png"
+                                data-question-id="${questionId}"
+                                data-requirement-id="${req.id_persyaratan}"
+                                data-requirement-type="${req.tipe}"
+                                ${isRequired} />
 
-                        <button type="button"
-                            class="btn btn-outline-primary ms-2 ${hasTemplate ? '' : 'd-none'}"
-                            id="btn_template_${key}"
-                            ${hasTemplate ? `onclick="window.open('/uploads/${req.template_persyaratan}', '_blank')"` : ''}>
-                            Template
-                        </button>
+                            <button type="button"
+                                class="btn btn-outline-primary ms-2 ${hasTemplate ? '' : 'd-none'}"
+                                id="btn_template_${key}"
+                                ${hasTemplate ? `onclick="window.open('/uploads/${req.template_persyaratan}', '_blank')"` : ''}>
+                                Template
+                            </button>
+                        </div>
                     </div>
-                </div>
-            `;
+                `;
                 }).join('');
             }
         };
@@ -332,7 +427,7 @@
                 formData.append('_token', '{{ csrf_token() }}');
 
                 // Jawaban status (radio buttons)
-                $('.answer-radio:checked').each(function() {
+                $('.answer-radio:checked').each(function () {
                     const name = $(this).attr('name');
                     const value = $(this).val();
                     const questionId = name.match(/\[(\d+)\]/)[1];
@@ -341,7 +436,7 @@
 
                 // Append files
                 let fileCount = 0;
-                $('.file-input').each(function() {
+                $('.file-input').each(function () {
                     const questionId = $(this).data('question-id');
                     const requirementId = $(this).data('requirement-id');
                     const hasFile = this.files.length > 0;
@@ -436,7 +531,7 @@
                 // Cek apakah ada minimal satu file apapun (wajib atau tambahan) yang diinput
                 let hasAnyFile = false;
 
-                $('.file-input').each(function() {
+                $('.file-input').each(function () {
                     if (this.files.length > 0) {
                         hasAnyFile = true;
                         return false; // break loop
@@ -580,14 +675,14 @@
                 });
 
                 // File input change handler
-                $(document).on('change', '.file-input', function() {
+                $(document).on('change', '.file-input', function () {
                     const questionId = $(this).data('question-id');
                     FormHandler.updateRadioBasedOnFiles(questionId);
                     ProgressTracker.updateProgress();
                 });
 
                 // Answer radio change handler
-                $(document).on('change', '.answer-radio', function() {
+                $(document).on('change', '.answer-radio', function () {
                     ProgressTracker.updateProgress();
                 });
 
@@ -597,7 +692,7 @@
         };
 
         // Main initialization
-        $(document).ready(function() {
+        $(document).ready(function () {
             DOM.initialize();
             EventHandlers.initialize();
             DataLoader.initializeForm();

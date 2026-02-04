@@ -1,28 +1,24 @@
 <script>
-    $(document).ready(function() {
+    $(document).ready(function () {
         // Handler untuk aksi dropdown di datatable
-        $('#example').on('click', '.dropdown-item', function() {
+        $('#example').on('click', '.dropdown-item', function () {
             const action = $(this).data('action');
             const desaId = $(this).data('desa-id');
             const kegiatanId = $(this).data('kegiatan-id');
             const laporanId = $(this).data('laporan-id');
-
-            // console.log('Dropdown clicked:', { action, desaId, kegiatanId, laporanId });
-
-            // if (!desaId || !kegiatanId) {
-            //     console.error("Missing required data:", { desaId, kegiatanId });
-            //     ResponseHandler.handleError("Data desa atau kegiatan tidak ditemukan!");
-            //     return;
-            // }
+            const bulan = $(this).data('bulan'); // NEW
+            const tahun = $(this).data('tahun'); // NEW
 
             const $row = $(this).closest('tr');
             const rowData = table.row($row).data();
 
             // Build URL dengan parameter query
-            const url = '{{ route("administrator.monev.laporan.show-request") }}' + 
-                       '?desa_id=' + desaId + 
-                       '&kegiatan_id=' + kegiatanId + 
-                       '&laporan_id=' + (laporanId || '');
+            const url = '{{ route("administrator.monev.laporan.show-request") }}' +
+                '?desa_id=' + desaId +
+                '&kegiatan_id=' + kegiatanId +
+                '&laporan_id=' + (laporanId || '') +
+                '&bulan=' + (bulan || '') + // NEW
+                '&tahun=' + (tahun || ''); // NEW
 
             const handlers = {
                 'action_show': handleShow
@@ -32,12 +28,12 @@
                 // Tampilkan modal dan loading state
                 $('#modalDetail').modal('show');
                 showLoadingState();
-                
+
                 console.log('Sending request to:', url);
 
                 AjaxHandler.sendGetRequest(url, response => {
                     console.log('Response received:', response);
-                    
+
                     if (response.status === 200 && response.data) {
                         hideLoadingState();
                         handlers[action](response.data, rowData, desaId, kegiatanId);
@@ -77,6 +73,7 @@
 
             const desa = data.desa;
             const kegiatan = data.kegiatan;
+            const context = data.context || {}; // NEW
             const laporan = data.laporan; // bisa null
             const tanggalTarget = data.tanggal_target;
             const timelineStatus = data.timeline_status;
@@ -91,22 +88,56 @@
             // ============================
             // 2. INFORMASI KEGIATAN (dengan tahun dan periode)
             // ============================
-            $('#detail_tahun').text(kegiatan.tahun_anggaran || 'N/A');
-            $('#detail_bulan').text(kegiatan.bulan || 'N/A');
+            $('#detail_tahun').text(context.tahun || kegiatan.tahun_anggaran || 'N/A');
+
+            // Logic Display Periode
+            let periodeText = kegiatan.bulan_master || 'N/A';
+            if (context.bulan_nama) {
+                periodeText = context.bulan_nama;
+            }
+            if (kegiatan.frekuensi_pelaporan) {
+                // Tambahkan info frekuensi jika ada
+                periodeText += ` (Rutin: Setiap ${kegiatan.frekuensi_pelaporan} Bulan)`;
+            }
+            $('#detail_bulan').text(periodeText);
+
             $('#detail_jenis_kegiatan').text(kegiatan.jenis_kegiatan || 'N/A');
             $('#detail_kode_kegiatan').text(kegiatan.kode_kegiatan || 'N/A');
             $('#detail_nama_kegiatan').text(kegiatan.nama_kegiatan || 'N/A');
             $('#detail_dasar_hukum').text(kegiatan.dasar_hukum || 'Tidak ada dasar hukum');
 
-            // Timeline Kegiatan dengan format yang benar
+            // Timeline Kegiatan Logic (Rutin vs Insidentil)
+            const tahun = kegiatan.tahun_anggaran;
+            let startBulan, endBulan;
+
+            if (kegiatan.frekuensi_pelaporan) {
+                // RUTIN LOGIC
+                // Tanggal Mulai: Tgl. X (col) + Bulan Mulai (col) + Tahun
+                // Tanggal Selesai: Tgl. Y (col) + Bulan Selesai (col) + Tahun
+                startBulan = kegiatan.bulan_mulai;
+                endBulan = kegiatan.bulan_selesai;
+            } else {
+                // INSIDENTIL LOGIC
+                // Tanggal Mulai: Tgl. X (col) + Bulan (col) + Tahun
+                // Tanggal Selesai: Tgl. Y (col) + Bulan (col) + Tahun
+                startBulan = kegiatan.bulan;
+                endBulan = kegiatan.bulan;
+            }
+
+            // Render Tanggal Mulai
             $('#detail_tanggal_mulai').text(
-                formatTanggalKegiatan(kegiatan.tanggal_mulai, kegiatan.bulan, kegiatan.tahun_anggaran)
+                formatDateSpecific(kegiatan.tanggal_mulai, startBulan, tahun)
             );
+
+            // Render Tanggal Selesai
             $('#detail_tanggal_selesai').text(
-                formatTanggalKegiatan(kegiatan.tanggal_selesai, kegiatan.bulan, kegiatan.tahun_anggaran)
+                formatDateSpecific(kegiatan.tanggal_selesai, endBulan, tahun)
             );
+
+            // Render Batas Upload
+            // Logic: + X hari dari tanggal selesai (which uses endBulan)
             $('#detail_batas_upload').text(
-                formatBatasUpload(kegiatan.batas_akhir_upload, kegiatan.tanggal_selesai, kegiatan.bulan, kegiatan.tahun_anggaran)
+                formatBatasUploadSpecific(kegiatan.batas_akhir_upload, kegiatan.tanggal_selesai, endBulan, tahun)
             );
 
             // ============================
@@ -127,7 +158,12 @@
             );
 
             // ============================
-            // 4. TOMBOL LAPORKAN/EDIT - GUNAKAN PARAMETER YANG SUDAH DIVALIDASI
+            // 4. STATUS TIMELINE - TERINTEGRASI DALAM CONTAINER
+            // ============================
+            updateTimelineStatus(timelineStatus, daysUntilDeadline);
+
+            // ============================
+            // 5. TOMBOL LAPORKAN/EDIT - GUNAKAN PARAMETER YANG SUDAH DIVALIDASI
             // ============================
             toggleLaporkanButton(
                 laporan ? laporan.status : null,
@@ -135,113 +171,99 @@
                 desaId, // Gunakan desaId dari parameter yang sudah divalidasi
                 kegiatanId // Gunakan kegiatanId dari parameter yang sudah divalidasi
             );
-
-            // Tambahkan info timeline status
-            updateTimelineStatus(timelineStatus, daysUntilDeadline);
         }
 
-        // Fungsi untuk format tanggal kegiatan (tanggal_mulai dan tanggal_selesai)
-        function formatTanggalKegiatan(tanggal, bulan, tahun) {
-            if (!tanggal || !bulan || !tahun) return 'N/A';
-            
+        // Helper: Format Date Specific (Tgl + Bulan(Int) + Tahun)
+        function formatDateSpecific(tanggal, bulanInt, tahun) {
+            if (!tanggal || !bulanInt || !tahun) return 'N/A';
+
             try {
-                // Konversi angka tanggal ke format "1 November 2025"
-                const bulanMap = {
-                    'Januari': 0, 'Februari': 1, 'Maret': 2, 'April': 3, 'Mei': 4, 'Juni': 5,
-                    'Juli': 6, 'Agustus': 7, 'September': 8, 'Oktober': 9, 'November': 10, 'Desember': 11
-                };
-                
-                const monthIndex = bulanMap[bulan];
-                if (monthIndex === undefined) return 'N/A';
-                
+                const monthIndex = parseInt(bulanInt) - 1; // 0-indexed
                 const date = new Date(parseInt(tahun), monthIndex, parseInt(tanggal));
+
                 if (isNaN(date.getTime())) return 'N/A';
-                
-                return date.toLocaleDateString('id-ID', {
-                    day: 'numeric',
-                    month: 'long',
-                    year: 'numeric'
-                });
+
+                return "Tgl. " + date.getDate() + " " + date.toLocaleDateString('id-ID', { month: 'long' }) + " " + date.getFullYear();
             } catch (error) {
-                console.error("Error formatting kegiatan date:", error);
+                console.error("Error formatting date specific:", error);
                 return 'N/A';
             }
         }
 
-        // Fungsi untuk format batas upload
-        function formatBatasUpload(batasHari, tanggalSelesai, bulan, tahun) {
+        // Helper: Format Batas Upload Specific
+        function formatBatasUploadSpecific(batasHari, tanggalSelesai, bulanInt, tahun) {
             if (!batasHari) return 'Tidak ada batas';
-            if (!tanggalSelesai || !bulan || !tahun) return `${batasHari} hari setelah selesai`;
-            
+            if (!tanggalSelesai || !bulanInt || !tahun) return `${batasHari} hari setelah selesai`;
+
             try {
-                // Hitung tanggal batas upload (tanggal_selesai + batas_akhir_upload)
-                const bulanMap = {
-                    'Januari': 0, 'Februari': 1, 'Maret': 2, 'April': 3, 'Mei': 4, 'Juni': 5,
-                    'Juli': 6, 'Agustus': 7, 'September': 8, 'Oktober': 9, 'November': 10, 'Desember': 11
-                };
-                
-                const monthIndex = bulanMap[bulan];
-                if (monthIndex === undefined) return `${batasHari} hari setelah selesai`;
-                
-                const tanggalSelesaiDate = new Date(parseInt(tahun), monthIndex, parseInt(tanggalSelesai));
-                if (isNaN(tanggalSelesaiDate.getTime())) return `${batasHari} hari setelah selesai`;
-                
-                const batasUploadDate = new Date(tanggalSelesaiDate);
-                batasUploadDate.setDate(tanggalSelesaiDate.getDate() + parseInt(batasHari));
-                
-                return batasUploadDate.toLocaleDateString('id-ID', {
-                    day: 'numeric',
-                    month: 'long',
-                    year: 'numeric'
-                });
+                const monthIndex = parseInt(bulanInt) - 1;
+                const selesaiDate = new Date(parseInt(tahun), monthIndex, parseInt(tanggalSelesai));
+
+                if (isNaN(selesaiDate.getTime())) return `${batasHari} hari setelah selesai`;
+
+                // Add days
+                const deadlineDate = new Date(selesaiDate);
+                deadlineDate.setDate(selesaiDate.getDate() + parseInt(batasHari));
+
+                return "Tgl. " + deadlineDate.getDate() + " " + deadlineDate.toLocaleDateString('id-ID', { month: 'long' }) + " " + deadlineDate.getFullYear();
             } catch (error) {
-                console.error("Error formatting batas upload:", error);
+                console.error("Error formatting batas upload specific:", error);
                 return `${batasHari} hari setelah selesai`;
             }
         }
 
+        // REFACTORED: Update Timeline Status - Terintegrasi dalam container yang sudah disediakan
         function updateTimelineStatus(status, days) {
-            // Hapus elemen timeline status lama jika ada
-            $('.timeline-status-info').remove();
-            
-            let statusClass = 'badge-';
+            const $container = $('#timeline_status_container');
+            const $statusElement = $('#detail_timeline_status');
+            const $daysElement = $('#detail_timeline_days');
+
+            // Jika tidak ada status timeline, sembunyikan container
+            if (!status) {
+                $container.hide();
+                return;
+            }
+
+            // Tampilkan container
+            $container.show();
+
+            // Konfigurasi badge berdasarkan status
+            let badgeClass = '';
             let statusText = status;
-            
-            switch(status) {
+
+            switch (status) {
                 case 'Selesai':
-                    statusClass += 'success';
+                    badgeClass = 'bg-success';
                     break;
                 case 'Menunggu':
-                    statusClass += 'primary';
+                    badgeClass = 'bg-primary';
                     break;
                 case 'Tenggang':
-                    statusClass += 'warning';
+                    badgeClass = 'bg-warning';
                     break;
                 case 'Terlambat':
-                    statusClass += 'danger';
+                    badgeClass = 'bg-danger';
                     break;
                 default:
-                    statusClass += 'dark';
+                    badgeClass = 'bg-secondary';
             }
-            
-            // Tambahkan elemen timeline status di bagian Informasi Laporan
-            const timelineHtml = `
-                <div class="row timeline-status-info">
-                    <dt class="col-sm-4">Status Timeline</dt>
-                    <dd class="col-sm-8">
-                        <span class="badge ${statusClass}">${statusText}</span>
-                        ${days !== null ? ` (${Math.abs(Math.round(days))} hari)` : ''}
-                    </dd>
-                </div>
-            `;
-            
-            // Sisipkan setelah status laporan
-            $('#detail_status').closest('.row').after(timelineHtml);
+
+            // Update status badge
+            $statusElement.html(`<span class="badge ${badgeClass}">${statusText}</span>`);
+
+            // Update informasi hari jika ada
+            if (days !== null && days !== undefined) {
+                const dayCount = Math.abs(Math.round(days));
+                const dayText = days < 0 ? `${dayCount} hari yang lalu` : `${dayCount} hari lagi`;
+                $daysElement.text(`(${dayText})`);
+            } else {
+                $daysElement.text('');
+            }
         }
 
         function toggleLaporkanButton(status, laporanId, desaId, kegiatanId) {
             const $btnLaporkan = $('.btn-laporkan');
-            
+
             console.log('Toggle button with:', { status, laporanId, desaId, kegiatanId });
 
             // Pastikan desaId dan kegiatanId valid
@@ -254,7 +276,7 @@
             // Jika belum ada laporan sama sekali
             if (!status || !laporanId) {
                 $btnLaporkan.show().html('<i class="las la-plus me-1"></i> Buat Laporan');
-                $btnLaporkan.off('click').on('click', function() {
+                $btnLaporkan.off('click').on('click', function () {
                     console.log('Creating report with:', { desaId, kegiatanId });
                     const url = '{{ route("administrator.monev.laporan.create") }}?desa_id=' + desaId + '&kegiatan_id=' + kegiatanId;
                     window.location.href = url;
@@ -265,7 +287,7 @@
             // Tampilkan tombol hanya untuk status tertentu
             if (['draft', 'revision'].includes(status)) {
                 $btnLaporkan.show().html('<i class="las la-edit me-1"></i> Edit Laporan');
-                $btnLaporkan.off('click').on('click', function() {
+                $btnLaporkan.off('click').on('click', function () {
                     console.log('Editing report with:', { desaId, kegiatanId, laporanId });
                     const url = '{{ route("administrator.monev.laporan.edit") }}?desa_id=' + desaId + '&kegiatan_id=' + kegiatanId + '&id_laporan=' + laporanId;
                     window.location.href = url;
@@ -278,41 +300,41 @@
         function getStatusBadge(status) {
             const statusConfig = {
                 'draft': {
-                    class: 'badge-secondary',
+                    class: 'bg-secondary',
                     text: 'Draft'
                 },
                 'submitted': {
-                    class: 'badge-primary',
+                    class: 'bg-primary',
                     text: 'Terkirim'
                 },
                 'revision': {
-                    class: 'badge-warning',
+                    class: 'bg-warning',
                     text: 'Perlu Revisi'
                 },
                 'approved': {
-                    class: 'badge-success',
+                    class: 'bg-success',
                     text: 'Disetujui'
                 },
                 'rejected': {
-                    class: 'badge-danger',
+                    class: 'bg-danger',
                     text: 'Ditolak'
                 },
                 '': {
-                    class: 'badge-dark',
+                    class: 'bg-dark',
                     text: 'Belum Dilaporkan'
                 },
                 null: {
-                    class: 'badge-dark',
+                    class: 'bg-dark',
                     text: 'Belum Dilaporkan'
                 },
                 undefined: {
-                    class: 'badge-dark',
+                    class: 'bg-dark',
                     text: 'Belum Dilaporkan'
                 }
             };
 
             const config = statusConfig[status] || {
-                class: 'badge-dark',
+                class: 'bg-dark',
                 text: status || 'Belum Dilaporkan'
             };
             return `<span class="badge ${config.class}">${config.text}</span>`;
@@ -321,15 +343,15 @@
         // Format tanggal baru: "14 agustus 2025"
         function formatDateLong(dateString) {
             if (!dateString) return 'N/A';
-            
+
             try {
                 const date = new Date(dateString);
                 if (isNaN(date.getTime())) return 'N/A';
-                
-                const options = { 
-                    day: 'numeric', 
-                    month: 'long', 
-                    year: 'numeric' 
+
+                const options = {
+                    day: 'numeric',
+                    month: 'long',
+                    year: 'numeric'
                 };
                 return date.toLocaleDateString('id-ID', options);
             } catch (error) {
@@ -339,15 +361,19 @@
         }
 
         // Reset modal ketika ditutup
-        $('#modalDetail').on('hidden.bs.modal', function() {
+        $('#modalDetail').on('hidden.bs.modal', function () {
             // Reset tombol laporkan
             $('.btn-laporkan').hide();
+            // Reset timeline status container
+            $('#timeline_status_container').hide();
+            $('#detail_timeline_status').html('-');
+            $('#detail_timeline_days').text('');
             // Reset loading state
             hideLoadingState();
         });
 
         // Reset modal ketika dibuka
-        $('#modalDetail').on('show.bs.modal', function() {
+        $('#modalDetail').on('show.bs.modal', function () {
             showLoadingState();
         });
     });
