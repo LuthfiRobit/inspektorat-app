@@ -28,7 +28,7 @@ class KegiatanController extends Controller
      * @param TransactionService $transactionService
      * @param LogActivityService $logActivityService
      */
-    public function __construct(ResponseService $responseService, TransactionService $transactionService,  LogActivityService $logActivityService)
+    public function __construct(ResponseService $responseService, TransactionService $transactionService, LogActivityService $logActivityService)
     {
         $this->responseService = $responseService;
         $this->transactionService = $transactionService;
@@ -78,10 +78,10 @@ class KegiatanController extends Controller
     {
         $filters = [
             'filter_status' => $request->input('filter_status', ''),
-            'filter_tahun'  => $request->input('filter_tahun', ''),
-            'filter_jenis'  => $request->input('filter_jenis', ''),
-            'filter_bulan'  => $request->input('filter_bulan', ''),
-            'search'        => $request->input('search', ''),
+            'filter_tahun' => $request->input('filter_tahun', ''),
+            'filter_jenis' => $request->input('filter_jenis', ''),
+            'filter_bulan' => $request->input('filter_bulan', ''),
+            'search' => $request->input('search', ''),
         ];
 
         $query = Kegiatan::getFilters($filters);
@@ -99,10 +99,10 @@ class KegiatanController extends Controller
                             <i class="fas fa-cogs"></i>  Aksi
                         </button>
                         <div class="dropdown-menu">
-                            <a class="dropdown-item" href="javascript:void(0);" data-action="action_show" data-id="' . $item->id_kegiatan . '">
+                            <a class="dropdown-item action-trigger" href="javascript:void(0);" data-action="action_show" data-id="' . $item->id_kegiatan . '">
                                 <i class="fas fa-eye"></i> Lihat
                             </a>
-                            <a class="dropdown-item" href="javascript:void(0);" data-action="action_edit" data-id="' . $item->id_kegiatan . '">
+                            <a class="dropdown-item action-trigger" href="javascript:void(0);" data-action="action_edit" data-id="' . $item->id_kegiatan . '">
                                 <i class="fas fa-edit"></i> Edit
                             </a>
                         </div>
@@ -125,17 +125,36 @@ class KegiatanController extends Controller
      * @param Request $request
      * @return \Illuminate\Http\JsonResponse
      */
+    /**
+     * Store a new Kegiatan record in the database.
+     *
+     * @param Request $request
+     * @return \Illuminate\Http\JsonResponse
+     */
     public function store(Request $request)
     {
+        // Validasi
         $validationRules = [
             'tahun_anggaran_id' => 'required|exists:tahun_anggaran,id_tahun_anggaran',
             'jenis_kegiatan_id' => 'required|exists:jenis_kegiatan,id_jenis_kegiatan',
             'kode_kegiatan' => 'required|string|max:20',
             'nama_kegiatan' => 'required|string|max:500',
-            'bulan' => 'nullable|integer|min:1|max:12',
-            'tanggal_mulai' => 'nullable|integer|min:1|max:31',
-            'tanggal_selesai' => 'nullable|integer|min:1|max:31',
-            'batas_akhir_upload' => 'nullable|integer|min:1|max:90',
+
+            // Logic Validasi Baru
+            'frekuensi_pelaporan' => 'nullable|integer|in:1,2,3,4,6,12', // Jika ada, berarti Rutin
+
+            // Insidentil
+            'bulan' => 'nullable|required_without:frekuensi_pelaporan|integer|min:1|max:12',
+            'tanggal_mulai_insidentil' => 'nullable|required_without:frekuensi_pelaporan|integer|min:1|max:31',
+            'tanggal_selesai_insidentil' => 'nullable|required_without:frekuensi_pelaporan|integer|min:1|max:31',
+
+            // Rutin
+            'bulan_mulai' => 'nullable|required_with:frekuensi_pelaporan|integer|min:1|max:12',
+            'bulan_selesai' => 'nullable|required_with:frekuensi_pelaporan|integer|min:1|max:12|gte:bulan_mulai',
+            'tanggal_mulai_rutin' => 'nullable|required_with:frekuensi_pelaporan|integer|min:1|max:31',
+            'tanggal_selesai_rutin' => 'nullable|required_with:frekuensi_pelaporan|integer|min:1|max:31',
+
+            'batas_akhir_upload' => 'required|integer|min:1|max:31',
             'dasar_hukum' => 'nullable|string',
             'status' => 'required|in:active,inactive',
         ];
@@ -152,6 +171,28 @@ class KegiatanController extends Controller
             $this->logActivityService->log('Validation failed during Kegiatan store', 'Errors: ' . json_encode($validator->errors()));
             return $this->responseService->validationError($validator->errors());
         }
+
+        // --- Data Mapping Logic (Rutin vs Insidentil) ---
+        if ($request->filled('frekuensi_pelaporan')) {
+            // Skenario Rutin
+            $request->merge([
+                'bulan' => $request->bulan_mulai, // Bulan used for list period
+                'tanggal_mulai' => $request->tanggal_mulai_rutin,
+                'tanggal_selesai' => $request->tanggal_selesai_rutin,
+                // bulan_mulai, bulan_selesai, frekuensi_pelaporan already in request
+            ]);
+        } else {
+            // Skenario Insidentil
+            $request->merge([
+                // bulan already in request
+                'tanggal_mulai' => $request->tanggal_mulai_insidentil,
+                'tanggal_selesai' => $request->tanggal_selesai_insidentil,
+                'frekuensi_pelaporan' => null,
+                'bulan_mulai' => null,
+                'bulan_selesai' => null,
+            ]);
+        }
+        // ------------------------------------------------
 
         // Use TransactionService to store the Kegiatan
         $result = $this->transactionService->store($request, new Kegiatan(), $validationRules);
@@ -201,20 +242,32 @@ class KegiatanController extends Controller
             return $this->responseService->error('Data not found', ResponseService::STATUS_NOT_FOUND);
         }
 
+        // Validasi
         $validationRules = [
             'tahun_anggaran_id' => 'required|exists:tahun_anggaran,id_tahun_anggaran',
             'jenis_kegiatan_id' => 'required|exists:jenis_kegiatan,id_jenis_kegiatan',
             'kode_kegiatan' => 'required|string|max:20',
             'nama_kegiatan' => 'required|string|max:500',
-            'bulan' => 'nullable|integer|min:1|max:12',
-            'tanggal_mulai' => 'nullable|integer|min:1|max:31',
-            'tanggal_selesai' => 'nullable|integer|min:1|max:31',
-            'batas_akhir_upload' => 'nullable|integer|min:1|max:90',
+
+            // Logic Validasi Baru
+            'frekuensi_pelaporan' => 'nullable|integer|in:1,2,3,4,6,12', // Jika ada, berarti Rutin
+
+            // Insidentil
+            'bulan' => 'nullable|required_without:frekuensi_pelaporan|integer|min:1|max:12',
+            'tanggal_mulai_insidentil' => 'nullable|required_without:frekuensi_pelaporan|integer|min:1|max:31',
+            'tanggal_selesai_insidentil' => 'nullable|required_without:frekuensi_pelaporan|integer|min:1|max:31',
+
+            // Rutin
+            'bulan_mulai' => 'nullable|required_with:frekuensi_pelaporan|integer|min:1|max:12',
+            'bulan_selesai' => 'nullable|required_with:frekuensi_pelaporan|integer|min:1|max:12|gte:bulan_mulai',
+            'tanggal_mulai_rutin' => 'nullable|required_with:frekuensi_pelaporan|integer|min:1|max:31',
+            'tanggal_selesai_rutin' => 'nullable|required_with:frekuensi_pelaporan|integer|min:1|max:31',
+
+            'batas_akhir_upload' => 'required|integer|min:1|max:31',
             'dasar_hukum' => 'nullable|string',
             'status' => 'required|in:active,inactive',
         ];
 
-        // Custom validation for unique kode_kegiatan per tahun_anggaran_id
         $validator = Validator::make($request->all(), $validationRules);
         $validator->after(function ($validator) use ($request, $id) {
             if (!Kegiatan::isKodeUnique($request->kode_kegiatan, $request->tahun_anggaran_id, $id)) {
@@ -226,6 +279,28 @@ class KegiatanController extends Controller
             $this->logActivityService->log('Validation failed during Kegiatan update', 'Errors: ' . json_encode($validator->errors()));
             return $this->responseService->validationError($validator->errors());
         }
+
+        // --- Data Mapping Logic (Rutin vs Insidentil) ---
+        if ($request->filled('frekuensi_pelaporan')) {
+            // Skenario Rutin
+            $request->merge([
+                'bulan' => $request->bulan_mulai, // Bulan used for list period
+                'tanggal_mulai' => $request->tanggal_mulai_rutin,
+                'tanggal_selesai' => $request->tanggal_selesai_rutin,
+                // bulan_mulai, bulan_selesai, frekuensi_pelaporan already in request
+            ]);
+        } else {
+            // Skenario Insidentil
+            $request->merge([
+                // bulan already in request
+                'tanggal_mulai' => $request->tanggal_mulai_insidentil,
+                'tanggal_selesai' => $request->tanggal_selesai_insidentil,
+                'frekuensi_pelaporan' => null,
+                'bulan_mulai' => null,
+                'bulan_selesai' => null,
+            ]);
+        }
+        // ------------------------------------------------
 
         // Use TransactionService to update the record
         $result = $this->transactionService->update($request, $kegiatan, $validationRules);
