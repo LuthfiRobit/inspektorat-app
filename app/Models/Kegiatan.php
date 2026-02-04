@@ -46,6 +46,9 @@ class Kegiatan extends Model
         'kode_kegiatan',
         'nama_kegiatan',
         'bulan',
+        'frekuensi_pelaporan',
+        'bulan_mulai', // Added
+        'bulan_selesai', // Added
         'tanggal_mulai',
         'tanggal_selesai',
         'batas_akhir_upload',
@@ -67,6 +70,9 @@ class Kegiatan extends Model
         'kode_kegiatan' => 'string',
         'nama_kegiatan' => 'string',
         'bulan' => 'integer',
+        'frekuensi_pelaporan' => 'integer',
+        'bulan_mulai' => 'integer', // Added
+        'bulan_selesai' => 'integer', // Added
         'tanggal_mulai' => 'integer',
         'tanggal_selesai' => 'integer',
         'batas_akhir_upload' => 'integer',
@@ -368,6 +374,9 @@ class Kegiatan extends Model
                 'k.tanggal_selesai',
                 'k.batas_akhir_upload',
                 'k.dasar_hukum',
+                'k.frekuensi_pelaporan',
+                'k.bulan_mulai',
+                'k.bulan_selesai',
                 'k.status',
                 'ta.tahun',
                 'jk.kode_jenis',
