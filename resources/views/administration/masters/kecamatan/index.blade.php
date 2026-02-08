@@ -37,10 +37,12 @@
                                     <option value="inactive">Tidak aktif</option>
                                 </select>
                             </div>
+                            @if (auth()->user()->hasPermissionTo('administrator.master.kecamatan.store'))
                             <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal"
                                 data-bs-target="#modalCreate" data-bs-toggle="tooltip" title="Tambah Kecamatan Baru">
                                 <i class="las la-plus me-1"></i>Tambah
                             </button>
+                            @endif
                         </div>
                     </div>
 
@@ -48,6 +50,7 @@
                         <!-- Aksi Tambahan -->
                         <div class="row mb-3 gy-2">
                             <div class="col-12 col-md d-flex flex-wrap gap-2">
+                                @if (auth()->user()->hasPermissionTo('administrator.master.kecamatan.update-status-multiple'))
                                 <button class="btn-update-status btn btn-sm btn-primary" data-status="active"
                                     data-bs-toggle="tooltip" title="Aktifkan kecamatan yang dipilih">
                                     <i class="las la-check-circle me-1"></i>Aktifkan
@@ -56,6 +59,7 @@
                                     data-bs-toggle="tooltip" title="Nonaktifkan kecamatan yang dipilih">
                                     <i class="las la-times-circle me-1"></i>Nonaktifkan
                                 </button>
+                                @endif
                             </div>
                             {{-- <div class="col-12 col-md-auto d-flex flex-wrap gap-2 justify-content-md-end">
                                 <button class="btn btn-sm btn-outline-secondary" data-bs-toggle="modal"

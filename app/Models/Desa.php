@@ -147,6 +147,19 @@ class Desa extends Model
             ->leftJoin('kecamatan', 'desa.kecamatan_id', '=', 'kecamatan.id_kecamatan')
             ->orderBy('desa.created_at', 'DESC');
 
+        // Role-based filtering
+        $user = Auth::user();
+        if ($user && $user->petugas) {
+            $petugas = $user->petugas;
+            if ($petugas->desa_id) {
+                // Petugas Desa: Show only their desa
+                $query->where('desa.id_desa', $petugas->desa_id);
+            } elseif ($petugas->kecamatan_id) {
+                // Petugas Kecamatan: Show all desa in their kecamatan
+                $query->where('desa.kecamatan_id', $petugas->kecamatan_id);
+            }
+        }
+
         if (!empty($filters['filter_status'])) {
             $query->where('desa.status', $filters['filter_status']);
         }

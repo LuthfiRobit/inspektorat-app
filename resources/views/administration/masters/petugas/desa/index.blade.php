@@ -41,10 +41,12 @@
                                     @endforeach
                                 </select>
                             </div>
-                            <a href="{{ route('administrator.master.petugas.desa.create') }}"
-                                class="btn btn-sm btn-outline-primary" title="Tambah Petugas Baru">
-                                <i class="las la-plus me-1"></i>Tambah
-                            </a>
+                            @if (auth()->user()->hasPermissionTo('administrator.master.petugas.desa.create'))
+                                <a href="{{ route('administrator.master.petugas.desa.create') }}"
+                                    class="btn btn-sm btn-outline-primary" title="Tambah Petugas Baru">
+                                    <i class="las la-plus me-1"></i>Tambah
+                                </a>
+                            @endif
                         </div>
                     </div>
 

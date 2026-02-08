@@ -63,20 +63,34 @@ class PetugasInspektoratController extends Controller
                 '<input type="checkbox" class="table-checkbox form-check-input" name="petugas_ids[]"   id="checkbox_' . $row->id_petugas . '"  value="' . $row->id_petugas . '">'
             )
             ->addColumn('aksi', function ($item) {
-                return '
-                <div class="btn-group">
-                    <button type="button" class="btn btn-outline-primary btn-xs dropdown-toggle" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                        <i class="fas fa-cogs"></i> Aksi
-                    </button>
-                    <div class="dropdown-menu">
-                        <a class="dropdown-item" href="javascript:void(0);" data-action="action_show" data-id="' . $item->id_petugas . '">
-                            <i class="fas fa-eye"></i> Lihat
-                        </a>
-                        <a class="dropdown-item" href="javascript:void(0);" data-action="action_edit" data-id="' . $item->id_petugas . '">
-                            <i class="fas fa-edit"></i> Edit
-                        </a>
-                    </div>
-                </div>';
+                $user = \Illuminate\Support\Facades\Auth::user();
+                $hasShow = $user->hasPermissionTo('administrator.master.petugas.inspektorat.show');
+                $hasEdit = $user->hasPermissionTo('administrator.master.petugas.inspektorat.edit');
+
+                if (!$hasShow && !$hasEdit) {
+                    return '<span class="text-muted">-</span>';
+                }
+
+                $btn = '<div class="btn-group">';
+                $btn .= '<button type="button" class="btn btn-outline-primary btn-xs dropdown-toggle" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">';
+                $btn .= '<i class="fas fa-cogs"></i> Aksi';
+                $btn .= '</button>';
+                $btn .= '<div class="dropdown-menu">';
+
+                if ($hasShow) {
+                    $btn .= '<a class="dropdown-item" href="javascript:void(0);" data-action="action_show" data-id="' . $item->id_petugas . '">';
+                    $btn .= '<i class="fas fa-eye"></i> Lihat';
+                    $btn .= '</a>';
+                }
+
+                if ($hasEdit) {
+                    $btn .= '<a class="dropdown-item" href="javascript:void(0);" data-action="action_edit" data-id="' . $item->id_petugas . '">';
+                    $btn .= '<i class="fas fa-edit"></i> Edit';
+                    $btn .= '</a>';
+                }
+
+                $btn .= '</div></div>';
+                return $btn;
             })
             ->editColumn(
                 'nip',
