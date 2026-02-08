@@ -187,6 +187,7 @@ class Petugas extends Model
                 'd.nama_desa',
                 'u.name as user_name',
                 'u.email as user_email',
+                'u.status as user_status',
             ])
             ->leftJoin('kecamatan as k', 'k.id_kecamatan', '=', 'petugas.kecamatan_id')
             ->leftJoin('desa as d', 'd.id_desa', '=', 'petugas.desa_id')
@@ -209,7 +210,7 @@ class Petugas extends Model
          */
         if ($petugasLogin) {
             // kalau user dari kecamatan → filter kecamatan
-            if ($petugasLogin->kecamatan_id && ! $petugasLogin->desa_id) {
+            if ($petugasLogin->kecamatan_id && !$petugasLogin->desa_id) {
                 $query->where('petugas.kecamatan_id', $petugasLogin->kecamatan_id);
             }
             // kalau user dari desa → filter desa
@@ -224,23 +225,23 @@ class Petugas extends Model
         /**
          * 🧭 Filter tambahan dari request
          */
-        if (! empty($filters['filter_status'])) {
+        if (!empty($filters['filter_status'])) {
             $query->where('petugas.status', $filters['filter_status']);
         }
 
-        if (! empty($filters['filter_kecamatan'])) {
+        if (!empty($filters['filter_kecamatan'])) {
             $query->where('petugas.kecamatan_id', $filters['filter_kecamatan']);
         }
 
-        if (! empty($filters['filter_desa'])) {
+        if (!empty($filters['filter_desa'])) {
             $query->where('petugas.desa_id', $filters['filter_desa']);
         }
 
-        if (! empty($filters['filter_jabatan'])) {
+        if (!empty($filters['filter_jabatan'])) {
             $query->where('petugas.jabatan', $filters['filter_jabatan']);
         }
 
-        if (! empty($filters['search'])) {
+        if (!empty($filters['search'])) {
             $search = $filters['search'];
             $query->where(function ($q) use ($search) {
                 $q->where('petugas.nama_lengkap', 'like', "%{$search}%")
@@ -326,6 +327,7 @@ class Petugas extends Model
                 'd.nama_desa',
                 'u.username as username',
                 'u.email as email',
+                'u.status as user_status',
             ])
             ->leftJoin('kecamatan as k', 'k.id_kecamatan', '=', 'petugas.kecamatan_id')
             ->leftJoin('desa as d', 'd.id_desa', '=', 'petugas.desa_id')
