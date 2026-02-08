@@ -1,7 +1,7 @@
 <script>
     $('.selectpicker').selectpicker();
 
-    $('#example').on('click', '.dropdown-item', function() {
+    $('#example').on('click', '.dropdown-item', function () {
         const action = $(this).data('action');
         const dataId = $(this).data('id');
         const url = '{{ route('administrator.master.petugas.kecamatan.show', ':id') }}'.replace(':id',
@@ -29,6 +29,17 @@
     function handleShow(data) {
         const baseUrl = "{{ asset('') }}";
 
+        // Helper date formatter
+        const formatDate = (dateString) => {
+            if (!dateString) return '-';
+            const date = new Date(dateString);
+            return date.toLocaleDateString('id-ID', {
+                day: 'numeric',
+                month: 'long',
+                year: 'numeric'
+            });
+        };
+
         // Isi data ke modal
         $('#detail_nama_lengkap').text(data.nama_lengkap || 'N/A');
         $('#detail_nip').text(data.nip || 'N/A');
@@ -37,17 +48,25 @@
         $('#detail_alamat').text(data.alamat || 'N/A');
         $('#detail_no_telp').text(data.no_telp || 'N/A');
         $('#detail_email').text(data.email || 'N/A');
-        $('#detail_status').text(data.status || 'N/A');
-        $('#detail_tanggal_awal').text(data.tanggal_awal || 'N/A');
-        $('#detail_tanggal_akhir').text(data.tanggal_akhir || 'N/A');
+
+        // Status Petugas
+        const statusMap = {
+            'active': '<span class="badge badge-success">AKTIF</span>',
+            'inactive': '<span class="badge badge-danger">TIDAK AKTIF</span>'
+        };
+        $('#detail_status').html(statusMap[data.status] || '<span class="badge badge-dark">-</span>');
+
+        // Akses Login
+        const userStatusMap = {
+            'active': '<span class="badge badge-success">AKTIF</span>',
+            'inactive': '<span class="badge badge-danger">TIDAK AKTIF</span>'
+        };
+        $('#detail_user_status').html(userStatusMap[data.user_status] || '<span class="badge badge-dark">NONAKTIF</span>');
+
+        $('#detail_tanggal_awal').text(formatDate(data.tanggal_awal));
+        $('#detail_tanggal_akhir').text(formatDate(data.tanggal_akhir));
         $('#detail_nama_kecamatan').text(data.nama_kecamatan || '-');
         $('#detail_nama_desa').text(data.nama_desa || '-');
-
-        // Ubah warna teks status (optional tapi recommended)
-        const statusElement = $('#detail_status');
-        statusElement
-            .removeClass('text-success text-danger')
-            .addClass(data.status === 'active' ? 'text-success' : 'text-danger');
 
         // Tampilkan foto
         if (data.foto_petugas) {
