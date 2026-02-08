@@ -45,11 +45,11 @@ class PetugasDesaController extends Controller
     public function list(Request $request)
     {
         $filters = [
-            'filter_status'    => $request->input('filter_status', ''),
+            'filter_status' => $request->input('filter_status', ''),
             'filter_kecamatan' => $request->input('filter_kecamatan', ''),
-            'filter_desa'      => $request->input('filter_desa', ''),
-            'filter_jabatan'   => $request->input('filter_jabatan', ''),
-            'search'           => $request->input('search', ''),
+            'filter_desa' => $request->input('filter_desa', ''),
+            'filter_jabatan' => $request->input('filter_jabatan', ''),
+            'search' => $request->input('search', ''),
         ];
 
         $query = Petugas::getFilters($filters, $this->scope);
@@ -118,10 +118,20 @@ class PetugasDesaController extends Controller
                 fn($item) =>
                 $item->unit_kerja ? e($item->unit_kerja) : '<span class="text-muted">-</span>'
             )
+            ->editColumn('user_status', function ($row) {
+                // badge untuk user status (akses login)
+                $map = [
+                    'active' => ['class' => 'light badge-success', 'label' => 'AKTIF'],
+                    'inactive' => ['class' => 'light badge-danger', 'label' => 'NONAKTIF'],
+                ];
+                $badge = $map[$row->user_status] ?? ['class' => 'light badge-dark', 'label' => strtoupper($row->user_status ?? '-')];
+
+                return '<span class="badge ' . $badge['class'] . '">' . $badge['label'] . '</span>';
+            })
             ->editColumn('status', function ($row) {
                 $map = [
-                    'active'    => ['class' => 'light badge-success', 'label' => 'AKTIF'],
-                    'inactive'  => ['class' => 'light badge-danger', 'label' => 'NONAKTIF'],
+                    'active' => ['class' => 'light badge-success', 'label' => 'AKTIF'],
+                    'inactive' => ['class' => 'light badge-danger', 'label' => 'NONAKTIF'],
                 ];
 
                 $badge = $map[$row->status] ?? ['class' => 'light badge-dark', 'label' => strtoupper($row->status ?? '-')];
@@ -137,6 +147,7 @@ class PetugasDesaController extends Controller
                 'jabatan',
                 'instansi',
                 'unit_kerja',
+                'user_status',
                 'status'
             ])
             ->make(true);
@@ -197,8 +208,9 @@ class PetugasDesaController extends Controller
                 // Untuk Kecamatan, desa_id harus null
                 $petugas->kecamatan_id = $request->kecamatan_id;
                 $petugas->desa_id = $request->desa_id;
-                // Create user account - langsung menggunakan data dari request
-                $user = $this->userAccountService->createPetugasAccount($petugas, $request->jabatan, $request->email, $request->status);
+                // Create user account - gunakan input 'akses_login' untuk status user
+                $userStatus = $request->input('akses_login', 'active');
+                $user = $this->userAccountService->createPetugasAccount($petugas, $request->jabatan, $request->email, $userStatus);
                 $petugas->user_id = $user->id_user;
                 $petugas->save(); // Simpan 
             },
@@ -244,18 +256,18 @@ class PetugasDesaController extends Controller
             return $this->responseService->error('Data not found', ResponseService::STATUS_NOT_FOUND);
         }
         $validationRules = [
-            'kecamatan_id'  => ['required', 'exists:kecamatan,id_kecamatan'],
-            'nama_lengkap'  => 'required|string|max:100',
-            'nip'           => 'required|string|max:20|unique:petugas,nip,' . $id . ',id_petugas',
-            'jabatan'       => 'required|string|max:100',
-            'unit_kerja'    => 'nullable|string|max:100',
-            'no_telp'       => 'nullable|string|max:15',
-            'email'         => 'required|email|max:100|unique:users,email,' . $petugas->user_id . ',id_user',
-            'alamat'        => 'nullable|string',
-            'tanggal_awal'  => 'nullable|date',
+            'kecamatan_id' => ['required', 'exists:kecamatan,id_kecamatan'],
+            'nama_lengkap' => 'required|string|max:100',
+            'nip' => 'required|string|max:20|unique:petugas,nip,' . $id . ',id_petugas',
+            'jabatan' => 'required|string|max:100',
+            'unit_kerja' => 'nullable|string|max:100',
+            'no_telp' => 'nullable|string|max:15',
+            'email' => 'required|email|max:100|unique:users,email,' . $petugas->user_id . ',id_user',
+            'alamat' => 'nullable|string',
+            'tanggal_awal' => 'nullable|date',
             'tanggal_akhir' => 'nullable|date',
-            'foto_petugas'  => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
-            'status'        => 'required|in:active,inactive',
+            'foto_petugas' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+            'status' => 'required|in:active,inactive',
         ];
 
         $validator = Validator::make($request->all(), $validationRules);
@@ -290,12 +302,13 @@ class PetugasDesaController extends Controller
             $petugas,
             $validationRules,
             function ($request, $petugas) {
-                // Update akun user berdasarkan jabatan & status
+                // Update akun user berdasarkan jabatan & status (akses login)
+                $userStatus = $request->input('akses_login', 'active');
                 $this->userAccountService->updatePetugasAccount(
                     $petugas,
                     $request->jabatan,
                     $request->email,
-                    $request->status
+                    $userStatus
                 );
             },
             $fileFields,
