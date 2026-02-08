@@ -116,7 +116,7 @@
                                         <th width="12%" class="text-center align-middle">Kecamatan</th>
                                         <th width="5%" class="text-center align-middle">Peringk</th>
                                         <th width="8%" class="text-center align-middle">Total Skor</th>
-                                        <th width="10%" class="text-center align-middle">Waktu Submit</th>
+                                        <!-- <th width="10%" class="text-center align-middle">Waktu Submit</th> -->
                                         <th width="8%" class="text-center align-middle">Kegiatan Terlapor</th>
                                         <th width="8%" class="text-center align-middle">Belum Terlapor</th>
                                         <th width="8%" class="text-center align-middle">Dok. Wajib</th>
@@ -158,21 +158,22 @@
                                     
                                     <div class="row mt-3">
                                         <div class="col-md-6">
-                                            <strong><i class="fa fa-calculator me-1"></i> Mekanisme Poin Ketepatan Waktu:</strong>
+                                            <strong><i class="fa fa-calculator me-1"></i> Mekanisme Penilaian:</strong>
                                             <ul class="mb-2 ps-3 small">
-                                                <li><strong>Tepat Waktu:</strong> Mendapatkan poin penuh <strong>1.0</strong>.</li>
-                                                <li><strong>Terlambat:</strong> Dikurangi <strong>0.1 poin</strong> untuk setiap hari keterlambatan.</li>
-                                                <li>Skor minimal untuk setiap kegiatan adalah 0.</li>
+                                                <li><strong>Total Skor:</strong> Merupakan poin rata-rata (Total Poin / Jumlah Kegiatan) dari seluruh laporan yang disubmit.</li>
+                                                <li><strong>Poin Kegiatan:</strong> Maksimun 100 poin per kegiatan. Penalti sebesar <strong>10 poin</strong> dikurangi untuk setiap hari keterlambatan.</li>
+                                                <li><strong>Kelengkapan:</strong> Dokumen wajib yang disetujui berkontribusi pada profil kepatuhan desa.</li>
                                             </ul>
                                         </div>
                                         <div class="col-md-6">
-                                            <strong><i class="fa fa-trophy me-1"></i> Kriteria Pemeringkatan (Ranking):</strong>
-                                            <ol class="mb-0 ps-3 small">
-                                                <li><strong>Total Skor</strong> tertinggi.</li>
-                                                <li><strong>Waktu Submit</strong> tercepat (jika skor seri).</li>
-                                                <li><strong>Jumlah Dokumen Wajib</strong> yang disetujui terbanyak.</li>
-                                                <li><strong>Jumlah Dokumen Tambahan</strong> yang disetujui terbanyak.</li>
-                                            </ol>
+                                            <strong><i class="fa fa-trophy me-1"></i> Pemeringkatan:</strong>
+                                            <ul class="mb-0 ps-3 small">
+                                                <li>Urutan peringkat desa ditentukan berdasarkan <strong>Total Skor (Rata-rata) tertinggi</strong>.</li>
+                                                <li>Jika skor sama, prioritas diberikan kepada desa dengan jumlah <strong>Dokumen Wajib</strong> yang lebih banyak.</li>
+                                            </ul>
+                                        </div>
+                                    </div>
+
                                         </div>
                                     </div>
                                 </div>

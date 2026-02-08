@@ -149,15 +149,15 @@
                                         <div class="col-md-6">
                                             <strong><i class="fa fa-calculator me-1"></i> Mekanisme Penilaian:</strong>
                                             <ul class="mb-2 ps-3 small">
-                                                <li><strong>Total Skor:</strong> Merupakan akumulasi (penjumlahan) dari total skor seluruh desa di wilayah kecamatan.</li>
-                                                <li><strong>Rata-rata Skor:</strong> Total Skor dibagi dengan jumlah desa yang aktif.</li>
+                                                <li><strong>Rata-rata Skor:</strong> Indikator utama performa kecamatan. Merupakan rata-rata skor dari seluruh desa.</li>
+                                                <li><strong>Total Skor:</strong> Akumulasi poin kontribusi dari seluruh desa di wilayah kecamatan.</li>
                                             </ul>
                                         </div>
                                         <div class="col-md-6">
                                             <strong><i class="fa fa-trophy me-1"></i> Pemeringkatan:</strong>
                                             <ul class="mb-0 ps-3 small">
-                                                <li>Urutan peringkat kecamatan ditentukan berdasarkan <strong>Total Skor tertinggi</strong>.</li>
-                                                <li>Semakin banyak desa yang tertib administrasi dan tepat waktu, semakin tinggi skor kecamatan.</li>
+                                                <li>Urutan peringkat kecamatan ditentukan berdasarkan <strong>Rata-rata Skor tertinggi</strong>.</li>
+                                                <li>Semakin tinggi rata-rata skor desa, semakin baik kinerja manajerial kepatuhan kecamatan.</li>
                                             </ul>
                                         </div>
                                     </div>

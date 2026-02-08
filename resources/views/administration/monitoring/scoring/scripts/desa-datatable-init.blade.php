@@ -21,7 +21,6 @@
                 { data: 'nama_kecamatan', name: 'nama_kecamatan' },
                 { data: 'peringkat', name: 'peringkat', orderable: false },
                 { data: 'total_skor', name: 'total_skor', orderable: false },
-                { data: 'waktu_submit', name: 'waktu_submit', orderable: false },
                 { data: 'kegiatan_terlapor', name: 'kegiatan_terlapor', orderable: false },
                 { data: 'kegiatan_belum_terlapor', name: 'kegiatan_belum_terlapor', orderable: false },
                 { data: 'jumlah_dokumen_wajib', name: 'jumlah_dokumen_wajib', orderable: false },
@@ -39,14 +38,16 @@
             if (json && json.userRanking) {
                 let rank = json.userRanking.rank;
                 let total = json.userRanking.total_desa;
-                
+
                 let message = '';
-                if (rank !== '-') {
-                     message = `Desa Anda saat ini berada di peringkat ke-<strong>${rank}</strong> dari <strong>${total}</strong> desa berdasarkan filter yang dipilih.`;
+                if (json.userRanking.is_kecamatan_user) {
+                    message = `Menampilkan data scoring untuk desa-desa di wilayah kecamatan Anda (Total seluruh kabupaten: ${total} desa).`;
+                } else if (rank !== '-') {
+                    message = `Desa Anda saat ini berada di peringkat ke-<strong>${rank}</strong> dari <strong>${total}</strong> desa berdasarkan filter yang dipilih.`;
                 } else {
-                     message = `Desa Anda belum masuk dalam daftar peringkat berdasarkan filter yang dipilih (Total: ${total} desa).`;
+                    message = `Desa Anda belum masuk dalam daftar peringkat berdasarkan filter yang dipilih (Total: ${total} desa).`;
                 }
-                
+
                 $('#userRankingText').html(message);
                 $('#userRankingAlert').removeClass('d-none');
             } else {
@@ -100,10 +101,10 @@
                 tahun: tahun,
                 periode: periode
             },
-            success: function(response) {
+            success: function (response) {
                 $('#modalDetailContent').html(response);
             },
-            error: function(xhr) {
+            error: function (xhr) {
                 $('#modalDetailContent').html(`
                     <div class="alert alert-danger">
                         Terjadi kesalahan saat memuat data. Silakan coba lagi.
