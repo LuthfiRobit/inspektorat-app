@@ -90,6 +90,7 @@
                                         <th style="width: 10%;" class="text-start">Jabatan</th>
                                         <th style="width: 15%;" class="text-start">Instansi</th>
                                         <th style="width: 10%;" class="text-start">Unit Kerja</th>
+                                        <th style="width: 10%;" class="text-start">Akses Login</th>
                                         <th style="width: 5%;" class="text-start">Status</th>
                                     </tr>
                                 </thead>

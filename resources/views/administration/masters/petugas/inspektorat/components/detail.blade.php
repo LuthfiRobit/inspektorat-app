@@ -42,8 +42,14 @@
                         <div class="border-bottom pb-2"><strong>Alamat:</strong> <span id="detail_alamat"></span></div>
                         <div class="border-bottom pb-2"><strong>No Telepon:</strong> <span id="detail_no_telp"></span>
                         </div>
-                        <div class="border-bottom pb-2"><strong>Email:</strong> <span id="detail_email"></span></div>
-                        <div class="pt-2"><strong>Status:</strong> <span id="detail_status"></span></div>
+                        <div class="border-bottom pb-2 mb-2"><strong>Email:</strong> <br><span id="detail_email"></span>
+                        </div>
+                        <div class="border-bottom pb-2 mb-2">
+                            <strong>Status Petugas:</strong> <br><span id="detail_status"></span>
+                        </div>
+                        <div class="pt-2">
+                            <strong>Akses Login:</strong> <br><span id="detail_user_status"></span>
+                        </div>
                     </div>
 
                 </div>
