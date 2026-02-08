@@ -36,8 +36,9 @@ class KeterlambatanService
                 return 0;
             }
 
-            // Hitung tanggal target
-            $tanggalTarget = $this->hitungTanggalTarget($kegiatan, $laporan->tahun, $laporan->bulan);
+            // Hitung tanggal target dengan Centralized Logic
+            // Pass $laporan object untuk context Rutin/Insidentil yang benar
+            $tanggalTarget = LaporanKegiatan::calculateTanggalTarget($kegiatan, $laporan);
 
             if (!$tanggalTarget) {
                 return 0;
@@ -59,7 +60,7 @@ class KeterlambatanService
                 ]
             );
 
-            Log::info('Keterlambatan diupdate/dicreate', [
+            Log::info('Keterlambatan diupdate/dicreate (V3 Logic)', [
                 'laporan_id' => $laporan->id_laporan,
                 'hari_keterlambatan' => $hariKeterlambatan,
                 'tanggal_target' => $tanggalTarget->format('Y-m-d'),
@@ -77,29 +78,11 @@ class KeterlambatanService
     }
 
     /**
-     * Hitung tanggal target berdasarkan: tanggal_selesai + batas_akhir_upload
+     * @deprecated Use LaporanKegiatan::calculateTanggalTarget
      */
     private function hitungTanggalTarget(Kegiatan $kegiatan, $tahun, $bulan): ?Carbon
     {
-        try {
-            // Gunakan tanggal_selesai jika ada, jika tidak gunakan akhir bulan
-            if ($kegiatan->tanggal_selesai) {
-                $tanggalSelesai = min($kegiatan->tanggal_selesai, Carbon::create($tahun, $bulan, 1)->daysInMonth);
-            } else {
-                $tanggalSelesai = Carbon::create($tahun, $bulan, 1)->daysInMonth;
-            }
-
-            // Tanggal target = tanggal_selesai + batas_akhir_upload
-            return Carbon::create($tahun, $bulan, $tanggalSelesai)
-                ->addDays($kegiatan->batas_akhir_upload);
-        } catch (\Exception $e) {
-            Log::error('Error menghitung tanggal target: ' . $e->getMessage(), [
-                'kegiatan_id' => $kegiatan->id_kegiatan,
-                'tahun' => $tahun,
-                'bulan' => $bulan
-            ]);
-            return null;
-        }
+        return LaporanKegiatan::calculateTanggalTarget($kegiatan, $tahun, $bulan);
     }
 
     /**
@@ -113,8 +96,8 @@ class KeterlambatanService
             return 0;
         }
 
-        // Jika upload > target, hitung selisih hari
-        return $tanggalTarget->diffInDays($tanggalUpload);
+        // Jika upload > target, hitung selisih hari absolute
+        return (int) $tanggalTarget->diffInDays($tanggalUpload);
     }
 
     /**

@@ -151,17 +151,64 @@ class LaporanKegiatan extends Model
      * @param int $bulan
      * @return \Carbon\Carbon|null
      */
-    public static function calculateTanggalTarget($kegiatan, $tahun, $bulan)
+    /**
+     * Calculate tanggal_target based on kegiatan data (Standardized Logic v3)
+     *
+     * @param mixed $kegiatan (Master Data)
+     * @param int|object $laporanOrTahun (If object: Laporan, if int: Tahun)
+     * @param int|null $bulan (Parameter bulan if argument 2 is int)
+     * @return \Carbon\Carbon|null
+     */
+    public static function calculateTanggalTarget($kegiatan, $laporanOrTahun, $bulan = null)
     {
         if (!$kegiatan->batas_akhir_upload) {
             return null;
         }
 
-        $baseDate = Carbon::create($tahun, $bulan, 1);
-        $tanggalSelesai = $kegiatan->tanggal_selesai ?: $baseDate->daysInMonth;
-        $tanggalSelesai = min($tanggalSelesai, $baseDate->daysInMonth);
+        // Determine Context (Tahun & Bulan)
+        if (is_object($laporanOrTahun)) {
+            // Context from Laporan Object
+            $tahun = $laporanOrTahun->tahun;
+            $bulan = $laporanOrTahun->bulan;
+        } else {
+            // Context from primitive params
+            $tahun = $laporanOrTahun;
+        }
 
-        $tanggalTarget = Carbon::create($tahun, $bulan, $tanggalSelesai)
+        // --- Logic Tanggal (Insidentil vs Rutin) ---
+        // A. Kegiatan Insidentil (Satu Kali)
+        // Basis: Tanggal Selesai + Bulan (Master Kegiatan) + Tahun (Master TA)
+        // 
+        // B. Kegiatan Rutin (Berulang)
+        // Basis: Tanggal Selesai + Bulan Selesai (Master Kegiatan) + Tahun (Master TA)
+
+        // Check if Rutin (has bulan_selesai)
+        $isRutin = !empty($kegiatan->bulan_selesai) && !empty($kegiatan->bulan_mulai);
+
+        if ($isRutin) {
+            // Rutin: Base month is ALWAYS bulan_selesai from Master
+            $targetMonth = $kegiatan->bulan_selesai ?: 12;
+        } else {
+            // Insidentil: Base month is bulan from Master
+            $targetMonth = $kegiatan->bulan;
+        }
+
+        // Fallback: If Master data is missing/invalid, use the report period (legacy safety)
+        if (empty($targetMonth)) {
+            $targetMonth = $bulan ?: 12; // Default to Dec if all fails
+        }
+
+        // Base Date: 1st of the target month
+        $baseDate = Carbon::create($tahun, $targetMonth, 1);
+
+        // --- Date Clamping Logic ---
+        // If kegiatan finishes on 31st, but target month is Feb (28/29), clamp to end of month.
+        $daysInMonth = $baseDate->daysInMonth;
+        $tanggalSelesai = min($kegiatan->tanggal_selesai, $daysInMonth);
+
+        // Construct Target Date
+        // Formula: Tanggal Selesai (Clamped) + Batas Akhir Upload
+        $tanggalTarget = Carbon::create($tahun, $targetMonth, $tanggalSelesai)
             ->addDays($kegiatan->batas_akhir_upload);
 
         return $tanggalTarget;
@@ -273,7 +320,8 @@ class LaporanKegiatan extends Model
 
         // Apply filters
         if (!empty($filters['filter_tahun'])) {
-            $query->where('ta.tahun', $filters['filter_tahun']);
+            // FIX: Filter by ID, not Year value
+            $query->where('ta.id_tahun_anggaran', $filters['filter_tahun']);
         }
 
         if (!empty($filters['filter_desa'])) {
@@ -350,6 +398,13 @@ class LaporanKegiatan extends Model
             }
         }
 
+        // Apply filter_desa here for optimization
+        if (!empty($filters['filter_desa'])) {
+            $desaQuery->where('d.id_desa', $filters['filter_desa']);
+        }
+
+
+
         $desaList = $desaQuery->get();
 
         // Step 2: Get all active kegiatan
@@ -376,7 +431,8 @@ class LaporanKegiatan extends Model
 
         // Filter by tahun if provided
         if (!empty($filters['filter_tahun'])) {
-            $kegiatanQuery->where('ta.tahun', $filters['filter_tahun']);
+            // FIX: Filter by ID, not Year value (Controller sends ID)
+            $kegiatanQuery->where('ta.id_tahun_anggaran', $filters['filter_tahun']);
         }
 
         $kegiatanList = $kegiatanQuery->get();
@@ -529,6 +585,11 @@ class LaporanKegiatan extends Model
             }
         }
 
+        // Apply filter_desa here for optimization
+        if (!empty($filters['filter_desa'])) {
+            $desaQuery->where('d.id_desa', $filters['filter_desa']);
+        }
+
         $desaList = $desaQuery->get();
 
         // Step 2: Get all active kegiatan
@@ -555,7 +616,13 @@ class LaporanKegiatan extends Model
 
         // Filter by tahun if provided
         if (!empty($filters['filter_tahun'])) {
-            $kegiatanQuery->where('ta.tahun', $filters['filter_tahun']);
+            // FIX: Filter by ID, not Year value
+            $kegiatanQuery->where('ta.id_tahun_anggaran', $filters['filter_tahun']);
+        }
+
+        // Filter by kegiatan if provided
+        if (!empty($filters['filter_kegiatan'])) {
+            $kegiatanQuery->where('k.id_kegiatan', $filters['filter_kegiatan']);
         }
 
         $kegiatanList = $kegiatanQuery->get();
@@ -886,10 +953,14 @@ class LaporanKegiatan extends Model
      */
     private static function applyFiltersForUser($result, $filters)
     {
-        // Filter untuk mengecualikan status submitted dan approved
-        $result = $result->filter(function ($item) {
-            return !in_array($item['status'], ['submitted', 'approved']);
-        });
+        // Filter status logic:
+        // By default (if no filter), we exclude 'submitted' and 'approved' to show only actionable items (To-Do List).
+        // BUT, if user explicitly filters for a status (e.g. 'submitted'), we allow it.
+        if (empty($filters['filter_status'])) {
+            $result = $result->filter(function ($item) {
+                return !in_array($item['status'], ['submitted', 'approved']);
+            });
+        }
 
         // Filter by status
         if (!empty($filters['filter_status'])) {
@@ -901,10 +972,7 @@ class LaporanKegiatan extends Model
             });
         }
 
-        // Filter by desa
-        if (!empty($filters['filter_desa'])) {
-            $result = $result->where('desa_id', $filters['filter_desa']);
-        }
+
 
         // Filter by bulan/periode
         if (!empty($filters['filter_periode'])) {
@@ -944,30 +1012,11 @@ class LaporanKegiatan extends Model
             });
         }
 
-        // Filter by tahun
-        if (!empty($filters['filter_tahun'])) {
-            $result = $result->filter(function ($item) use ($filters) {
-                return $item['tahun'] == $filters['filter_tahun'];
-            });
-        }
-
         // Filter by periode (bulan)
         if (!empty($filters['filter_periode'])) {
             $result = $result->filter(function ($item) use ($filters) {
                 return $item['bulan'] == $filters['filter_periode'];
             });
-        }
-
-        // Filter by kegiatan
-        if (!empty($filters['filter_kegiatan'])) {
-            $result = $result->filter(function ($item) use ($filters) {
-                return $item['kegiatan_id'] == $filters['filter_kegiatan'];
-            });
-        }
-
-        // Filter by desa
-        if (!empty($filters['filter_desa'])) {
-            $result = $result->where('desa_id', $filters['filter_desa']);
         }
 
         // Search filter
@@ -1036,6 +1085,9 @@ class LaporanKegiatan extends Model
             'kegiatan.tanggal_selesai',
             'kegiatan.batas_akhir_upload',
             'kegiatan.dasar_hukum',
+            'kegiatan.frekuensi_pelaporan',
+            'kegiatan.bulan_mulai',
+            'kegiatan.bulan_selesai',
 
             // Kolom jenis kegiatan
             'jenis_kegiatan.kode_jenis',
@@ -1124,7 +1176,7 @@ class LaporanKegiatan extends Model
         }
 
         // Get additional data
-        $additionalData = self::getAdditionalHistoryData($id_laporan);
+        $additionalData = self::getAdditionalHistoryData($id_laporan, $mainData);
 
         return array_merge($mainData, $additionalData);
     }
@@ -1132,7 +1184,7 @@ class LaporanKegiatan extends Model
     /**
      * Get additional history data (documents, timeline, etc)
      */
-    private static function getAdditionalHistoryData($id_laporan)
+    private static function getAdditionalHistoryData($id_laporan, $laporanData = null)
     {
         // Get jawaban and dokumen
         $jawaban = JawabanPertanyaan::where('laporan_id', $id_laporan)->get();
@@ -1154,7 +1206,7 @@ class LaporanKegiatan extends Model
             'jawaban' => $jawaban,
             'dokumen' => $dokumen,
             'pertanyaan' => $pertanyaan,
-            'history_laporan' => self::buildHistoryLaporan($id_laporan),
+            'history_laporan' => self::buildHistoryLaporan($id_laporan, $laporanData),
             'completeness' => self::calculateCompleteness($jawaban, $dokumen)
         ];
     }
@@ -1162,30 +1214,42 @@ class LaporanKegiatan extends Model
     /**
      * Build history laporan events
      */
-    private static function buildHistoryLaporan($id_laporan)
+    /**
+     * Build history laporan events
+     */
+    private static function buildHistoryLaporan($id_laporan, $laporanData = null)
     {
-        $laporan = self::find($id_laporan);
-        if (!$laporan)
-            return [];
+        if (!$laporanData) {
+            $laporan = self::getMainHistory($id_laporan);
+            if (!$laporan)
+                return [];
+            $laporanData = $laporan->toArray();
+        }
 
         $history = [];
 
+        // Determine names
+        $creatorName = $laporanData['created_by_petugas'] ?? $laporanData['created_by_name'] ?? 'Petugas Desa';
+        $approverName = $laporanData['approved_by_petugas'] ?? $laporanData['approved_by_name'] ?? 'Admin Inspektorat';
+
         // Draft created event
-        $history[] = [
-            'event' => 'Draft Created',
-            'timestamp' => $laporan->created_at,
-            'user' => 'Petugas Desa', // This would come from relationship
-            'catatan' => null,
-            'icon' => 'la-save',
-            'color' => 'primary'
-        ];
+        if (!empty($laporanData['created_at'])) {
+            $history[] = [
+                'event' => 'Draft Created',
+                'timestamp' => $laporanData['created_at'],
+                'user' => $creatorName,
+                'catatan' => null,
+                'icon' => 'la-save',
+                'color' => 'primary'
+            ];
+        }
 
         // Submitted event
-        if ($laporan->tanggal_submit) {
+        if (!empty($laporanData['tanggal_submit'])) {
             $history[] = [
                 'event' => 'Submitted for Review',
-                'timestamp' => $laporan->tanggal_submit,
-                'user' => 'Petugas Desa',
+                'timestamp' => $laporanData['tanggal_submit'],
+                'user' => $creatorName,
                 'catatan' => null,
                 'icon' => 'la-paper-plane',
                 'color' => 'warning'
@@ -1193,12 +1257,12 @@ class LaporanKegiatan extends Model
         }
 
         // Approved event
-        if ($laporan->tanggal_approve) {
+        if (!empty($laporanData['tanggal_approve'])) {
             $history[] = [
                 'event' => 'Approved',
-                'timestamp' => $laporan->tanggal_approve,
-                'user' => 'Admin Inspektorat',
-                'catatan' => $laporan->catatan_approval,
+                'timestamp' => $laporanData['tanggal_approve'],
+                'user' => $approverName,
+                'catatan' => $laporanData['catatan_approval'] ?? null,
                 'icon' => 'la-check-circle',
                 'color' => 'success'
             ];

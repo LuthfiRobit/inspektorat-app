@@ -86,7 +86,7 @@ class LaporanKegiatanService
     }
 
     /**
-     * Store new laporan kegiatan
+     * Store new laporan kegiatan (Refactored for V3 Logic)
      */
     public function storeLaporan($validatedData, $jawabanData, $files = [])
     {
@@ -95,10 +95,11 @@ class LaporanKegiatanService
             $laporan = new LaporanKegiatan();
             $laporan->fill($validatedData);
 
-            // Calculate target date
+            // Calculate target date using Centralized Model Logic
             $kegiatan = Kegiatan::find($validatedData['kegiatan_id']);
             if ($kegiatan) {
-                $laporan->tanggal_target = $this->calculateTargetDate($kegiatan);
+                // Pass $laporan object to provide context (tahun & bulan)
+                $laporan->tanggal_target = LaporanKegiatan::calculateTanggalTarget($kegiatan, $laporan);
             }
 
             if ($validatedData['status'] == 'submitted') {
@@ -142,6 +143,17 @@ class LaporanKegiatanService
 
             // Update laporan
             $laporan->fill($validatedData);
+
+            // Re-calculate target date if relevant data changed (safeguard)
+            $kegiatan = $laporan->kegiatan; // Use relation loaded or find
+            if (!$kegiatan) {
+                // If not loaded, try to load
+                $kegiatan = Kegiatan::find($laporan->kegiatan_id);
+            }
+
+            if ($kegiatan) {
+                $laporan->tanggal_target = LaporanKegiatan::calculateTanggalTarget($kegiatan, $laporan);
+            }
 
             if ($validatedData['status'] == 'submitted' && $oldStatus != 'submitted') {
                 $laporan->tanggal_submit = now();
@@ -417,14 +429,12 @@ class LaporanKegiatanService
     }
 
     /**
-     * Calculate target date
+     * @deprecated Use LaporanKegiatan::calculateTanggalTarget instead
      */
     private function calculateTargetDate($kegiatan)
     {
-        $bulan = $kegiatan->bulan;
-        $tahun = $kegiatan->tahun;
-        $batasAkhir = $kegiatan->batas_akhir_upload ?? 15;
-
-        return Carbon::create($tahun, $bulan, 1)->endOfMonth()->addDays($batasAkhir);
+        // Method ini sudah digantikan oleh LaporanKegiatan::calculateTanggalTarget
+        // dibiarkan kosong atau throw exception jika dipanggil
+        return null;
     }
 }
