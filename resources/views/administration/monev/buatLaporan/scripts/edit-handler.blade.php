@@ -50,13 +50,28 @@
                     infoCreatedAt: $('#info_created_at'),
                     infoUpdatedAt: $('#info_updated_at'),
                     infoCurrentStatus: $('#info_current_status'),
+                    infoCreatedBy: $('#info_created_by'),
                     infoApprovedBy: $('#info_approved_by'),
+                    infoApprovedAt: $('#info_approved_at'),
                     infoApprovalNote: $('#info_approval_note'),
                     infoDesa: $('#info_desa'),
                     infoKegiatan: $('#info_kegiatan'),
                     infoPeriode: $('#info_periode'),
                     infoBatasUpload: $('#info_batas_upload'),
                     infoDasarHukum: $('#info_dasar_hukum'),
+
+                    // Professional Layout Elements
+                    detailDesa: $('#detail_desa'),
+                    detailKecamatan: $('#detail_kecamatan'),
+                    detailNamaKegiatan: $('#detail_nama_kegiatan'),
+                    detailTahun: $('#detail_tahun'),
+                    detailKodeKegiatan: $('#detail_kode_kegiatan'),
+                    detailJenisKegiatan: $('#detail_jenis_kegiatan'),
+                    detailBulan: $('#detail_bulan'),
+                    detailDasarHukum: $('#detail_dasar_hukum'),
+                    detailTanggalMulai: $('#detail_tanggal_mulai'),
+                    detailTanggalSelesai: $('#detail_tanggal_selesai'),
+                    detailBatasUpload: $('#detail_batas_upload'),
 
                     // Form elements
                     questionsContainer: $('#questionsContainer'),
@@ -97,23 +112,67 @@
                 return CONFIG.BULAN_NAMES[bulanNumber] || bulanNumber;
             },
 
+            formatDateSpecific(tanggal, bulanInt, tahun) {
+                if (!tanggal || !bulanInt || !tahun) return 'N/A';
+
+                try {
+                    const monthIndex = parseInt(bulanInt) - 1;
+                    const date = new Date(parseInt(tahun), monthIndex, parseInt(tanggal));
+
+                    if (isNaN(date.getTime())) return 'N/A';
+
+                    const day = date.getDate();
+                    const month = date.toLocaleDateString('id-ID', { month: 'long' });
+                    const year = date.getFullYear();
+
+                    return `Tgl. ${day} ${month} ${year}`;
+                } catch (error) {
+                    console.error("Error formatting date specific:", error);
+                    return 'N/A';
+                }
+            },
+
+            formatBatasUploadSpecific(batasHari, tanggalSelesai, bulanInt, tahun) {
+                if (!batasHari) return 'Tidak ada batas';
+                if (!tanggalSelesai || !bulanInt || !tahun) return `${batasHari} hari setelah selesai`;
+
+                try {
+                    const monthIndex = parseInt(bulanInt) - 1;
+                    const selesaiDate = new Date(parseInt(tahun), monthIndex, parseInt(tanggalSelesai));
+
+                    if (isNaN(selesaiDate.getTime())) return `${batasHari} hari setelah selesai`;
+
+                    const deadlineDate = new Date(selesaiDate);
+                    deadlineDate.setDate(selesaiDate.getDate() + parseInt(batasHari));
+
+                    const day = deadlineDate.getDate();
+                    const month = deadlineDate.toLocaleDateString('id-ID', { month: 'long' });
+                    const year = deadlineDate.getFullYear();
+
+                    return `Tgl. ${day} ${month} ${year}`;
+                } catch (error) {
+                    console.error("Error formatting batas upload specific:", error);
+                    return `${batasHari} hari setelah selesai`;
+                }
+            },
+
             showErrorAlert(message) {
                 const alertHtml = `
-                <div class="alert alert-danger alert-dismissible fade show" role="alert">
-                    <i class="las la-exclamation-circle me-2"></i>
-                    ${message}
-                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-                </div>`;
+                        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                            <i class="las la-exclamation-circle me-2"></i>
+                            ${message}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                        </div>`;
                 $('#formAlerts').html(alertHtml);
             },
 
             showSuccessAlert(message, callback = null) {
                 const alertHtml = `
-                <div class="alert alert-success alert-dismissible fade show" role="alert">
-                    <i class="las la-check-circle me-2"></i>
-                    ${message}
-                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-                </div>`;
+                        <div class="alert alert-success alert-dismissible fade show" role="alert">
+                            <i class="las la-check-circle me-2"></i>
+                            ${message}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                        </div>`;
                 $('#formAlerts').html(alertHtml);
 
                 if (typeof callback === 'function') {
@@ -200,11 +259,12 @@
 
                 // Update info displays
                 DOM.elements.infoCreatedAt.text(Utils.formatDateTime(laporan.created_at));
+                DOM.elements.infoCreatedBy.text(laporan.created_by_name || 'N/A');
                 DOM.elements.infoUpdatedAt.text(Utils.formatDateTime(laporan.updated_at));
                 DOM.elements.infoCurrentStatus.text(Utils.getStatusDisplay(laporan.status));
-                DOM.elements.infoApprovedBy.text(laporan.approved_by ? laporan.approved_by : 'Belum di-approve');
-                DOM.elements.infoApprovalNote.text(laporan.catatan_approval ? laporan.catatan_approval :
-                    'Belum ada catatan');
+                DOM.elements.infoApprovedBy.text(laporan.approved_by_name || 'Belum di-approve');
+                DOM.elements.infoApprovedAt.text(laporan.approved_at ? Utils.formatDateTime(laporan.approved_at) : '-');
+                DOM.elements.infoApprovalNote.text(laporan.catatan_approval || 'Belum ada catatan');
 
                 // Set form data
                 $('#desa_id').val(laporan.desa_id);
@@ -317,13 +377,52 @@
             populateKegiatanInfo() {
                 if (!AppState.kegiatanData || !AppState.desaData) return;
 
-                DOM.elements.infoDesa.text(`Desa : ${AppState.desaData.nama_desa}`);
-                DOM.elements.infoKegiatan.text(AppState.kegiatanData.nama_kegiatan || '-');
-                DOM.elements.infoPeriode.text(
-                    `${AppState.kegiatanData.tahun || '-'} - ${AppState.kegiatanData.nama_bulan || '-'}`);
-                DOM.elements.infoBatasUpload.text(AppState.kegiatanData.batas_akhir_upload ?
-                    `Tgl. ${AppState.kegiatanData.batas_akhir_upload}` : '-');
-                DOM.elements.infoDasarHukum.text(AppState.kegiatanData.dasar_hukum || 'Tidak ada dasar hukum');
+                const kegiatan = AppState.kegiatanData;
+                const desa = AppState.desaData;
+
+                // Header Info
+                DOM.elements.detailDesa.text(desa.nama_desa || '-');
+                DOM.elements.detailKecamatan.text(`Kec. ${desa.nama_kecamatan || '-'}`);
+
+                // Main Info
+                DOM.elements.detailNamaKegiatan.text(kegiatan.nama_kegiatan || '-');
+                DOM.elements.detailTahun.text(kegiatan.tahun || '-');
+                DOM.elements.detailKodeKegiatan.text(kegiatan.kode_kegiatan || '-');
+                DOM.elements.detailJenisKegiatan.text(kegiatan.nama_jenis || '-');
+                DOM.elements.detailDasarHukum.text(kegiatan.dasar_hukum || 'Tidak ada dasar hukum');
+
+                // Logic Display Periode
+                let periodeText = kegiatan.nama_bulan || 'N/A';
+
+                if (kegiatan.frekuensi_pelaporan) {
+                    periodeText += ` (Rutin: Setiap ${kegiatan.frekuensi_pelaporan} Bulan)`;
+                }
+                DOM.elements.detailBulan.text(periodeText);
+
+                // Timeline Logic
+                const tahun = kegiatan.tahun;
+                let startBulan, endBulan;
+
+                if (kegiatan.frekuensi_pelaporan) {
+                    // Rutin (Use Master Data)
+                    startBulan = kegiatan.bulan_mulai;
+                    endBulan = kegiatan.bulan_selesai;
+                } else {
+                    // Insidentil (Use Laporan Month as Context)
+                    startBulan = kegiatan.bulan;
+                    endBulan = kegiatan.bulan;
+                }
+
+                // Render Dates
+                DOM.elements.detailTanggalMulai.text(
+                    Utils.formatDateSpecific(kegiatan.tanggal_mulai, startBulan, tahun)
+                );
+                DOM.elements.detailTanggalSelesai.text(
+                    Utils.formatDateSpecific(kegiatan.tanggal_selesai, endBulan, tahun)
+                );
+                DOM.elements.detailBatasUpload.text(
+                    Utils.formatBatasUploadSpecific(kegiatan.batas_akhir_upload, kegiatan.tanggal_selesai, endBulan, tahun)
+                );
             }
         };
 
@@ -332,11 +431,11 @@
             renderQuestions() {
                 if (!AppState.questionsData?.length) {
                     DOM.elements.questionsContainer.html(`
-                        <div class="alert alert-warning">
-                            <h6>Tidak Ada Pertanyaan</h6>
-                            <p>Belum ada pertanyaan yang ditetapkan untuk kegiatan ini.</p>
-                        </div>
-                    `);
+                                <div class="alert alert-warning">
+                                    <h6>Tidak Ada Pertanyaan</h6>
+                                    <p>Belum ada pertanyaan yang ditetapkan untuk kegiatan ini.</p>
+                                </div>
+                            `);
                     return;
                 }
 
@@ -359,48 +458,48 @@
 
             renderQuestion(question, index) {
                 return `<div class="question-section mb-4" data-question-id="${question.id_pertanyaan}">
-                            <div class="d-flex justify-content-between align-items-start flex-wrap gap-2 mb-2">
-                                <div class="flex-grow-1">
-                                    <h6 class="mb-0">
-                                        <span class="badge bg-primary me-2">${index + 1}</span>
-                                        ${question.pertanyaan}
-                                    </h6>
-                                </div>
-                                <div class="d-flex align-items-center gap-3 d-none">
-                                    <div class="form-check mb-0">
-                                        <input class="form-check-input answer-radio" type="radio"
-                                            name="jawaban[${question.id_pertanyaan}]"
-                                            id="jawaban-sudah-${question.id_pertanyaan}"
-                                            value="sudah">
-                                        <label class="form-check-label" for="jawaban-sudah-${question.id_pertanyaan}">
-                                            Sudah
-                                        </label>
+                                    <div class="d-flex justify-content-between align-items-start flex-wrap gap-2 mb-2">
+                                        <div class="flex-grow-1">
+                                            <h6 class="mb-0">
+                                                <span class="badge bg-primary me-2">${index + 1}</span>
+                                                ${question.pertanyaan}
+                                            </h6>
+                                        </div>
+                                        <div class="d-flex align-items-center gap-3 d-none">
+                                            <div class="form-check mb-0">
+                                                <input class="form-check-input answer-radio" type="radio"
+                                                    name="jawaban[${question.id_pertanyaan}]"
+                                                    id="jawaban-sudah-${question.id_pertanyaan}"
+                                                    value="sudah">
+                                                <label class="form-check-label" for="jawaban-sudah-${question.id_pertanyaan}">
+                                                    Sudah
+                                                </label>
+                                            </div>
+                                            <div class="form-check mb-0">
+                                                <input class="form-check-input answer-radio" type="radio"
+                                                    name="jawaban[${question.id_pertanyaan}]"
+                                                    id="jawaban-belum-${question.id_pertanyaan}"
+                                                    value="belum">
+                                                <label class="form-check-label" for="jawaban-belum-${question.id_pertanyaan}">
+                                                    Belum
+                                                </label>
+                                            </div>
+                                        </div>
                                     </div>
-                                    <div class="form-check mb-0">
-                                        <input class="form-check-input answer-radio" type="radio"
-                                            name="jawaban[${question.id_pertanyaan}]"
-                                            id="jawaban-belum-${question.id_pertanyaan}"
-                                            value="belum">
-                                        <label class="form-check-label" for="jawaban-belum-${question.id_pertanyaan}">
-                                            Belum
-                                        </label>
-                                    </div>
-                                </div>
-                            </div>
 
-                            <div class="requirements-section mt-3">
-                                <label class="form-label mb-2">Dokumen Persyaratan:</label>
-                                ${this.renderRequirements(question.persyaratan, question.id_pertanyaan)}
-                            </div>
-                        </div>`;
+                                    <div class="requirements-section mt-3">
+                                        <label class="form-label mb-2">Dokumen Persyaratan:</label>
+                                        ${this.renderRequirements(question.persyaratan, question.id_pertanyaan)}
+                                    </div>
+                                </div>`;
             },
 
             renderRequirements(requirements, questionId) {
                 if (!requirements?.length) {
                     return `
-                    <div class="alert alert-info py-2">
-                        <small>Tidak ada persyaratan dokumen untuk pertanyaan ini.</small>
-                    </div>`;
+                            <div class="alert alert-info py-2">
+                                <small>Tidak ada persyaratan dokumen untuk pertanyaan ini.</small>
+                            </div>`;
                 }
 
                 return requirements.map(req => {
@@ -420,45 +519,45 @@
                     });
 
                     return `<div class="mb-3 position-relative requirement-item" data-requirement-id="${req.id_persyaratan}">
-                            <div class="d-flex justify-content-between align-items-center">
-                                <label for="file-${key}" class="form-label mb-0">
-                                    ${req.nama_persyaratan}
-                                    <span class="badge ${req.tipe === 'wajib' ? 'bg-danger' : 'bg-secondary'} ms-2">
-                                        ${req.tipe === 'wajib' ? 'WAJIB' : 'TAMBAHAN'}
-                                    </span>
-                                    ${isReadonly ? '<span class="badge bg-success ms-2">APPROVED</span>' : ''}
-                                    ${req.deskripsi ? `<br><small class="text-muted">${req.deskripsi}</small>` : ''}
-                                </label>
-                                <small class="form-text text-muted d-flex align-items-center gap-2">
-                                    File saat ini:
-                                    <div id="files-${questionId}-${req.id_persyaratan}" class="text-truncate" style="max-width: 250px;"></div>
-                                </small>
-                            </div>
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <label for="file-${key}" class="form-label mb-0">
+                                            ${req.nama_persyaratan}
+                                            <span class="badge ${req.tipe === 'wajib' ? 'bg-danger' : 'bg-secondary'} ms-2">
+                                                ${req.tipe === 'wajib' ? 'WAJIB' : 'TAMBAHAN'}
+                                            </span>
+                                            ${isReadonly ? '<span class="badge bg-success ms-2">APPROVED</span>' : ''}
+                                            ${req.deskripsi ? `<br><small class="text-muted">${req.deskripsi}</small>` : ''}
+                                        </label>
+                                        <small class="form-text text-muted d-flex align-items-center gap-2">
+                                            File saat ini:
+                                            <div id="files-${questionId}-${req.id_persyaratan}" class="text-truncate" style="max-width: 250px;"></div>
+                                        </small>
+                                    </div>
 
-                            <div class="d-flex align-items-center mt-1">
-                                <input type="file" 
-                                    class="form-control file-input"
-                                    id="file-${key}"
-                                    name="files[${questionId}][${req.id_persyaratan}]"
-                                    data-question-id="${questionId}"
-                                    data-requirement-id="${req.id_persyaratan}"
-                                    accept=".pdf,.doc,.docx,.xls,.xlsx,.jpg,.png"
-                                    ${isRequired}
-                                    ${readonlyAttr}
-                                    ${disabledAttr} />
+                                    <div class="d-flex align-items-center mt-1">
+                                        <input type="file" 
+                                            class="form-control file-input"
+                                            id="file-${key}"
+                                            name="files[${questionId}][${req.id_persyaratan}]"
+                                            data-question-id="${questionId}"
+                                            data-requirement-id="${req.id_persyaratan}"
+                                            accept=".pdf,.doc,.docx,.xls,.xlsx,.jpg,.png"
+                                            ${isRequired}
+                                            ${readonlyAttr}
+                                            ${disabledAttr} />
 
-                                <button type="button"
-                                    class="btn btn-outline-primary ms-2 ${hasTemplate ? '' : 'd-none'}"
-                                    id="btn_template_${key}"
-                                    ${hasTemplate ? `onclick="window.open('${req.template_persyaratan}', '_blank')"` : ''}>
-                                    Template
-                                </button>
-                            </div>
-                            <div class="alert alert-warning alert-dismissible alert-alt mt-1 show d-flex align-items-center gap-1 py-2 px-3">
-                                <strong class="me-1">Catatan revisi:</strong>
-                                <div id="catatan-${questionId}-${req.id_persyaratan}" class="flex-grow-1"></div>
-                            </div>
-                        </div>`;
+                                        <button type="button"
+                                            class="btn btn-outline-primary ms-2 ${hasTemplate ? '' : 'd-none'}"
+                                            id="btn_template_${key}"
+                                            ${hasTemplate ? `onclick="window.open('${req.template_persyaratan}', '_blank')"` : ''}>
+                                            Template
+                                        </button>
+                                    </div>
+                                    <div class="alert alert-warning alert-dismissible alert-alt mt-1 show d-flex align-items-center gap-1 py-2 px-3">
+                                        <strong class="me-1">Catatan revisi:</strong>
+                                        <div id="catatan-${questionId}-${req.id_persyaratan}" class="flex-grow-1"></div>
+                                    </div>
+                                </div>`;
                 }).join('');
             },
 
@@ -472,14 +571,14 @@
 
                     if (currentFile) {
                         container.append(`
-                        <span class="text-success">
-                            <i class="las la-check-circle me-1"></i>
-                            <a href="/uploads/${currentFile.path}" target="_blank" class="text-success">
-                                ${currentFile.name}
-                            </a>
-                            <small class="text-muted">(v${currentFile.version})</small>
-                        </span>
-                    `);
+                                <span class="text-success">
+                                    <i class="las la-check-circle me-1"></i>
+                                    <a href="/uploads/${currentFile.path}" target="_blank" class="text-success">
+                                        ${currentFile.name}
+                                    </a>
+                                    <small class="text-muted">(v${currentFile.version})</small>
+                                </span>
+                            `);
                     } else {
                         container.html('<span class="text-muted">Belum ada file</span>');
                     }
@@ -498,11 +597,11 @@
                     const currentFile = fileList.find(file => file.is_current);
                     if (currentFile?.catatan_revisi?.trim()) {
                         container.html(`
-                    <span class="text-warning">
-                        <i class="las la-exclamation-circle me-1"></i>
-                        ${currentFile.catatan_revisi}
-                    </span>
-                `);
+                            <span class="text-warning">
+                                <i class="las la-exclamation-circle me-1"></i>
+                                ${currentFile.catatan_revisi}
+                            </span>
+                        `);
                         return;
                     }
                 }
@@ -557,7 +656,7 @@
                 formData.append('_token', '{{ csrf_token() }}');
 
                 // Jawaban status (radio buttons)
-                $('.answer-radio:checked').each(function() {
+                $('.answer-radio:checked').each(function () {
                     const name = $(this).attr('name');
                     const value = $(this).val();
                     const questionId = name.match(/\[(\d+)\]/)[1];
@@ -566,7 +665,7 @@
 
                 // Files - hanya tambahkan file yang benar-benar dipilih
                 let fileCount = 0;
-                $('.file-input').each(function() {
+                $('.file-input').each(function () {
                     const questionId = $(this).data('question-id');
                     const requirementId = $(this).data('requirement-id');
                     const file = this.files[0];
@@ -617,11 +716,11 @@
 
                     if (response.status === 200) {
                         if (status === 'submitted') {
-                            Utils.showSuccessAlert('Laporan berhasil disubmit!', function() {
+                            Utils.showSuccessAlert('Laporan berhasil disubmit!', function () {
                                 window.location.href = CONFIG.ROUTES.LAPORAN_INDEX;
                             });
                         } else {
-                            Utils.showSuccessAlert('Draft berhasil disimpan!', function() {
+                            Utils.showSuccessAlert('Draft berhasil disimpan!', function () {
                                 location.reload();
                             });
                         }
@@ -696,7 +795,7 @@
 
                                 // Skip jika dokumen sudah approved
                                 if (Utils.isDokumenReadonly(question.id_pertanyaan, req
-                                        .id_persyaratan)) {
+                                    .id_persyaratan)) {
                                     return;
                                 }
 
@@ -732,21 +831,21 @@
                 });
 
                 // File input change handler
-                $(document).on('change', '.file-input', function() {
+                $(document).on('change', '.file-input', function () {
                     const questionId = $(this).data('question-id');
                     FormHandler.checkAndSetRadioFromFiles(questionId);
                     ProgressTracker.updateProgress();
                 });
 
                 // Answer radio change handler
-                $(document).on('change', '.answer-radio', function() {
+                $(document).on('change', '.answer-radio', function () {
                     ProgressTracker.updateProgress();
                 });
             }
         };
 
         // Main initialization
-        $(document).ready(function() {
+        $(document).ready(function () {
             DOM.initialize();
             EventHandlers.initialize();
             DataLoader.initializeForm();
@@ -754,7 +853,7 @@
 
         // Add AjaxHandler.sendGetRequestAsync for compatibility
         if (typeof AjaxHandler !== 'undefined' && AjaxHandler.sendGetRequest && !AjaxHandler.sendGetRequestAsync) {
-            AjaxHandler.sendGetRequestAsync = function(url) {
+            AjaxHandler.sendGetRequestAsync = function (url) {
                 return new Promise((resolve, reject) => {
                     AjaxHandler.sendGetRequest(url, resolve, reject);
                 });
