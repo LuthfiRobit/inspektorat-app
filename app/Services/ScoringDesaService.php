@@ -238,18 +238,35 @@ class ScoringDesaService
             $kegiatanQuery = Kegiatan::where('status', 'active')
                 ->whereHas('jenisKegiatan', function ($q) {
                     $q->where('status', 'active');
-                })
-                ->whereHas('tahunAnggaran', function ($q) {
-                    $q->where('status', 'active');
                 });
+            // ->whereHas('tahunAnggaran', function ($q) {
+            //     $q->where('status', 'active');
+            // });
 
             if (!empty($filters['tahun'])) {
-                $kegiatanQuery->whereHas('tahunAnggaran', function ($q) use ($filters) {
-                    $q->where('id_tahun_anggaran', $filters['tahun']);
+                // Fix: Frontend sends ID, but we should be robust to accept ID or Year Value
+                $t = $filters['tahun'];
+                $kegiatanQuery->whereHas('tahunAnggaran', function ($q) use ($t) {
+                    $q->where(function ($sub) use ($t) {
+                        $sub->where('id_tahun_anggaran', $t)
+                            ->orWhere('tahun', $t);
+                    });
                 });
             }
             if (!empty($filters['periode'])) {
-                $kegiatanQuery->where('bulan', $filters['periode']);
+                $p = $filters['periode'];
+                $kegiatanQuery->where(function ($q) use ($p) {
+                    // 1. Insidentil: Match exact bulan
+                    $q->where('bulan', $p)
+                        // 2. Rutin: Match range and frequency
+                        ->orWhere(function ($sub) use ($p) {
+                            $sub->whereNotNull('frekuensi_pelaporan')
+                                ->where('bulan_mulai', '<=', $p)
+                                ->where('bulan_selesai', '>=', $p)
+                                // Check if period aligns with frequency (e.g. start=1, freq=3 => 1, 4, 7, 10)
+                                ->whereRaw('MOD(? - bulan_mulai, frekuensi_pelaporan) = 0', [$p]);
+                        });
+                });
             }
             $kegiatans = $kegiatanQuery->get();
             $totalKegiatanWajib = $kegiatans->count();
@@ -282,27 +299,28 @@ class ScoringDesaService
                     if ($laporan) {
                         $kegiatanTerlapor++;
 
-                        // A. Calculate Timeliness Score
+                        // A. Calculate Timeliness Score (V3 Logic)
                         $submittedAt = Carbon::parse($laporan->tanggal_submit);
-                        $deadline = LaporanKegiatan::calculateTanggalTarget($kegiatan, $kegiatan->tahunAnggaran->tahun ?? $laporan->tahun, $kegiatan->bulan);
+                        $deadline = LaporanKegiatan::calculateTanggalTarget($kegiatan, $laporan);
 
                         $score = 0;
                         if ($deadline) {
-                            $diffDays = 0;
-
                             if ($submittedAt->lte($deadline)) {
-                                $score = 1;
+                                $score = 100; // V3: Scale 100
                             } else {
                                 // Telat
-                                $diffDays = $submittedAt->diffInDays($deadline);
+                                // Fix: Enforce absolute difference AND ceiling to integer for clean display/penalty
+                                // 0.1 days late => 1 day penalty
+                                $diffDays = (int) ceil(abs($submittedAt->diffInDays($deadline, false)));
 
-                                // User rule: dikurangi 0.1 setiap harinya sampai 0
-                                $penalty = $diffDays * 0.1;
-                                $score = max(0, 1 - $penalty);
+                                // V3 Rule: dikurangi 10 poin setiap harinya sampai 0
+                                $penalty = $diffDays * 10;
+                                $score = max(0, 100 - $penalty);
                             }
                         } else {
-                            $score = 1;
+                            $score = 100;
                         }
+
                         $totalSkor += $score;
                         $submitDates[] = $submittedAt->timestamp;
 
@@ -321,15 +339,15 @@ class ScoringDesaService
                     }
                 }
 
+                // Perbaikan Formula: (Jumlah Poin / Jumlah Kegiatan Terlapor)
+                $finalScore = $kegiatanTerlapor > 0 ? ($totalSkor / $kegiatanTerlapor) : 0;
+
                 return (object) [
                     'id_desa' => $desa->id_desa,
                     'nama_desa' => $desa->nama_desa,
                     'nama_kecamatan' => $desa->kecamatan->nama_kecamatan ?? '-',
                     'kecamatan_id' => $desa->kecamatan_id,
-                    'total_skor' => $totalSkor,
-                    // Untuk tie-breaker submit tercepat, ambil min timestamp. Jika tidak ada laporan, set max int.
-                    'earliest_submit' => !empty($submitDates) ? min($submitDates) : PHP_INT_MAX,
-                    'earliest_submit_formatted' => !empty($submitDates) ? Carbon::createFromTimestamp(min($submitDates))->format('d M Y H:i') : '-',
+                    'total_skor' => $finalScore,
                     'jumlah_dokumen_wajib' => $docWajibCount,
                     'jumlah_dokumen_tambahan' => $docTambahanCount,
                     'kegiatan_terlapor' => $kegiatanTerlapor,
@@ -345,17 +363,12 @@ class ScoringDesaService
                     return $b->total_skor <=> $a->total_skor;
                 }
 
-                // Criteria 2: Earliest Submit Date (Asc)
-                if ($a->earliest_submit !== $b->earliest_submit) {
-                    return $a->earliest_submit <=> $b->earliest_submit;
-                }
-
-                // Criteria 3: Doc Wajib (Desc)
+                // Criteria 2: Doc Wajib (Desc)
                 if ($a->jumlah_dokumen_wajib !== $b->jumlah_dokumen_wajib) {
                     return $b->jumlah_dokumen_wajib <=> $a->jumlah_dokumen_wajib;
                 }
 
-                // Criteria 4: Doc Tambahan (Desc)
+                // Criteria 3: Doc Tambahan (Desc)
                 return $b->jumlah_dokumen_tambahan <=> $a->jumlah_dokumen_tambahan;
             });
 
@@ -421,9 +434,13 @@ class ScoringDesaService
                 ];
             })->filter()->values();
 
-            // 3. Sort by Total Skor (Accumulated)
+            // 3. Sort by Rata-rata Skor (Normalized Performance)
             $sorted = $result->sort(function ($a, $b) {
-                return $b->total_skor <=> $a->total_skor;
+                if (abs($a->rata_rata_skor - $b->rata_rata_skor) > 0.001) {
+                    return $b->rata_rata_skor <=> $a->rata_rata_skor;
+                }
+                // Tie breaker: Jumlah Desa (More desa with same high score = better?)
+                return $b->jumlah_desa <=> $a->jumlah_desa;
             });
 
             // 4. Assign Rank
@@ -487,24 +504,39 @@ class ScoringDesaService
         $kegiatanQuery = Kegiatan::where('status', 'active')
             ->whereHas('jenisKegiatan', function ($q) {
                 $q->where('status', 'active');
-            })
-            ->whereHas('tahunAnggaran', function ($q) {
-                $q->where('status', 'active');
             });
+        // ->whereHas('tahunAnggaran', function ($q) {
+        //     $q->where('status', 'active');
+        // });
 
         if (!empty($filters['tahun'])) {
-            $kegiatanQuery->whereHas('tahunAnggaran', function ($q) use ($filters) {
-                $q->where('id_tahun_anggaran', $filters['tahun']);
+            // Fix: Robust Filter (ID or Value)
+            $t = $filters['tahun'];
+            $kegiatanQuery->whereHas('tahunAnggaran', function ($q) use ($t) {
+                $q->where(function ($sub) use ($t) {
+                    $sub->where('id_tahun_anggaran', $t)
+                        ->orWhere('tahun', $t);
+                });
             });
         }
         if (!empty($filters['periode'])) {
-            $kegiatanQuery->where('bulan', $filters['periode']);
+            $p = $filters['periode'];
+            $kegiatanQuery->where(function ($q) use ($p) {
+                // 1. Insidentil: Match exact bulan
+                $q->where('bulan', $p)
+                    // 2. Rutin: Match range and frequency
+                    ->orWhere(function ($sub) use ($p) {
+                        $sub->whereNotNull('frekuensi_pelaporan')
+                            ->where('bulan_mulai', '<=', $p)
+                            ->where('bulan_selesai', '>=', $p)
+                            ->whereRaw('MOD(? - bulan_mulai, frekuensi_pelaporan) = 0', [$p]);
+                    });
+            });
         }
         $kegiatans = $kegiatanQuery->get();
 
         // 3. Adjust dates for display if needed
         $kegiatans->transform(function ($item) {
-            $item->nama_bulan = $item->nama_bulan; // Accessor should handle this
             return $item;
         });
 
@@ -529,40 +561,41 @@ class ScoringDesaService
                 'late_days' => 0,
                 'timeliness_score' => 0,
                 'doc_wajib_approved' => 0,
-                'doc_wajib_total' => 0, // This needs requirement count logic ideally, but simpler is counting types
+                'doc_wajib_total' => 0,
                 'doc_tambahan_approved' => 0
             ];
 
-            // Calculate Target (Deadline)
+            // Calculate Target (Deadline) V3
             $deadline = LaporanKegiatan::calculateTanggalTarget($kegiatan, $kegiatan->tahunAnggaran->tahun ?? ($laporan->tahun ?? date('Y')), $kegiatan->bulan);
+            if ($laporan) {
+                $deadline = LaporanKegiatan::calculateTanggalTarget($kegiatan, $laporan);
+            }
+
             $detail['tanggal_target'] = $deadline ? $deadline->format('d M Y') : '-';
 
             if ($laporan && in_array($laporan->status, ['submitted', 'approved'])) {
                 $submittedAt = Carbon::parse($laporan->tanggal_submit);
                 $detail['tanggal_submit'] = $submittedAt->format('d M Y H:i');
 
-                // Timeliness Logic
+                // Timeliness Logic V3
                 $score = 0;
                 if ($deadline) {
                     if ($submittedAt->lte($deadline)) {
-                        $score = 1;
+                        $score = 100;
                         $detail['late_days'] = 0;
                     } else {
-                        $diffDays = $submittedAt->diffInDays($deadline);
-                        $penalty = $diffDays * 0.1;
-                        $score = max(0, 1 - $penalty);
+                        // Fix: Enforce absolute difference AND ceiling to integer
+                        $diffDays = (int) ceil(abs($submittedAt->diffInDays($deadline, false)));
+                        $penalty = $diffDays * 10; // Scale 100, -10/day
+                        $score = max(0, 100 - $penalty);
                         $detail['late_days'] = $diffDays;
                     }
                 } else {
-                    $score = 1;
+                    $score = 100;
                 }
                 $detail['timeliness_score'] = $score;
 
                 // Document Logic
-                // We rely on approved documents for count
-                // Ideally we should know how many mandatory Requirements exist for accurate "2/2" display
-                // For now let's just count Approved Wajib vs Total Wajib referenced in answers? 
-                // Creating a simplified count:
                 foreach ($laporan->jawaban_pertanyaan as $jawaban) {
                     foreach ($jawaban->dokumen as $dokumen) {
                         if ($dokumen->status === 'approved' && $dokumen->is_current) {
@@ -580,15 +613,17 @@ class ScoringDesaService
         });
 
         // Calculate Header Stats
-        $totalSkor = $details->sum('timeliness_score');
+        $totalSkorAccumulated = $details->sum('timeliness_score');
         $terlapor = $details->filter(fn($d) => in_array($d->status, ['submitted', 'approved']))->count();
 
+        // Calculate Average Score (Total Poin / Jumlah Terlapor)
+        $finalScore = $terlapor > 0 ? ($totalSkorAccumulated / $terlapor) : 0;
 
         return (object) [
             'desa' => $desa,
             'details' => $details,
             'summary' => [
-                'total_skor' => $totalSkor,
+                'total_skor' => $finalScore, // Now Average
                 'total_kegiatan' => $kegiatans->count(),
                 'terlapor' => $terlapor,
                 'belum_terlapor' => $kegiatans->count() - $terlapor

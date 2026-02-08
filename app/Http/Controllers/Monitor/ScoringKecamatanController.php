@@ -61,39 +61,42 @@ class ScoringKecamatanController extends Controller
             'periode' => $request->filter_periode
         ];
 
-        // 1. Get ALL data (already sorted by rank from service)
-        $data = $this->scoringDesaService->getKecamatanData($filters);
+        // 1. Get ALL data (already sorted by rank from service) to determine global ranking
+        $allData = $this->scoringDesaService->getKecamatanData($filters);
 
-        // 2. User Role Logic for Ranking Info
-        $userRankInfo = null;
+        // 2. User Role Logic (Filter Output Collection)
         $user = auth()->user();
         $petugas = $user->petugas;
+        $returnData = $allData;
+        $userRankInfo = null;
 
         if ($petugas && $petugas->kecamatan_id) {
             // --- LOGIC FOR KECAMATAN USER ---
             $myKecamatanId = $petugas->kecamatan_id;
 
             // Search in collection
-            $myRankIndex = $data->search(function ($item) use ($myKecamatanId) {
+            $myRankIndex = $allData->search(function ($item) use ($myKecamatanId) {
                 return $item->id_kecamatan == $myKecamatanId;
             });
 
-            if ($myRankIndex !== false) {
-                $userRankInfo = [
-                    'rank' => $myRankIndex + 1,
-                    'total_kecamatan' => $data->count(),
-                    'is_kecamatan_user' => true
-                ];
-            } else {
-                $userRankInfo = [
-                    'rank' => '-',
-                    'total_kecamatan' => $data->count(),
-                    'is_kecamatan_user' => true
-                ];
-            }
+            // Metadata Ranking
+            $userRankInfo = [
+                'rank' => $myRankIndex !== false ? $myRankIndex + 1 : '-',
+                'total_kecamatan' => $allData->count(),
+                'is_kecamatan_user' => true
+            ];
+
+            // FORCE FILTER: Only return my kecamatan row
+            $returnData = $allData->filter(function ($item) use ($myKecamatanId) {
+                return $item->id_kecamatan == $myKecamatanId;
+            })->values();
         }
 
-        return DataTables::of($data)
+        // If Inspektorat or Desa User (Desa user logic for kecamatan scoring usually sees own kecamatan, 
+        // but here we focus on Kecamatan user restriction. If Desa user accesses this, they might see all or restricted.
+        // Assuming strictly Kecamatan/Inspektorat view for now based on request "jika scope user dalah kecamatan...")
+
+        return DataTables::of($returnData)
             ->with('userRanking', $userRankInfo)
             ->addColumn('aksi', function ($row) {
                 return '<button class="btn btn-outline-primary btn-xs" onclick="showKecamatanDetail(' . $row->id_kecamatan . ')">
@@ -133,6 +136,16 @@ class ScoringKecamatanController extends Controller
      */
     public function detail(Request $request, $id_kecamatan)
     {
+        // --- AUTHORIZATION CHECK ---
+        $user = auth()->user();
+        $petugas = $user->petugas;
+
+        if ($petugas && $petugas->kecamatan_id) {
+            if ($petugas->kecamatan_id != $id_kecamatan) {
+                abort(403, 'Anda tidak memiliki akses untuk melihat detail kecamatan ini.');
+            }
+        }
+
         $filters = [
             'tahun' => $request->tahun,
             'periode' => $request->periode

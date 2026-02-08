@@ -64,43 +64,57 @@ class ScoringDesaController extends Controller
             'filter_desa' => $request->filter_desa
         ];
 
-        // 1. Get ALL data first to determine global ranking
+        // 1. Get ALL data first to determine global ranking (regardless of user role)
+        // This ensures "Rank 5 of 100" is preserved even if we later filter the output to only 1 row.
         $allData = $this->scoringDesaService->getDesaData($filters);
 
-        // 2. Data to be returned (Default: All Data)
+        // 2. User Role Logic (Filter Output Collection)
+        $user = auth()->user();
+        $petugas = $user->petugas;
         $returnData = $allData;
         $userRankInfo = null;
 
-        // 3. User Role Logic
-        $user = auth()->user();
-        $petugas = $user->petugas;
+        if ($petugas) {
+            if ($petugas->desa_id) {
+                // --- LOGIC FOR DESA USER ---
+                $myDesaId = $petugas->desa_id;
 
-        if ($petugas && $petugas->desa_id) {
-            // --- LOGIC FOR DESA USER ---
-            $myDesaId = $petugas->desa_id;
+                // Find my ranking in the global list
+                $myRankIndex = $allData->search(function ($item) use ($myDesaId) {
+                    return $item->id_desa == $myDesaId;
+                });
 
-            // Search in collection (already sorted by rank)
-            $myRankIndex = $allData->search(function ($item) use ($myDesaId) {
-                return $item->id_desa == $myDesaId;
-            });
-
-            if ($myRankIndex !== false) {
+                // User Rank Metadata
                 $userRankInfo = [
-                    'rank' => $myRankIndex + 1,
+                    'rank' => $myRankIndex !== false ? $myRankIndex + 1 : '-',
                     'total_desa' => $allData->count(),
                     'is_desa_user' => true
                 ];
-            } else {
+
+                // FORCE FILTER: Only return my desa row
+                $returnData = $allData->filter(function ($item) use ($myDesaId) {
+                    return $item->id_desa == $myDesaId;
+                })->values();
+
+            } elseif ($petugas->kecamatan_id) {
+                // --- LOGIC FOR KECAMATAN USER ---
+                $myKecamatanId = $petugas->kecamatan_id;
+
+                // FORCE FILTER: Only return desas in my kecamatan
+                $returnData = $allData->filter(function ($item) use ($myKecamatanId) {
+                    return $item->kecamatan_id == $myKecamatanId;
+                })->values();
+
+                // Check if any desa in my kecamatan is ranked (optional metadata)
                 $userRankInfo = [
                     'rank' => '-',
                     'total_desa' => $allData->count(),
-                    'is_desa_user' => true
+                    'is_kecamatan_user' => true
                 ];
             }
-
-            // Limit to Top 5
-            $returnData = $allData->take(5);
         }
+
+        // If Inspektorat (no petugas/desa/kecamatan id), $returnData remains $allData (All Rows)
 
         return DataTables::of($returnData)
             ->with('userRanking', $userRankInfo)
@@ -128,9 +142,9 @@ class ScoringDesaController extends Controller
             ->addColumn('jumlah_dokumen_tambahan', function ($row) {
                 return $row->jumlah_dokumen_tambahan;
             })
-            ->addColumn('waktu_submit', function ($row) {
-                return '<small>' . $row->earliest_submit_formatted . '</small>';
-            })
+            // ->addColumn('waktu_submit', function ($row) {
+            //     return '<small>' . $row->earliest_submit_formatted . '</small>';
+            // })
             ->addColumn('peringkat', function ($row) {
                 return $row->peringkat_badge;
             })
@@ -140,7 +154,7 @@ class ScoringDesaController extends Controller
             // ->addColumn('peringkat', function ($row) {
             //     return $row->peringkat_badge;
             // })
-            ->rawColumns(['aksi', 'kegiatan_terlapor', 'kegiatan_belum_terlapor', 'waktu_submit', 'peringkat', 'total_skor'])
+            ->rawColumns(['aksi', 'kegiatan_terlapor', 'kegiatan_belum_terlapor', 'peringkat', 'total_skor'])
             // ->rawColumns(['aksi', 'persentase_dokumen', 'persentase_kegiatan', 'total_skor', 'peringkat'])
             ->make(true);
     }
@@ -153,6 +167,26 @@ class ScoringDesaController extends Controller
      */
     public function detail(Request $request, $id_desa)
     {
+        // --- AUTHORIZATION CHECK ---
+        $user = auth()->user();
+        $petugas = $user->petugas;
+
+        if ($petugas) {
+            if ($petugas->desa_id) {
+                if ($petugas->desa_id != $id_desa) {
+                    abort(403, 'Anda tidak memiliki akses untuk melihat detail desa ini.');
+                }
+            } elseif ($petugas->kecamatan_id) {
+                // Check if desired desa is in my kecamatan
+                $desaCheck = \App\Models\Desa::where('id_desa', $id_desa)
+                    ->where('kecamatan_id', $petugas->kecamatan_id)
+                    ->exists();
+                if (!$desaCheck) {
+                    abort(403, 'Anda tidak memiliki akses untuk melihat detail desa di luar kecamatan Anda.');
+                }
+            }
+        }
+
         $filters = [
             'tahun' => $request->tahun,
             'periode' => $request->periode
