@@ -1,7 +1,8 @@
 <script>
     /**
-     * LAPORAN DETAIL HANDLER
+     * LAPORAN DETAIL HANDLER - REFACTORED VERSION
      * Script untuk menangani tampilan detail riwayat laporan kegiatan
+     * Optimized for compact and professional layout
      */
 
     // Configuration constants
@@ -111,16 +112,17 @@
                 infoCreatedAt: $('#info_created_at'),
 
                 // Informasi Kegiatan
-                infoKecamatan: $('#info_kecamatan'),
-                infoDesa: $('#info_desa'),
-                infoKegiatan: $('#info_kegiatan'),
-                infoPeriode: $('#info_periode'),
-                infoJenisKegiatan: $('#info_jenis_kegiatan'),
-                infoBatasUpload: $('#info_batas_upload'),
-                infoKodeKegiatan: $('#info_kode_kegiatan'),
-                infoDasarHukum: $('#info_dasar_hukum'),
-                infoTahunAnggaran: $('#info_tahun_anggaran'),
-                infoRentangWaktu: $('#info_rentang_waktu'),
+                detailDesa: $('#detail_desa'),
+                detailKecamatan: $('#detail_kecamatan'),
+                detailNamaKegiatan: $('#detail_nama_kegiatan'),
+                detailTahun: $('#detail_tahun'),
+                detailKodeKegiatan: $('#detail_kode_kegiatan'),
+                detailJenisKegiatan: $('#detail_jenis_kegiatan'),
+                detailBulan: $('#detail_bulan'),
+                detailDasarHukum: $('#detail_dasar_hukum'),
+                detailTanggalMulai: $('#detail_tanggal_mulai'),
+                detailTanggalSelesai: $('#detail_tanggal_selesai'),
+                detailBatasUpload: $('#detail_batas_upload'),
 
                 // Containers
                 timelineContainer: $('#timelineContainer'),
@@ -142,13 +144,13 @@
             container.html(`
             <div class="text-center py-3">
                 <div class="spinner-border spinner-border-sm text-primary me-2"></div>
-                <span class="text-muted">${message}</span>
+                <span class="text-muted small">${message}</span>
             </div>
         `);
         }
 
         showEmptyState(container, message = 'Tidak ada data') {
-            container.html(`<p class="text-muted text-center">${message}</p>`);
+            container.html(`<p class="text-muted text-center small">${message}</p>`);
         }
     }
 
@@ -159,23 +161,23 @@
         static formatDateTime(dateTimeString) {
             if (!dateTimeString) return '-';
             const date = new Date(dateTimeString);
-            return date.toLocaleDateString('id-ID', {
-                day: '2-digit',
-                month: '2-digit',
-                year: 'numeric',
-                hour: '2-digit',
-                minute: '2-digit'
-            });
+            const day = date.getDate();
+            const month = date.toLocaleDateString('id-ID', { month: 'long' });
+            const year = date.getFullYear();
+            const hours = String(date.getHours()).padStart(2, '0');
+            const minutes = String(date.getMinutes()).padStart(2, '0');
+
+            return `Tgl. ${day} ${month} ${year} - Jm. ${hours}:${minutes}`;
         }
 
         static formatDateOnly(dateTimeString) {
             if (!dateTimeString) return '-';
             const date = new Date(dateTimeString);
-            return date.toLocaleDateString('id-ID', {
-                day: '2-digit',
-                month: 'short',
-                year: 'numeric'
-            });
+            const day = date.getDate();
+            const month = date.toLocaleDateString('id-ID', { month: 'long' });
+            const year = date.getFullYear();
+
+            return `Tgl. ${day} ${month} ${year}`;
         }
 
         static getStatusDisplay(status) {
@@ -221,31 +223,40 @@
             $('.container-fluid').prepend(alertHtml);
         }
 
-        static formatRentangWaktu(tanggalMulai, tanggalSelesai) {
-            if (!tanggalMulai || !tanggalSelesai) return '-';
-            return `${tanggalMulai} - ${tanggalSelesai}`;
+        static formatDateSpecific(tanggal, bulanInt, tahun) {
+            if (!tanggal || !bulanInt || !tahun) return 'N/A';
+
+            try {
+                const monthIndex = parseInt(bulanInt) - 1;
+                const date = new Date(parseInt(tahun), monthIndex, parseInt(tanggal));
+
+                if (isNaN(date.getTime())) return 'N/A';
+
+                return "Tgl. " + date.getDate() + " " + date.toLocaleDateString('id-ID', { month: 'long' }) + " " + date.getFullYear();
+            } catch (error) {
+                console.error("Error formatting date specific:", error);
+                return 'N/A';
+            }
         }
 
-        static calculateBatasUpload(tanggalSelesai, batasHari, tahun, bulan) {
-            if (!batasHari) return '-';
+        static formatBatasUploadSpecific(batasHari, tanggalSelesai, bulanInt, tahun) {
+            if (!batasHari) return 'Tidak ada batas';
+            if (!tanggalSelesai || !bulanInt || !tahun) return `${batasHari} hari setelah selesai`;
 
-            let tanggalSelesaiDate = null;
+            try {
+                const monthIndex = parseInt(bulanInt) - 1;
+                const selesaiDate = new Date(parseInt(tahun), monthIndex, parseInt(tanggalSelesai));
 
-            if (tanggalSelesai) {
-                tanggalSelesaiDate = new Date(tahun, bulan - 1, tanggalSelesai);
-            } else if (tahun && bulan) {
-                // Fallback: akhir bulan
-                tanggalSelesaiDate = new Date(tahun, bulan, 0);
+                if (isNaN(selesaiDate.getTime())) return `${batasHari} hari setelah selesai`;
+
+                const deadlineDate = new Date(selesaiDate);
+                deadlineDate.setDate(selesaiDate.getDate() + parseInt(batasHari));
+
+                return "Tgl. " + deadlineDate.getDate() + " " + deadlineDate.toLocaleDateString('id-ID', { month: 'long' }) + " " + deadlineDate.getFullYear();
+            } catch (error) {
+                console.error("Error formatting batas upload specific:", error);
+                return `${batasHari} hari setelah selesai`;
             }
-
-            if (tanggalSelesaiDate) {
-                const tanggalBatasAkhir = new Date(tanggalSelesaiDate);
-                tanggalBatasAkhir.setDate(tanggalBatasAkhir.getDate() + batasHari);
-
-                return `${this.formatDateOnly(tanggalBatasAkhir)} (${batasHari} Hari setelah ${this.formatDateOnly(tanggalSelesaiDate)})`;
-            }
-
-            return `${batasHari} Hari (tanggal selesai tidak tersedia)`;
         }
     }
 
@@ -258,9 +269,6 @@
             this.appState = appState;
         }
 
-        /**
-         * Load laporan data from server
-         */
         async loadLaporanData(laporanId) {
             console.log("🔄 Loading laporan data for detail:", laporanId);
 
@@ -287,9 +295,6 @@
             }
         }
 
-        /**
-         * Process and update all sections with laporan data
-         */
         processLaporanData(data) {
             this.updateInformasiLaporan(data);
             this.updateInformasiKegiatan(data);
@@ -298,13 +303,9 @@
             this.updateProgressKelengkapan(data.completeness);
         }
 
-        /**
-         * Update Informasi Laporan section
-         */
         updateInformasiLaporan(data) {
             const elements = this.dom.elements;
 
-            // Status Information
             elements.infoStatusBadge
                 .text(data.status_display)
                 .removeClass('bg-success bg-warning bg-info bg-secondary bg-danger')
@@ -315,44 +316,66 @@
                 .removeClass('bg-primary bg-warning bg-danger')
                 .addClass(Utils.getTimelineStatusClass(data.timeline_status));
 
-            // Date Information
             elements.infoTanggalTarget.text(Utils.formatDateOnly(data.tanggal_target));
             elements.infoTanggalSubmit.text(Utils.formatDateTime(data.tanggal_submit));
             elements.infoTanggalApprove.text(Utils.formatDateTime(data.tanggal_approve));
-            elements.infoApprovedBy.text(data.approved_by_petugas || '-');
+
+            const approvedBy = data.approved_by_petugas || data.approved_by_name || '-';
+            elements.infoApprovedBy.text(approvedBy);
+
             elements.infoCatatanApproval.text(data.catatan_approval || 'Tidak ada catatan');
-            elements.infoCreatedBy.text(data.created_by_petugas || '-');
+
+            const createdBy = data.created_by_petugas || data.created_by_name || '-';
+            elements.infoCreatedBy.text(createdBy);
+
             elements.infoCreatedAt.text(Utils.formatDateTime(data.created_at));
         }
 
-        /**
-         * Update Informasi Kegiatan section
-         */
         updateInformasiKegiatan(data) {
             const elements = this.dom.elements;
 
-            elements.infoKecamatan.text(data.nama_kecamatan || '-');
-            elements.infoDesa.text(data.nama_desa || '-');
-            elements.infoKegiatan.text(data.nama_kegiatan || '-');
-            elements.infoPeriode.text(`${data.tahun} - ${Utils.getBulanName(data.bulan)}`);
-            elements.infoJenisKegiatan.text(data.nama_jenis || '-');
+            elements.detailDesa.text(data.nama_desa || '-');
+            elements.detailKecamatan.text(data.nama_kecamatan || '-');
 
-            elements.infoBatasUpload.text(
-                Utils.calculateBatasUpload(data.tanggal_selesai, data.batas_akhir_upload, data.tahun, data
-                    .bulan)
+            elements.detailNamaKegiatan.text(data.nama_kegiatan || '-');
+            elements.detailTahun.text(data.tahun_anggaran || '-');
+            elements.detailKodeKegiatan.text(data.kode_kegiatan || '-');
+            elements.detailJenisKegiatan.text(data.nama_jenis || '-');
+            elements.detailDasarHukum.text(data.dasar_hukum || 'Tidak ada dasar hukum');
+
+            let periodeText = data.bulan_kegiatan || 'N/A';
+
+            if (data.bulan) {
+                periodeText = Utils.getBulanName(data.bulan);
+            }
+
+            if (data.frekuensi_pelaporan) {
+                periodeText += ` (Rutin: Setiap ${data.frekuensi_pelaporan} Bulan)`;
+            }
+            elements.detailBulan.text(periodeText);
+
+            const tahun = data.tahun_anggaran;
+            let startBulan, endBulan;
+
+            if (data.frekuensi_pelaporan) {
+                startBulan = data.bulan_mulai;
+                endBulan = data.bulan_selesai;
+            } else {
+                startBulan = data.bulan;
+                endBulan = data.bulan;
+            }
+
+            elements.detailTanggalMulai.text(
+                Utils.formatDateSpecific(data.tanggal_mulai, startBulan, tahun)
             );
-
-            elements.infoKodeKegiatan.text(data.kode_kegiatan || '-');
-            elements.infoDasarHukum.text(data.dasar_hukum || '-');
-            elements.infoTahunAnggaran.text(data.tahun_anggaran || '-');
-            elements.infoRentangWaktu.text(
-                Utils.formatRentangWaktu(data.tanggal_mulai, data.tanggal_selesai)
+            elements.detailTanggalSelesai.text(
+                Utils.formatDateSpecific(data.tanggal_selesai, endBulan, tahun)
+            );
+            elements.detailBatasUpload.text(
+                Utils.formatBatasUploadSpecific(data.batas_akhir_upload, data.tanggal_selesai, endBulan, tahun)
             );
         }
 
-        /**
-         * Update History Laporan timeline
-         */
         updateHistoryLaporan(history) {
             const container = this.dom.elements.timelineContainer;
 
@@ -376,26 +399,26 @@
             <div class="timeline-item">
                 <div class="timeline-marker bg-${item.color}"></div>
                 <div class="timeline-content" style="${borderClass}">
-                    <h6 class="mb-1">${item.event}</h6>
-                    <small class="text-muted">${formattedTime}</small>
-                    <p class="mb-0">${item.user}</p>
-                    ${item.catatan ? `<small class="text-muted">${item.catatan}</small>` : ''}
+                    <h6 class="mb-1 small fw-bold">${item.event}</h6>
+                    <small class="text-muted" style="font-size: 0.7rem;">${formattedTime}</small>
+                    <p class="mb-0 small">${item.user}</p>
+                    ${item.catatan ? `<small class="text-muted" style="font-size: 0.75rem;">${item.catatan}</small>` : ''}
                 </div>
             </div>
         `;
         }
 
         /**
-         * Update Questions and Documents section
+         * REFACTORED: Update Questions and Documents section - COMPACT VERSION
          */
         updateQuestionsAndDocuments(data) {
             const container = this.dom.elements.questionsContainer;
 
             if (!data.pertanyaan || data.pertanyaan.length === 0) {
                 container.html(`
-                <div class="alert alert-warning">
-                    <h6><i class="las la-exclamation-triangle me-2"></i>Tidak Ada Pertanyaan</h6>
-                    <p class="mb-0">Belum ada pertanyaan yang ditetapkan untuk kegiatan ini.</p>
+                <div class="alert alert-warning mb-0 py-2">
+                    <h6 class="mb-1 small"><i class="las la-exclamation-triangle me-2"></i>Tidak Ada Pertanyaan</h6>
+                    <p class="mb-0 small">Belum ada pertanyaan yang ditetapkan untuk kegiatan ini.</p>
                 </div>
             `);
                 return;
@@ -409,6 +432,9 @@
             this.initializeRevisionHistory();
         }
 
+        /**
+         * REFACTORED: Render Question - COMPACT VERSION
+         */
         renderQuestion(question, jawaban, dokumen, index) {
             const jawabanPertanyaan = jawaban.find(j => j.pertanyaan_id === question.id_pertanyaan);
             const statusJawaban = jawabanPertanyaan ? jawabanPertanyaan.jawaban_text : 'belum';
@@ -417,14 +443,17 @@
             const statusText = statusJawaban === 'sudah' ? 'SUDAH' : 'BELUM';
 
             return `
-            <div class="question-section" data-question-id="${question.id_pertanyaan}">
-                <div class="d-flex justify-content-between align-items-start flex-wrap gap-2 mb-3">
+            <div class="question-section mb-3" data-question-id="${question.id_pertanyaan}">
+                <div class="d-flex justify-content-between align-items-start flex-wrap gap-2 mb-2">
                     <div class="flex-grow-1">
-                        <h6 class="mb-1 text-${statusColor}">
-                            <i class="las la-${statusIcon} me-2"></i>
-                            <span class="badge bg-primary me-2">${index + 1}</span>
-                            ${question.pertanyaan} - <span class="text-${statusColor}">${statusText}</span>
-                        </h6>
+                        <div class="d-flex align-items-center mb-1">
+                            <span class="badge bg-primary me-2" style="font-size: 0.7rem;">${index + 1}</span>
+                            <h6 class="mb-0 fw-bold" style="font-size: 0.9rem;">
+                                <i class="las la-${statusIcon} me-1 text-${statusColor}"></i>
+                                ${question.pertanyaan}
+                            </h6>
+                        </div>
+                        <span class="badge bg-${statusColor}" style="font-size: 0.65rem;">${statusText}</span>
                     </div>
                 </div>
                 <div class="requirements-section">
@@ -436,12 +465,15 @@
 
         renderRequirementsForDetail(requirements, jawaban, dokumen) {
             if (!requirements?.length) {
-                return `<div class="alert alert-info py-2"><small>Tidak ada persyaratan dokumen untuk pertanyaan ini.</small></div>`;
+                return `<div class="alert alert-info mb-0 py-2"><small>Tidak ada persyaratan dokumen untuk pertanyaan ini.</small></div>`;
             }
 
             return requirements.map(req => this.renderRequirementDetail(req, jawaban, dokumen)).join('');
         }
 
+        /**
+         * REFACTORED: Render Requirement Detail - COMPACT VERSION
+         */
         renderRequirementDetail(req, jawaban, dokumen) {
             const dokumenList = dokumen.filter(d =>
                 d.persyaratan_id === req.id_persyaratan &&
@@ -452,68 +484,67 @@
             const hasPreviousRevisions = dokumenList.length > 1;
 
             const statusBadge = currentDokumen ?
-                `<span class="badge ${Utils.getStatusBadgeClass(currentDokumen.status)} ms-2">${Utils.getStatusDisplay(currentDokumen.status)}</span>` :
+                `<span class="badge ${Utils.getStatusBadgeClass(currentDokumen.status)} ms-2" style="font-size: 0.65rem;">${Utils.getStatusDisplay(currentDokumen.status)}</span>` :
                 '';
 
             return `
-            <div class="requirement-item" data-requirement-id="${req.id_persyaratan}">
-                <div class="row">
-                    <div class="col-md-6 mb-2">
-                        <div class="row">
-                            <div class="col-12 mb-2">
-                                <small class="text-muted">Persyaratan:</small>
-                                <div class="fw-bold fs-6">
-                                    ${req.nama_persyaratan}
-                                    <span class="badge ${req.tipe === 'wajib' ? 'bg-danger' : 'bg-secondary'} ms-2">
-                                        ${req.tipe === 'wajib' ? 'WAJIB' : 'TAMBAHAN'}
-                                    </span>
-                                    ${statusBadge}
-                                </div>
+            <div class="requirement-item mb-2" data-requirement-id="${req.id_persyaratan}">
+                <div class="row g-2">
+                    <!-- Left Column: Requirement Info -->
+                    <div class="col-md-6">
+                        <div class="mb-2">
+                            <label class="info-label mb-0">Persyaratan</label>
+                            <div class="info-value d-flex align-items-center flex-wrap gap-1">
+                                ${req.nama_persyaratan}
+                                <span class="badge ${req.tipe === 'wajib' ? 'bg-danger' : 'bg-secondary'}" style="font-size: 0.65rem;">
+                                    ${req.tipe === 'wajib' ? 'WAJIB' : 'TAMBAHAN'}
+                                </span>
+                                ${statusBadge}
                             </div>
-                            <div class="col-12 mb-2">
-                                <small class="text-muted">Deskripsi:</small>
-                                <div class="fw-bold fs-6">${req.deskripsi || '-'}</div>
-                            </div>
-                            ${req.template_persyaratan ? `
-                            <div class="col-12 mb-2">
-                                <small class="text-muted">Template:</small>
-                                <div class="fw-bold fs-6">
-                                    <a href="/uploads/${req.template_persyaratan}" target="_blank" class="text-decoration-none">
-                                        <i class="las la-download me-1"></i>Download Template
-                                    </a>
-                                </div>
-                            </div>
-                            ` : ''}
                         </div>
+                        <div class="mb-2">
+                            <label class="info-label mb-0">Deskripsi</label>
+                            <div class="info-value">${req.deskripsi || '-'}</div>
+                        </div>
+                        ${req.template_persyaratan ? `
+                        <div>
+                            <label class="info-label mb-0">Template</label>
+                            <div class="info-value">
+                                <a href="/uploads/${req.template_persyaratan}" target="_blank" class="text-decoration-none small">
+                                    <i class="las la-download me-1"></i>Download Template
+                                </a>
+                            </div>
+                        </div>
+                        ` : ''}
                     </div>
-                    <div class="col-md-6 mb-2">
-                        <div class="row">
-                            <div class="col-12 mb-2">
-                                <small class="text-muted">File:</small>
-                                <div class="fw-bold fs-6">
-                                    ${currentDokumen ?
-                                        `<div class="d-flex align-items-center">
-                                            <i class="las la-file-pdf text-danger me-2"></i>
-                                            <a href="/uploads/${currentDokumen.path_file}" target="_blank" class="text-decoration-none">
-                                                ${currentDokumen.nama_file}
-                                            </a>
-                                            <small class="text-muted ms-2 file-version">V.${currentDokumen.version}</small>
-                                        </div>` :
-                                        '<span class="text-danger"><i class="las la-times-circle me-1"></i>File tidak ditemukan</span>'
-                                    }
-                                </div>
+
+                    <!-- Right Column: Document Info -->
+                    <div class="col-md-6">
+                        <div class="mb-2">
+                            <label class="info-label mb-0">File Dokumen</label>
+                            <div class="info-value">
+                                ${currentDokumen ?
+                    `<div class="d-flex align-items-center flex-wrap gap-1">
+                                        <i class="las la-file-pdf text-danger"></i>
+                                        <a href="/uploads/${currentDokumen.path_file}" target="_blank" class="text-decoration-none small">
+                                            ${currentDokumen.nama_file}
+                                        </a>
+                                        <span class="badge bg-secondary" style="font-size: 0.65rem;">V.${currentDokumen.version}</span>
+                                    </div>` :
+                    '<span class="text-danger small"><i class="las la-times-circle me-1"></i>File tidak ditemukan</span>'
+                }
                             </div>
-                            <div class="col-12 mb-2">
-                                <small class="text-muted">Catatan Revisi:</small>
-                                <div class="fw-bold fs-6">
-                                    ${currentDokumen?.catatan_revisi || 'Tidak ada catatan revisi'}
-                                </div>
+                        </div>
+                        <div class="mb-2">
+                            <label class="info-label mb-0">Tanggal Upload</label>
+                            <div class="info-value small">
+                                ${currentDokumen ? Utils.formatDateTime(currentDokumen.created_at) : '-'}
                             </div>
-                            <div class="col-12 mb-2">
-                                <small class="text-muted">Tanggal Upload:</small>
-                                <div class="fw-bold fs-6">
-                                    ${currentDokumen ? Utils.formatDateTime(currentDokumen.created_at) : '-'}
-                                </div>
+                        </div>
+                        <div>
+                            <label class="info-label mb-0">Catatan Revisi</label>
+                            <div class="small text-muted" style="font-size: 0.8rem;">
+                                ${currentDokumen?.catatan_revisi || 'Tidak ada catatan revisi'}
                             </div>
                         </div>
                     </div>
@@ -523,6 +554,9 @@
         `;
         }
 
+        /**
+         * REFACTORED: Render Revision History - COMPACT VERSION
+         */
         renderRevisionHistory(requirementId, dokumenList) {
             const revisions = dokumenList.filter(d => !d.is_current).sort((a, b) => b.version - a.version);
             if (!revisions.length) return '';
@@ -531,18 +565,18 @@
             <div class="revision-item">
                 <div class="d-flex justify-content-between align-items-start">
                     <div class="flex-grow-1">
-                        <strong class="d-block">v${rev.version} - ${Utils.getStatusDisplay(rev.status)}</strong>
-                        <a href="/uploads/${rev.path_file}" target="_blank" class="text-decoration-none small">
+                        <strong class="d-block small">v${rev.version} - ${Utils.getStatusDisplay(rev.status)}</strong>
+                        <a href="/uploads/${rev.path_file}" target="_blank" class="text-decoration-none" style="font-size: 0.75rem;">
                             <i class="las la-download me-1"></i>${rev.nama_file}
                         </a>
                         ${rev.catatan_revisi ? `
                             <div class="mt-1">
-                                <small class="text-muted">Catatan:</small>
-                                <div class="small text-warning">${rev.catatan_revisi}</div>
+                                <small class="text-muted" style="font-size: 0.7rem;">Catatan:</small>
+                                <div class="text-warning" style="font-size: 0.75rem;">${rev.catatan_revisi}</div>
                             </div>
                         ` : ''}
                         <div class="mt-1">
-                            <small class="text-muted">Upload: ${Utils.formatDateTime(rev.created_at)}</small>
+                            <small class="text-muted" style="font-size: 0.7rem;">Upload: ${Utils.formatDateTime(rev.created_at)}</small>
                         </div>
                     </div>
                 </div>
@@ -550,11 +584,12 @@
         `).join('');
 
             return `
-            <div class="mt-3">
-                <button class="btn btn-sm btn-outline-secondary" type="button"
+            <div class="mt-2">
+                <button class="btn btn-sm btn-outline-secondary py-1 px-2" type="button"
                     data-bs-toggle="collapse"
                     data-bs-target="#revisionHistory-${requirementId}"
-                    aria-expanded="false">
+                    aria-expanded="false"
+                    style="font-size: 0.75rem;">
                     <i class="las la-history me-1"></i>Riwayat Revisi (${revisions.length})
                 </button>
                 <div class="collapse mt-2" id="revisionHistory-${requirementId}">
@@ -565,16 +600,13 @@
         }
 
         initializeRevisionHistory() {
-            $('.collapse').on('show.bs.collapse', function() {
+            $('.collapse').on('show.bs.collapse', function () {
                 $(this).prev().find('i').removeClass('la-history').addClass('la-chevron-up');
-            }).on('hide.bs.collapse', function() {
+            }).on('hide.bs.collapse', function () {
                 $(this).prev().find('i').removeClass('la-chevron-up').addClass('la-history');
             });
         }
 
-        /**
-         * Update progress kelengkapan dokumen
-         */
         updateProgressKelengkapan(completeness) {
             const percentage = completeness || 0;
             const status = Utils.getCompletenessStatus(percentage);
@@ -608,10 +640,10 @@
 
         bindEvents() {
             // Download Laporan
-            this.dom.elements.downloadLaporanBtn.on('click', () => this.handleDownloadLaporan());
+            this.dom.elements.downloadLaporanBtn?.on('click', () => this.handleDownloadLaporan());
 
             // Print Laporan
-            this.dom.elements.printLaporanBtn.on('click', () => this.handlePrintLaporan());
+            this.dom.elements.printLaporanBtn?.on('click', () => this.handlePrintLaporan());
         }
 
         handleDownloadLaporan() {
@@ -658,7 +690,7 @@
         }
 
         initialize() {
-            console.log('🚀 Initializing Laporan Detail App...');
+            console.log('🚀 Initializing Laporan Detail App (Refactored)...');
 
             this.eventHandler.initialize();
             this.loadLaporanData();
@@ -682,7 +714,7 @@
     }
 
     // Initialize application when DOM is ready
-    $(document).ready(function() {
+    $(document).ready(function () {
         const app = new LaporanDetailApp();
         app.initialize();
     });
