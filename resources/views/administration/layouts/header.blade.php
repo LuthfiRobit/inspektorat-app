@@ -71,14 +71,24 @@
                                     <p class="fs-12 mb-0">Please log in</p>
                                 @endif
                             </div>
-                            <img src="{{ asset('templates/administration/images/avatar/1.png') }}" width="20"
+                            @php
+                                $avatarPath = asset('templates/administration/images/avatar/1.png');
+                                if (Auth::check() && Auth::user()->petugas && Auth::user()->petugas->foto_petugas) {
+                                    $photoFileName = Auth::user()->petugas->foto_petugas;
+                                    $fullPath = public_path('uploads/' . $photoFileName);
+                                    if (file_exists($fullPath)) {
+                                        $avatarPath = asset('uploads/' . $photoFileName);
+                                    }
+                                }
+                            @endphp
+                            <img src="{{ $avatarPath }}" width="20"
                                 alt="User Profile Picture" />
                         </a>
                         <!-- Dropdown menu with profile and logout options -->
                         <div class="dropdown-menu dropdown-menu-end">
                             @if (Auth::check())
                                 @php
-                                    $userPetugas = Auth::user()->petugas;
+                                    $userPetugas = Auth::user()->petugas ?? null;
                                 @endphp
                                 @if ($userPetugas && ($userPetugas->desa || $userPetugas->kecamatan))
                                     <div class="dropdown-header text-center pb-2 pt-2 border-bottom mb-2">
@@ -91,7 +101,7 @@
                                         @endif
                                     </div>
                                 @endif
-                                <a href="" class="dropdown-item ai-icon">
+                                <a href="{{ route('administrator.profile.index') }}" class="dropdown-item ai-icon">
                                     <i class="fas fa-user text-primary" style="font-size: 18px"></i>
                                     <span class="ms-2">Profile</span>
                                 </a>

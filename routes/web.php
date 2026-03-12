@@ -20,6 +20,7 @@ use App\Http\Controllers\Monitor\RiwayatLaporanController;
 use App\Http\Controllers\Monitor\ScoringDesaController;
 use App\Http\Controllers\Monitor\ScoringKecamatanController;
 use App\Http\Controllers\Monitor\TarikDataLaporanController;
+use App\Http\Controllers\System\ProfilController;
 use App\Http\Controllers\Rbac\PermissionController;
 use App\Http\Controllers\Rbac\RoleController;
 use App\Http\Controllers\Rbac\UserController;
@@ -51,6 +52,11 @@ Route::middleware(['auth', 'checkPermission'])->prefix('administrator')->name('a
         Route::get('/summary', [DashboardController::class, 'getSummary'])->name('summary');
         Route::get('/recent-laporan/{type}', [DashboardController::class, 'getRecentLaporan'])->name('recent-laporan');
         Route::get('/upcomming-kegiatan', [DashboardController::class, 'getUpcommingKegiatan'])->name('upcomming-kegiatan');
+    });
+
+    Route::prefix('profile')->name('profile.')->group(function () {
+        Route::get('/', [ProfilController::class, 'index'])->name('index');
+        Route::put('/update', [ProfilController::class, 'update'])->name('update');
     });
 
     // Master
