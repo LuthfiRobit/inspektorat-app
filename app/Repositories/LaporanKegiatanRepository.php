@@ -192,4 +192,143 @@ class LaporanKegiatanRepository
             return ['status' => 'Tenggang', 'days' => $days];
         return ['status' => 'Terlambat', 'days' => $days];
     }
+
+    /**
+     * Get consolidated logic for Tarik Data without N+1 queries.
+     * Generates all desa x kegiatan combinations according to filters.
+     */
+    public function getTarikDataList($user, $filters)
+    {
+        // 1. Get Desa based on User Role
+        $desaQuery = DB::table('desa as d')
+            ->select('d.id_desa', 'd.nama_desa', 'd.kode_desa', 'd.kecamatan_id', 'kec.nama_kecamatan')
+            ->leftJoin('kecamatan as kec', 'd.kecamatan_id', '=', 'kec.id_kecamatan')
+            ->where('d.status', 'active');
+
+        $petugas = $user->petugas;
+        if ($petugas) {
+            if ($petugas->desa_id) {
+                // Desa - show only their desa
+                $desaQuery->where('d.id_desa', $petugas->desa_id);
+            } elseif ($petugas->kecamatan_id) {
+                // Kecamatan - show all desa in their kecamatan
+                $desaQuery->where('d.kecamatan_id', $petugas->kecamatan_id);
+            }
+        }
+
+        $desaList = $desaQuery->get();
+
+        // 2. Get Kegiatan based on filter_tahun
+        $kegiatanQuery = DB::table('kegiatan as k')
+            ->select(
+                'k.id_kegiatan',
+                'k.nama_kegiatan',
+                'k.kode_kegiatan',
+                'k.tanggal_mulai',
+                'k.tanggal_selesai',
+                'k.bulan',
+                // New Columns for Recurring Logic
+                'k.frekuensi_pelaporan',
+                'k.bulan_mulai',
+                'k.bulan_selesai',
+                'k.batas_akhir_upload',
+                'jk.nama_jenis as jenis_kegiatan',
+                'ta.tahun as tahun_anggaran'
+            )
+            ->leftJoin('jenis_kegiatan as jk', 'k.jenis_kegiatan_id', '=', 'jk.id_jenis_kegiatan')
+            ->leftJoin('tahun_anggaran as ta', 'k.tahun_anggaran_id', '=', 'ta.id_tahun_anggaran')
+            ->where('k.status', 'active')
+            ->where('jk.status', 'active');
+
+        if (!empty($filters['filter_tahun'])) {
+            $kegiatanQuery->where('ta.id_tahun_anggaran', $filters['filter_tahun']);
+        }
+
+        $kegiatanList = $kegiatanQuery->get();
+
+        // Normalize Types
+        $kegiatanList = $kegiatanList->map(function ($kegiatan) {
+            $kegiatan->id_kegiatan = (int) $kegiatan->id_kegiatan;
+            $kegiatan->tahun_anggaran = (int) $kegiatan->tahun_anggaran;
+            $kegiatan->bulan = (int) $kegiatan->bulan;
+            $kegiatan->batas_akhir_upload = (int) $kegiatan->batas_akhir_upload;
+            $kegiatan->frekuensi_pelaporan = $kegiatan->frekuensi_pelaporan ? (int) $kegiatan->frekuensi_pelaporan : null;
+            $kegiatan->bulan_mulai = $kegiatan->bulan_mulai ? (int) $kegiatan->bulan_mulai : null;
+            $kegiatan->bulan_selesai = $kegiatan->bulan_selesai ? (int) $kegiatan->bulan_selesai : null;
+            $kegiatan->tanggal_selesai = $kegiatan->tanggal_selesai ? (int) $kegiatan->tanggal_selesai : null;
+            $kegiatan->tanggal_mulai = $kegiatan->tanggal_mulai ? (int) $kegiatan->tanggal_mulai : null;
+            return $kegiatan;
+        });
+
+        // Resolve necessary month range
+        $bulanAwal = (int) ($filters['filter_bulan_awal'] ?? 1);
+        $bulanAkhir = !empty($filters['filter_bulan_akhir']) ? (int) $filters['filter_bulan_akhir'] : $bulanAwal;
+        $rangeBulanFilter = range($bulanAwal, $bulanAkhir);
+
+        // Batch Query all matching Laporan in db to prevent N+1 queries.
+        $laporanDbQuery = DB::table('laporan_kegiatan as lk')
+            ->whereIn('lk.bulan', $rangeBulanFilter)
+            ->whereIn('lk.desa_id', $desaList->pluck('id_desa')->toArray())
+            ->whereIn('lk.kegiatan_id', $kegiatanList->pluck('id_kegiatan')->toArray());
+
+        $laporanDbResult = $laporanDbQuery->get()->groupBy(function ($item) {
+            return $item->desa_id . '_' . $item->kegiatan_id . '_' . $item->bulan;
+        });
+
+        $result = collect();
+        $targetStatus = $filters['filter_status'] ?? null;
+
+        foreach ($desaList as $desa) {
+            foreach ($kegiatanList as $kegiatan) {
+
+                // --- Determine Target Months based on Frequency ---
+                $targetMonths = [];
+                if ($kegiatan->frekuensi_pelaporan) {
+                    $startMonth = $kegiatan->bulan_mulai ?? 1;
+                    $endMonth = $kegiatan->bulan_selesai ?? 12;
+                    $step = $kegiatan->frekuensi_pelaporan;
+                    for ($m = $startMonth; $m <= $endMonth; $m += $step) {
+                        $targetMonths[] = $m;
+                    }
+                } else {
+                    $targetMonths[] = $kegiatan->bulan; // Insidentil
+                }
+
+                foreach ($targetMonths as $targetBulan) {
+                    // Check against filter
+                    if (!in_array($targetBulan, $rangeBulanFilter)) {
+                        continue;
+                    }
+
+                    $key = $desa->id_desa . '_' . $kegiatan->id_kegiatan . '_' . $targetBulan;
+                    $existingLaporanArr = $laporanDbResult->get($key);
+                    $existingLaporan = $existingLaporanArr ? $existingLaporanArr->first() : null;
+
+                    $status = $existingLaporan->status ?? 'belum_dilaporkan';
+
+                    // Apply status filter
+                    if ($targetStatus && $status !== $targetStatus) {
+                        continue;
+                    }
+
+                    $record = [
+                        'id_laporan' => $existingLaporan->id_laporan ?? null,
+                        'tahun' => $kegiatan->tahun_anggaran,
+                        'bulan' => $targetBulan,
+                        'nama_kecamatan' => $desa->nama_kecamatan,
+                        'nama_desa' => $desa->nama_desa,
+                        'jenis_kegiatan' => $kegiatan->jenis_kegiatan,
+                        'nama_kegiatan' => $kegiatan->nama_kegiatan,
+                        'status' => $status,
+                        'status_display' => LaporanKegiatan::getStatusDisplayForUser($status),
+                        'status_class' => LaporanKegiatan::getStatusClass($status),
+                    ];
+
+                    $result->push($record);
+                }
+            }
+        }
+
+        return $result;
+    }
 }

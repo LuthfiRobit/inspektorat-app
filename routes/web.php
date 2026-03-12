@@ -19,6 +19,7 @@ use App\Http\Controllers\Monev\LaporanReviewController;
 use App\Http\Controllers\Monitor\RiwayatLaporanController;
 use App\Http\Controllers\Monitor\ScoringDesaController;
 use App\Http\Controllers\Monitor\ScoringKecamatanController;
+use App\Http\Controllers\Monitor\TarikDataLaporanController;
 use App\Http\Controllers\Rbac\PermissionController;
 use App\Http\Controllers\Rbac\RoleController;
 use App\Http\Controllers\Rbac\UserController;
@@ -206,6 +207,12 @@ Route::middleware(['auth', 'checkPermission'])->prefix('administrator')->name('a
                 Route::get('/list', [ScoringKecamatanController::class, 'list'])->name('list');
                 Route::get('/detail/{id}', [ScoringKecamatanController::class, 'detail'])->name('detail');
             });
+        });
+
+        Route::prefix('tarik-data')->name('tarik-data.')->group(function () {
+            Route::get('/', [TarikDataLaporanController::class, 'index'])->name('index');
+            Route::get('/list', [TarikDataLaporanController::class, 'list'])->name('list');
+            Route::get('/export', [TarikDataLaporanController::class, 'export'])->name('export');
         });
     });
 

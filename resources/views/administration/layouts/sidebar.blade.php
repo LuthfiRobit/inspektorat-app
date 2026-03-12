@@ -119,7 +119,7 @@
             @endif
 
             <!-- Pelaporan (Monev) -->
-            @if ($user->hasAnyPermission(['administrator.monev.laporan.index', 'administrator.monev.review.index','administrator.monitoring.riwayat.index']))
+            @if ($user->hasAnyPermission(['administrator.monev.laporan.index', 'administrator.monev.review.index', 'administrator.monitoring.riwayat.index', 'administrator.monitoring.tarik-data.index']))
                 <li>
                     <a class="has-arrow ai-icon" href="javascript:void(0);" aria-expanded="false">
                         <i class="fas fa-file-alt fw-bold"></i>
@@ -140,6 +140,11 @@
                             <li><a href="{{ route('administrator.monitoring.riwayat.index') }}" class="fs-6">Riwayat
                                     Laporan</a></li>
                         @endif
+
+                        @if ($user->hasPermissionTo('administrator.monitoring.tarik-data.index'))
+                            <li><a href="{{ route('administrator.monitoring.tarik-data.index') }}" class="fs-6">Tarik
+                                    Data</a></li>
+                        @endif
                     </ul>
                 </li>
             @endif
@@ -156,7 +161,8 @@
                             <li><a href="{{ route('administrator.monitoring.scoring.desa.index') }}" class="fs-6">Desa</a></li>
                         @endif
                         @if ($user->hasPermissionTo('administrator.monitoring.scoring.kecamatan.index'))
-                            <li><a href="{{ route('administrator.monitoring.scoring.kecamatan.index') }}" class="fs-6">Kecamatan</a></li>
+                            <li><a href="{{ route('administrator.monitoring.scoring.kecamatan.index') }}"
+                                    class="fs-6">Kecamatan</a></li>
                         @endif
                     </ul>
                 </li>
