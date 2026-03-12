@@ -12,6 +12,7 @@
         const handlers = {
             'action_show': handleShow,
             'action_edit': handleEdit,
+            'action_reset_password': handleResetPassword,
             // Tambahkan handler lain di sini
         };
 
@@ -87,6 +88,33 @@
         const editUrl = '{{ route('administrator.master.petugas.inspektorat.edit', ':id') }}'.replace(':id', data
             .id_petugas);
         window.location.href = editUrl;
+    }
+
+    function handleResetPassword(data) {
+        let routeTemplate = '{{ route('administrator.master.petugas.inspektorat.reset-password', ':id') }}';
+        const url = routeTemplate.replace(':id', data.id_petugas);
+
+        Swal.fire({
+            title: 'Apakah Anda yakin?',
+            text: "Password default dan username akan dikembalikan ke NIP petugas!",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#1d8ae0',
+            cancelButtonColor: '#f95f53',
+            confirmButtonText: 'Ya, Reset Password!',
+            cancelButtonText: 'Batal'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                AjaxHandler.sendPostRequest(url, {}, response => {
+                    if (response.status === 200) {
+                        ResponseHandler.handleSuccess("Password berhasil direset!");
+                        $('#example').DataTable().ajax.reload(null, false);
+                    } else {
+                        ResponseHandler.handleError(response.message || "Gagal mereset password.");
+                    }
+                });
+            }
+        });
     }
 
     // Tambahkan handler tambahan di sini jika ada action baru

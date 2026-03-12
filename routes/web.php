@@ -131,6 +131,7 @@ Route::middleware(['auth', 'checkPermission'])->prefix('administrator')->name('a
                 Route::get('/show/{id}', [PetugasInspektoratController::class, 'show'])->name('show');
                 Route::get('/edit/{id}', [PetugasInspektoratController::class, 'edit'])->name('edit');
                 Route::put('/update/{id}', [PetugasInspektoratController::class, 'update'])->name('update');
+                Route::post('/reset-password/{id}', [PetugasInspektoratController::class, 'resetPassword'])->name('reset-password');
             });
 
             Route::prefix('kecamatan')->name('kecamatan.')->group(function () {
@@ -141,6 +142,7 @@ Route::middleware(['auth', 'checkPermission'])->prefix('administrator')->name('a
                 Route::get('/show/{id}', [PetugasKecamatanController::class, 'show'])->name('show');
                 Route::get('/edit/{id}', [PetugasKecamatanController::class, 'edit'])->name('edit');
                 Route::put('/update/{id}', [PetugasKecamatanController::class, 'update'])->name('update');
+                Route::post('/reset-password/{id}', [PetugasKecamatanController::class, 'resetPassword'])->name('reset-password');
             });
 
             Route::prefix('desa')->name('desa.')->group(function () {
@@ -151,6 +153,7 @@ Route::middleware(['auth', 'checkPermission'])->prefix('administrator')->name('a
                 Route::get('/show/{id}', [PetugasDesaController::class, 'show'])->name('show');
                 Route::get('/edit/{id}', [PetugasDesaController::class, 'edit'])->name('edit');
                 Route::put('/update/{id}', [PetugasDesaController::class, 'update'])->name('update');
+                Route::post('/reset-password/{id}', [PetugasDesaController::class, 'resetPassword'])->name('reset-password');
             });
         });
     });

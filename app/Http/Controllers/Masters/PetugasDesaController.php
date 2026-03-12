@@ -87,6 +87,10 @@ class PetugasDesaController extends Controller
                     $btn .= '<a class="dropdown-item" href="javascript:void(0);" data-action="action_edit" data-id="' . $item->id_petugas . '">';
                     $btn .= '<i class="fas fa-edit"></i> Edit';
                     $btn .= '</a>';
+
+                    $btn .= '<a class="dropdown-item" href="javascript:void(0);" data-action="action_reset_password" data-id="' . $item->id_petugas . '">';
+                    $btn .= '<i class="fas fa-key"></i> Reset Password';
+                    $btn .= '</a>';
                 }
 
                 $btn .= '</div></div>';
@@ -348,5 +352,35 @@ class PetugasDesaController extends Controller
             ->get();
 
         return $this->responseService->success($desas);
+    }
+
+    /**
+     * Reset password and username to NIP
+     */
+    public function resetPassword($id)
+    {
+        $petugas = Petugas::find($id);
+
+        if (!$petugas) {
+            return $this->responseService->error('Data not found', ResponseService::STATUS_NOT_FOUND);
+        }
+
+        if (!$petugas->user_id) {
+            return $this->responseService->error('Petugas tidak memiliki akun login', 400);
+        }
+
+        $user = \App\Models\User::find($petugas->user_id);
+        if (!$user) {
+            return $this->responseService->error('Akun login tidak ditemukan', ResponseService::STATUS_NOT_FOUND);
+        }
+
+        $user->update([
+            'username' => $petugas->nip,
+            'password' => \Illuminate\Support\Facades\Hash::make($petugas->nip),
+        ]);
+
+        $this->logActivityService->log('Reset Password Petugas Desa', 'ID: ' . $id . ' NIP: ' . $petugas->nip);
+
+        return $this->responseService->success(null, 'Password dan username berhasil direset menjadi NIP.');
     }
 }
