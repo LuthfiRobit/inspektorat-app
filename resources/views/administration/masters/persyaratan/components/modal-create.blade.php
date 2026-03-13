@@ -50,7 +50,8 @@
                                 <label for="template_persyaratan" class="form-label">Template Persyaratan
                                     (opsional)</label>
                                 <input type="file" class="form-control" id="template_persyaratan"
-                                    name="template_persyaratan" accept=".pdf,.doc,.docx,.xls,.xlsx,.jpg,.png" />
+                                    name="template_persyaratan" accept=".pdf,.doc,.docx" />
+                                <small class="form-text text-muted">Maksimal 2MB. Format: PDF, DOC, DOCX</small>
                             </div>
 
                             <!-- Tipe Persyaratan -->

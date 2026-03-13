@@ -541,7 +541,7 @@
                                             name="files[${questionId}][${req.id_persyaratan}]"
                                             data-question-id="${questionId}"
                                             data-requirement-id="${req.id_persyaratan}"
-                                            accept=".pdf,.doc,.docx,.xls,.xlsx,.jpg,.png"
+                                            accept=".pdf,.doc,.docx"
                                             ${isRequired}
                                             ${readonlyAttr}
                                             ${disabledAttr} />
@@ -553,6 +553,8 @@
                                             Template
                                         </button>
                                     </div>
+                                    <div class="text-danger small mt-1 d-none file-error fw-bold" id="error-${key}"></div>
+                                    <small class="text-muted mt-1 d-block"><i class="las la-info-circle me-1"></i>Maks 2MB. Format: PDF, DOC, DOCX</small>
                                     <div class="alert alert-warning alert-dismissible alert-alt mt-1 show d-flex align-items-center gap-1 py-2 px-3">
                                         <strong class="me-1">Catatan revisi:</strong>
                                         <div id="catatan-${questionId}-${req.id_persyaratan}" class="flex-grow-1"></div>
@@ -730,9 +732,34 @@
                     }
                 } catch (error) {
                     let errorMessage = 'Gagal menyimpan laporan';
-                    if (error.responseJSON?.message) {
+                    
+                    // Bersihkan error sebelumnya
+                    $('.file-input').removeClass('is-invalid');
+                    $('.file-error').text('').addClass('d-none');
+
+                    if (error.responseJSON?.errors) {
+                        const errors = error.responseJSON.errors;
+                        let firstErrorMsg = '';
+                        Object.keys(errors).forEach(key => {
+                            if (key.startsWith('files.')) {
+                                const parts = key.split('.');
+                                const qId = parts[1];
+                                const rId = parts[2];
+                                const inputId = `#file-${qId}-${rId}`;
+                                const errorDivId = `#error-${qId}-${rId}`;
+                                
+                                $(inputId).addClass('is-invalid');
+                                $(errorDivId).text(errors[key][0]).removeClass('d-none');
+                                if(!firstErrorMsg) firstErrorMsg = errors[key][0];
+                            } else if (!firstErrorMsg) {
+                                firstErrorMsg = errors[key][0];
+                            }
+                        });
+                        errorMessage = firstErrorMsg || 'Terdapat kesalahan validasi pada formulir Anda. Silakan periksa pesan error di bawah input file.';
+                    } else if (error.responseJSON?.message) {
                         errorMessage = error.responseJSON.message;
                     }
+
                     Utils.showErrorAlert(errorMessage);
                     Utils.setButtonsLoading(false);
                 }
@@ -833,6 +860,34 @@
                 // File input change handler
                 $(document).on('change', '.file-input', function () {
                     const questionId = $(this).data('question-id');
+                    const reqId = $(this).data('requirement-id');
+                    const fileInput = this;
+                    const errorContainer = $(`#error-${questionId}-${reqId}`);
+                    
+                    $(this).removeClass('is-invalid');
+                    errorContainer.text('').addClass('d-none');
+
+                    if (fileInput.files.length > 0) {
+                        const file = fileInput.files[0];
+                        const fileSizeMB = file.size / 1024 / 1024;
+                        const allowedExts = ['pdf', 'doc', 'docx'];
+                        const fileExt = file.name.split('.').pop().toLowerCase();
+                        
+                        let errorMessage = '';
+                        if (fileSizeMB > 2) {
+                            errorMessage = 'Ukuran file lebih dari 2MB. Harap perkecil file Anda.';
+                        } else if (!allowedExts.includes(fileExt)) {
+                            errorMessage = 'Format file tidak valid. Dokumen harus berformat PDF, DOC, atau DOCX.';
+                        }
+
+                        if (errorMessage) {
+                            $(this).addClass('is-invalid');
+                            errorContainer.text(errorMessage).removeClass('d-none');
+                            fileInput.value = ''; // Reset input value so they must pick again
+                            Utils.showErrorAlert('Gagal menambahkan dokumen: ' + errorMessage);
+                        }
+                    }
+
                     FormHandler.checkAndSetRadioFromFiles(questionId);
                     ProgressTracker.updateProgress();
                 });

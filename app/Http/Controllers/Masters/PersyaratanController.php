@@ -128,7 +128,7 @@ class PersyaratanController extends Controller
             'pertanyaan_kegiatan_id' => 'required|exists:pertanyaan_kegiatan,id_pertanyaan',
             'urutan' => 'nullable|integer|min:1',
             'nama_persyaratan' => 'required|string|max:200',
-            'template_persyaratan' => 'nullable|file|mimes:pdf,doc,docx,xls,xlsx,jpg,jpeg,png|max:2048', // max 2MB
+            'template_persyaratan' => 'nullable|file|mimes:pdf,doc,docx|max:2048', // max 2MB
             'deskripsi' => 'nullable|string|max:500',
             'tipe' => 'required|in:wajib,tambahan',
             'status' => 'required|in:active,inactive',
@@ -214,7 +214,7 @@ class PersyaratanController extends Controller
             'deskripsi' => 'nullable|string|max:500',
             'tipe' => 'required|in:wajib,tambahan',
             'status' => 'required|in:active,inactive',
-            'template_persyaratan' => 'nullable|file|mimes:pdf,doc,docx,xls,xlsx,png,jpg,jpeg|max:5120', // contoh validasi file max 5MB
+            'template_persyaratan' => 'nullable|file|mimes:pdf,doc,docx|max:2048', // max 2MB
         ];
 
         // Validate the request data

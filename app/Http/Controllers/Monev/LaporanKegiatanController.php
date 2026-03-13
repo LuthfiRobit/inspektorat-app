@@ -289,7 +289,7 @@ class LaporanKegiatanController extends Controller
      */
     private function validateLaporanRequest(Request $request)
     {
-        return Validator::make($request->all(), [
+        $rules = [
             'desa_id' => 'required|exists:desa,id_desa',
             'kegiatan_id' => 'required|exists:kegiatan,id_kegiatan',
             'tahun' => 'required|integer',
@@ -297,7 +297,16 @@ class LaporanKegiatanController extends Controller
             'status' => 'required|in:draft,submitted',
             'jawaban' => 'required|array',
             'jawaban.*' => 'required|in:sudah,belum',
-        ]);
+            'files' => 'nullable|array',
+            'files.*.*' => 'nullable|file|mimes:pdf,doc,docx|max:2048',
+        ];
+
+        $messages = [
+            'files.*.*.mimes' => 'Format dokumen harus berformat PDF, DOC, atau DOCX.',
+            'files.*.*.max' => 'Ukuran dokumen maksimal adalah 2MB.',
+        ];
+
+        return Validator::make($request->all(), $rules, $messages);
     }
 
     /**
