@@ -4,7 +4,7 @@
         /* -------------------------------------------------
          *  INIT DATATABLE
          * ------------------------------------------------- */
-        const table = $('#example').DataTable({
+        window.table = $('#example').DataTable({
             processing: true,
             serverSide: true,
             ajax: {
@@ -39,7 +39,7 @@
          * ------------------------------------------------- */
         const optimizedSearch = _.debounce(query => {
             if (query.length >= 4 || query.length === 0) {
-                table.search(query).draw();
+                window.table.search(query).draw();
             }
         }, 500);
 
@@ -55,7 +55,7 @@
          * ------------------------------------------------- */
         $('#filter_status, #filter_tipe, #filter_pertanyaan')
             .on('change', () => {
-                table.ajax.reload();
+                window.table.ajax.reload();
             });
 
 
@@ -70,7 +70,7 @@
 
             $('.selectpicker').selectpicker('refresh');
 
-            table.ajax.reload();
+            window.table.ajax.reload();
         });
 
 

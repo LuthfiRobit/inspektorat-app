@@ -20,7 +20,7 @@
         AjaxHandler.sendUpdateRequest(url, this,
             () => {
                 $('#modalEdit').modal('hide');
-                table.ajax.reload();
+                window.table.ajax.reload();
                 resetSubmitButton();
             },
             res => {
