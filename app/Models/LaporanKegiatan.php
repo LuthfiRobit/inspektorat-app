@@ -168,11 +168,11 @@ class LaporanKegiatan extends Model
         // Determine Context (Tahun & Bulan)
         if (is_object($laporanOrTahun)) {
             // Context from Laporan Object
-            $tahun = $laporanOrTahun->tahun;
-            $bulan = $laporanOrTahun->bulan;
+            $tahun = (int) $laporanOrTahun->tahun;
+            $bulan = (int) $laporanOrTahun->bulan;
         } else {
             // Context from primitive params
-            $tahun = $laporanOrTahun;
+            $tahun = (int) $laporanOrTahun;
         }
 
         // --- Logic Tanggal (Insidentil vs Rutin) ---
@@ -187,15 +187,15 @@ class LaporanKegiatan extends Model
 
         if ($isRutin) {
             // Rutin: Base month is ALWAYS bulan_selesai from Master
-            $targetMonth = $kegiatan->bulan_selesai ?: 12;
+            $targetMonth = (int) ($kegiatan->bulan_selesai ?: 12);
         } else {
             // Insidentil: Base month is bulan from Master
-            $targetMonth = $kegiatan->bulan;
+            $targetMonth = (int) $kegiatan->bulan;
         }
 
         // Fallback: If Master data is missing/invalid, use the report period (legacy safety)
         if (empty($targetMonth)) {
-            $targetMonth = $bulan ?: 12; // Default to Dec if all fails
+            $targetMonth = (int) ($bulan ?: 12); // Default to Dec if all fails
         }
 
         // Base Date: 1st of the target month
@@ -204,12 +204,12 @@ class LaporanKegiatan extends Model
         // --- Date Clamping Logic ---
         // If kegiatan finishes on 31st, but target month is Feb (28/29), clamp to end of month.
         $daysInMonth = $baseDate->daysInMonth;
-        $tanggalSelesai = min($kegiatan->tanggal_selesai, $daysInMonth);
+        $tanggalSelesai = min((int) $kegiatan->tanggal_selesai, $daysInMonth);
 
         // Construct Target Date
         // Formula: Tanggal Selesai (Clamped) + Batas Akhir Upload
         $tanggalTarget = Carbon::create($tahun, $targetMonth, $tanggalSelesai)
-            ->addDays($kegiatan->batas_akhir_upload);
+            ->addDays((int) $kegiatan->batas_akhir_upload);
 
         return $tanggalTarget;
     }

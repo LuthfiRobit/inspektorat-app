@@ -78,8 +78,8 @@ class LaporanKegiatanRepository
         }
 
         // Tentukan tahun & bulan (Prioritas: Laporan -> Input Params -> Master Kegiatan)
-        $tahun = $laporan->tahun ?? ($tahun ?? $kegiatan['tahun']);
-        $bulan = $laporan->bulan ?? ($bulan ?? $kegiatan['bulan']);
+        $tahun = (int) ($laporan->tahun ?? ($tahun ?? $kegiatan['tahun']));
+        $bulan = (int) ($laporan->bulan ?? ($bulan ?? $kegiatan['bulan']));
 
         // ============================
         // 4. Hitung tanggal target
@@ -158,15 +158,15 @@ class LaporanKegiatanRepository
             return null;
         }
 
-        $baseDate = Carbon::create($tahun, $bulan, 1);
+        $baseDate = Carbon::create((int) $tahun, (int) $bulan, 1);
 
         // Perbaikan: Akses sebagai array
-        $tanggalSelesai = $kegiatan['tanggal_selesai'] ?: $baseDate->daysInMonth;
+        $tanggalSelesai = (int) ($kegiatan['tanggal_selesai'] ?: $baseDate->daysInMonth);
         $tanggalSelesai = min($tanggalSelesai, $baseDate->daysInMonth);
 
         // Perbaikan: Akses sebagai array
-        return Carbon::create($tahun, $bulan, $tanggalSelesai)
-            ->addDays($kegiatan['batas_akhir_upload'])
+        return Carbon::create((int) $tahun, (int) $bulan, $tanggalSelesai)
+            ->addDays((int) $kegiatan['batas_akhir_upload'])
             ->startOfDay();
     }
 

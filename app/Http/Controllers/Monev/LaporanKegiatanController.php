@@ -137,8 +137,8 @@ class LaporanKegiatanController extends Controller
             $request->desa_id,
             $request->kegiatan_id,
             $request->laporan_id,
-            $request->bulan, // New Param
-            $request->tahun  // New Param
+            (int) $request->bulan, // New Param
+            (int) $request->tahun  // New Param
         );
 
         $this->logActivityService->log('Viewed Detail Laporan');
