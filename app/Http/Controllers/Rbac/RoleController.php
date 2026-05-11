@@ -49,11 +49,18 @@ class RoleController extends Controller
      */
     public function list(Request $request)
     {
-        $query = Role::get();
+        $query = Role::query();
+
+        // 🚀 Security: Jangan tampilkan role developer ke user dengan role selain developer.
+        if (!auth()->user()->hasRole('developer')) {
+            $query->where('role_name', '!=', 'developer');
+        }
+
+        $roles = $query->get();
 
         LogActivityService::log('Fetched Role list');
 
-        return DataTables::of($query)
+        return DataTables::of($roles)
             ->addColumn('checkbox', fn($row) => '<input type="checkbox" class="table-checkbox form-check-input" id="checkbox_' . $row->id_role . '" name="role_ids[]" value="' . $row->id_role . '">')
             ->addColumn('aksi', function ($item) {
                 return '<div class="btn-group">
@@ -115,8 +122,18 @@ class RoleController extends Controller
      */
     public function show($id)
     {
+        $role = Role::find($id);
+        if (!$role) {
+            return $this->responseService->error('Data not found', 404);
+        }
+
+        // 🚀 Security: Jangan tampilkan detail role developer ke non-developer
+        if ($role->role_name === 'developer' && !auth()->user()->hasRole('developer')) {
+            return $this->responseService->error('Data not found', 404);
+        }
+
         LogActivityService::log('Viewed Role detail', 'ID: ' . $id);
-        return $this->transactionService->getById(new Role(), $id);
+        return $this->responseService->success($role);
     }
 
     /**
@@ -130,6 +147,11 @@ class RoleController extends Controller
 
         if (!$role) {
             return $this->responseService->error('Data not found', ResponseService::STATUS_NOT_FOUND);
+        }
+
+        // 🚀 Security: Jangan tampilkan edit role developer ke non-developer
+        if ($role->role_name === 'developer' && !auth()->user()->hasRole('developer')) {
+            abort(404);
         }
         LogActivityService::log('Accessed the edit permission view for Role');
         return view('administration.rbac.role.edit', compact('role'));
@@ -166,6 +188,11 @@ class RoleController extends Controller
             return $this->responseService->error('Data not found', ResponseService::STATUS_NOT_FOUND);
         }
 
+        // 🚀 Security: Jangan biarkan non-developer update role developer
+        if ($role->role_name === 'developer' && !auth()->user()->hasRole('developer')) {
+            return $this->responseService->error('Unauthorized to update developer role', 403);
+        }
+
         // Use TransactionService to update the record
         $result = $this->transactionService->update($request, $role, $validationRules);
 
@@ -183,7 +210,17 @@ class RoleController extends Controller
     public function listRolePermission($id)
     {
         // Fetch the role and associated permissions
-        $role = Role::select('role_scope', 'role_name', 'role_description')->find($id);
+        $role = Role::select('id_role', 'role_scope', 'role_name', 'role_description')->find($id);
+
+        if (!$role) {
+            return $this->responseService->error('Data not found', 404);
+        }
+
+        // 🚀 Security: Jangan tampilkan permission role developer ke non-developer
+        if ($role->role_name === 'developer' && !auth()->user()->hasRole('developer')) {
+            return $this->responseService->error('Data not found', 404);
+        }
+
         $permissions = Permission::select('id_permission', 'permission_name')->get();
         $rolePermissions = RolePermission::where('role_id', $id)->pluck('permission_id');
 
@@ -215,6 +252,11 @@ class RoleController extends Controller
 
         // Find the Role by ID
         $role = Role::findOrFail($roleId);
+
+        // 🚀 Security: Jangan biarkan non-developer update permission role developer
+        if ($role->role_name === 'developer' && !auth()->user()->hasRole('developer')) {
+            return $this->responseService->error('Unauthorized to update developer permissions', 403);
+        }
 
         // Synchronize the selected permissions with the role
         // This will replace the existing permissions with the newly selected ones
