@@ -2,17 +2,17 @@
 <div class="nav-header">
     <!-- Brand logo with different images for various screen sizes -->
     <a href="/" class="brand-logo">
-        <!-- Logo for abbreviated view (e.g., mobile) -->
-        <!-- <img class="logo-abbr" src="images/logo.png" alt="" /> -->
         <img class="logo-abbr" src="{{ asset('templates/administration/images/Logo_Kabupaten_Probolinggo.svg') }}"
             alt="" />
-        <!-- Compact logo with text (e.g., for sidebar) -->
-        <!-- <img class="logo-compact" src="images/logo-text.png" alt="" /> -->
         <img class="logo-compact" src="{{ asset('templates/administration/images/Logo_Kabupaten_Probolinggo.svg') }}"
             alt="" />
-        <!-- Full brand title logo -->
-        <!-- <img class="brand-title" src="images/logo-text.png" alt="" /> -->
-        <!-- <img class="brand-title" src="images/logo-text.png" alt="" /> -->
+        <div class="brand-title ms-3">
+            <h2 class="mb-0 fs-20 fw-bold" style="letter-spacing: 1px;">
+                <span class="text-black">SIDESA</span><span class="text-primary">APK</span>
+            </h2>
+            <small class="text-muted fw-medium d-block"
+                style="font-size: 8px; margin-top: -5px; letter-spacing: 0.5px;">INSPEKTORAT KAB. PROBOLINGGO</small>
+        </div>
     </a>
 
     <!-- Navigation control for mobile view -->
@@ -81,8 +81,7 @@
                                     }
                                 }
                             @endphp
-                            <img src="{{ $avatarPath }}" width="20"
-                                alt="User Profile Picture" />
+                            <img src="{{ $avatarPath }}" width="20" alt="User Profile Picture" />
                         </a>
                         <!-- Dropdown menu with profile and logout options -->
                         <div class="dropdown-menu dropdown-menu-end">
@@ -96,7 +95,8 @@
                                             <span class="fs-14 fw-bold text-primary">{{ $userPetugas->desa->nama_desa }}</span>
                                             <p class="fs-12 mb-0 text-muted">Desa</p>
                                         @elseif ($userPetugas->kecamatan)
-                                            <span class="fs-14 fw-bold text-primary">{{ $userPetugas->kecamatan->nama_kecamatan }}</span>
+                                            <span
+                                                class="fs-14 fw-bold text-primary">{{ $userPetugas->kecamatan->nama_kecamatan }}</span>
                                             <p class="fs-12 mb-0 text-muted">Kecamatan</p>
                                         @endif
                                     </div>

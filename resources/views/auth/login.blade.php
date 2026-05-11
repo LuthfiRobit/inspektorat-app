@@ -65,8 +65,18 @@
             <div class="login-container p-4 p-md-5 rounded shadow-lg w-100"
                 style="background-color: rgba(255, 255, 255, 0.92); max-width: 420px;">
                 <div class="text-center mb-4">
-                    <h3 class="fw-bold">Selamat Datang di SIDESA APK</h3>
-                    <p class="text-muted small">Masukkan email/username dan kata sandi Anda untuk masuk ke SIDESA APK — Sistem Monev Kegiatan Desa.</p>
+                    <div class="d-inline-flex align-items-center mb-4">
+                        <img src="{{ asset('templates/administration/images/Logo_Kabupaten_Probolinggo.svg') }}"
+                            alt="Logo Kabupaten Probolinggo" width="60" class="me-3" />
+                        <div class="text-start border-start border-2 ps-3" style="border-color: #eee !important;">
+                            <h1 class="mb-0 fw-black" style="letter-spacing: 2px; line-height: 0.9; font-size: 32px;">
+                                <span class="text-dark">SIDESA</span><span class="text-primary">APK</span>
+                            </h1>
+                            <span class="text-muted fw-bold" style="font-size: 11px; letter-spacing: 1.5px; text-transform: uppercase;">Inspektorat</span>
+                        </div>
+                    </div>
+                    <h4 class="fw-bold">Selamat Datang Kembali</h4>
+                    <p class="text-muted small">Silakan masuk untuk melanjutkan akses ke Sistem Monev Kegiatan Desa.</p>
                 </div>
 
                 <h6 class="text-center mb-3"><span class="border-bottom pb-1">Masuk ke SIDESA APK</span></h6>
@@ -97,7 +107,8 @@
                         <button type="submit" class="btn btn-primary" id="submitBtn">Masuk</button>
                     </div>
                     <div class="text-center">
-                        <a href="#" class="text-decoration-none text-muted small">Lupa kata sandi?</a>
+                        <a href="javascript:void(0);" class="text-decoration-none text-muted small" data-bs-toggle="modal"
+                            data-bs-target="#forgotPasswordModal">Lupa kata sandi?</a>
                     </div>
                 </form>
             </div>
@@ -125,6 +136,52 @@
     <!-- Script token end -->
 
     @include('auth.scripts.login')
+
+    <!-- Modal Lupa Kata Sandi -->
+    <div class="modal fade" id="forgotPasswordModal" tabindex="-1" aria-labelledby="forgotPasswordModalLabel"
+        aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0 shadow">
+                <div class="modal-header border-0 pb-0">
+                    <h5 class="modal-title fw-bold" id="forgotPasswordModalLabel">
+                        <i class="fas fa-info-circle text-primary me-2"></i>Informasi Lupa Kata Sandi
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body text-center py-4">
+                    <div class="mb-4">
+                        <i class="fas fa-user-shield text-primary mb-3" style="font-size: 3rem;"></i>
+                        <p class="text-muted">Untuk mereset atau mendapatkan kembali akses akun Anda, silakan hubungi Administrator Inspektorat Kabupaten Probolinggo melalui kontak berikut:</p>
+                    </div>
+
+                    <div class="contact-info-list text-start mx-auto" style="max-width: 300px;">
+                        <div class="d-flex align-items-center mb-3">
+                            <div class="icon-box bg-light text-primary rounded-circle p-2 me-3">
+                                <i class="fas fa-envelope"></i>
+                            </div>
+                            <div>
+                                <small class="text-muted d-block">Email</small>
+                                <a href="mailto:inspektorat@probolinggokab.go.id" class="fw-bold text-dark text-decoration-none">inspektorat@probolinggokab.go.id</a>
+                            </div>
+                        </div>
+
+                        <div class="d-flex align-items-center">
+                            <div class="icon-box bg-light text-primary rounded-circle p-2 me-3">
+                                <i class="fas fa-phone-alt"></i>
+                            </div>
+                            <div>
+                                <small class="text-muted d-block">Call Center</small>
+                                <a href="tel:+62335844110" class="fw-bold text-dark text-decoration-none">+62335844110</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer border-0 pt-0">
+                    <button type="button" class="btn btn-primary w-100 py-2" data-bs-dismiss="modal">Tutup</button>
+                </div>
+            </div>
+        </div>
+    </div>
 </body>
 
 </html>
