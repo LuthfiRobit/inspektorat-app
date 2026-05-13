@@ -29,13 +29,16 @@
 
     <!-- Metadata Open Graph -->
     <meta property="og:title" content="SIDESA APK - Inspektorat Kabupaten Probolinggo" />
-    <meta property="og:description" content="SIDESA APK adalah sistem monev milik Inspektorat Kabupaten Probolinggo untuk mendukung pelaporan dan evaluasi kegiatan desa secara transparan dan efisien." />
+    <meta property="og:description"
+        content="SIDESA APK adalah sistem monev milik Inspektorat Kabupaten Probolinggo untuk mendukung pelaporan dan evaluasi kegiatan desa secara transparan dan efisien." />
     <meta property="og:image" content="{{ asset('templates/administration/images/Logo_Kabupaten_Probolinggo.svg') }}" />
 
     <!-- Twitter Card Metadata -->
     <meta name="twitter:title" content="SIDESA APK - Inspektorat Kabupaten Probolinggo" />
-    <meta name="twitter:description" content="SIDESA APK adalah sistem monev milik Inspektorat Kabupaten Probolinggo untuk mendukung pelaporan dan evaluasi kegiatan desa secara transparan dan efisien." />
-    <meta name="twitter:image" content="{{ asset('templates/administration/images/Logo_Kabupaten_Probolinggo.svg') }}" />
+    <meta name="twitter:description"
+        content="SIDESA APK adalah sistem monev milik Inspektorat Kabupaten Probolinggo untuk mendukung pelaporan dan evaluasi kegiatan desa secara transparan dan efisien." />
+    <meta name="twitter:image"
+        content="{{ asset('templates/administration/images/Logo_Kabupaten_Probolinggo.svg') }}" />
     <meta name="twitter:card" content="summary_large_image" />
     <!-- Meta end -->
 
@@ -46,11 +49,12 @@
     <link rel="icon" type="image/png" sizes="16x16"
         href="{{ asset('templates/administration/images/Logo_Kabupaten_Probolinggo.svg') }}" />
     @yield('this-page-style') <!-- Menyertakan Style tambahan dari halaman -->
-    
+
     <style>
         .drop-shadow {
-            filter: drop-shadow(0px 10px 20px rgba(0,0,0,0.1));
+            filter: drop-shadow(0px 10px 20px rgba(0, 0, 0, 0.1));
         }
+
         .cursor-pointer {
             cursor: pointer;
         }
@@ -68,21 +72,29 @@
     <div class="container-fluid p-0 m-0 min-vh-100">
         <div class="row g-0 min-vh-100">
             <!-- Sisi Form Login (Atas di Mobile, Kanan di Desktop) -->
-            <div class="col-lg-5 col-12 d-flex align-items-center justify-content-center bg-white p-3 p-sm-5 order-1 order-lg-2">
+            <div
+                class="col-lg-5 col-12 d-flex align-items-center justify-content-center bg-white p-3 p-sm-5 order-1 order-lg-2">
                 <div class="login-container w-100" style="max-width: 420px;">
                     <div class="text-center mb-4">
                         <div class="d-inline-flex align-items-center justify-content-center mb-4">
-                            <img src="{{ asset('templates/administration/images/Logo_Kabupaten_Probolinggo.svg') }}"
-                                alt="Logo Kabupaten Probolinggo" width="60" class="me-3" />
+                            <div class="d-flex align-items-center me-3">
+                                <img src="{{ asset('templates/administration/images/Logo-UNUJA.webp') }}"
+                                    alt="Logo UNUJA" width="50" class="me-2" />
+                                <img src="{{ asset('templates/administration/images/Logo_Kabupaten_Probolinggo.svg') }}"
+                                    alt="Logo Kabupaten Probolinggo" width="50" />
+                            </div>
                             <div class="text-start border-start border-2 ps-3" style="border-color: #eee !important;">
-                                <h1 class="mb-0 fw-black" style="letter-spacing: 2px; line-height: 0.9; font-size: 32px;">
+                                <h1 class="mb-0 fw-black"
+                                    style="letter-spacing: 2px; line-height: 0.9; font-size: 32px;">
                                     <span class="text-dark">SIDESA</span><span class="text-primary">APK</span>
                                 </h1>
-                                <span class="text-muted fw-bold" style="font-size: 11px; letter-spacing: 1.5px; text-transform: uppercase;">Inspektorat</span>
+                                <span class="text-muted fw-bold"
+                                    style="font-size: 11px; letter-spacing: 1.5px; text-transform: uppercase;">Inspektorat</span>
                             </div>
                         </div>
                         <h4 class="fw-bold">Selamat Datang Kembali</h4>
-                        <p class="text-muted small">Silakan masuk untuk melanjutkan akses ke Sistem Monev Kegiatan Desa.</p>
+                        <p class="text-muted small">Silakan masuk untuk melanjutkan akses ke Sistem Monev Kegiatan Desa.
+                        </p>
                     </div>
 
                     <h6 class="text-center mb-3"><span class="border-bottom pb-1">Masuk ke SIDESA APK</span></h6>
@@ -97,15 +109,16 @@
                         @csrf
                         <div class="mb-3">
                             <label for="login" class="form-label fw-semibold">Email atau Username</label>
-                            <input type="text" class="form-control form-control-lg bg-light border-0" id="login" name="login"
-                                placeholder="Masukkan email atau username" required>
+                            <input type="text" class="form-control form-control-lg bg-light border-0" id="login"
+                                name="login" placeholder="Masukkan email atau username" required>
                         </div>
                         <div class="mb-3">
                             <label for="password" class="form-label fw-semibold">Kata Sandi</label>
                             <div class="input-group">
-                                <input type="password" class="form-control form-control-lg bg-light border-0" id="password" name="password"
-                                    placeholder="Masukkan kata sandi" required>
-                                <span class="input-group-text bg-light border-0 cursor-pointer" onclick="togglePassword()">
+                                <input type="password" class="form-control form-control-lg bg-light border-0"
+                                    id="password" name="password" placeholder="Masukkan kata sandi" required>
+                                <span class="input-group-text bg-light border-0 cursor-pointer"
+                                    onclick="togglePassword()">
                                     <i class="fa fa-eye-slash" id="togglePasswordIcon"></i>
                                 </span>
                             </div>
@@ -115,14 +128,15 @@
                                 <input type="checkbox" class="form-check-input" id="remember" name="remember">
                                 <label class="form-check-label text-muted" for="remember">Ingat saya</label>
                             </div>
-                            <a href="javascript:void(0);" class="text-decoration-none text-primary small fw-semibold" data-bs-toggle="modal"
-                                data-bs-target="#forgotPasswordModal">Lupa kata sandi?</a>
+                            <a href="javascript:void(0);" class="text-decoration-none text-primary small fw-semibold"
+                                data-bs-toggle="modal" data-bs-target="#forgotPasswordModal">Lupa kata sandi?</a>
                         </div>
                         <div class="d-grid mb-3">
-                            <button type="submit" class="btn btn-primary btn-lg rounded-pill shadow-sm" id="submitBtn">Masuk Aplikasi</button>
+                            <button type="submit" class="btn btn-primary btn-lg rounded-pill shadow-sm"
+                                id="submitBtn">Masuk Aplikasi</button>
                         </div>
                     </form>
-                    
+
                     <div class="text-center mt-5">
                         <p class="text-muted small mb-0">&copy; {{ date('Y') }} Inspektorat Kab. Probolinggo.</p>
                     </div>
@@ -130,12 +144,12 @@
             </div>
 
             <!-- Sisi Gambar Siklus (Bawah di Mobile, Kiri di Desktop) -->
-            <div class="col-lg-7 col-12 d-flex bg-light align-items-center justify-content-center p-4 p-lg-5 border-end order-2 order-lg-1">
+            <div
+                class="col-lg-7 col-12 d-flex bg-light align-items-center justify-content-center p-4 p-lg-5 border-end order-2 order-lg-1">
                 <div class="text-center w-100">
-                    <img src="{{ asset('templates/administration/images/siklus_perencanaan_desa.png') }}" 
-                         alt="Siklus Perencanaan Desa" 
-                         class="img-fluid drop-shadow" 
-                         style="max-height: 80vh; object-fit: contain;">
+                    <img src="{{ asset('templates/administration/images/siklus_perencanaan_desa.webp') }}"
+                        alt="Siklus Perencanaan Desa" class="img-fluid drop-shadow"
+                        style="max-height: 80vh; object-fit: contain;">
                 </div>
             </div>
         </div>
@@ -143,7 +157,8 @@
 
     <!-- Required vendors -->
     <script src="{{ asset('templates/administration/vendor/global/global.min.js') }}"></script>
-    <script src="{{ asset('templates/administration/vendor/bootstrap-select/dist/js/bootstrap-select.min.js') }}"></script>
+    <script
+        src="{{ asset('templates/administration/vendor/bootstrap-select/dist/js/bootstrap-select.min.js') }}"></script>
     <script src="{{ asset('templates/administration/js/custom.min.js') }}"></script>
     @include('administration.layouts.deznav') <!-- Digunakan karna default js tidak bisa load -->
     @include('administration.layouts.script')
@@ -191,7 +206,8 @@
                 <div class="modal-body text-center py-4">
                     <div class="mb-4">
                         <i class="fas fa-user-shield text-primary mb-3" style="font-size: 3rem;"></i>
-                        <p class="text-muted">Untuk mereset atau mendapatkan kembali akses akun Anda, silakan hubungi Administrator Inspektorat Kabupaten Probolinggo melalui kontak berikut:</p>
+                        <p class="text-muted">Untuk mereset atau mendapatkan kembali akses akun Anda, silakan hubungi
+                            Administrator Inspektorat Kabupaten Probolinggo melalui kontak berikut:</p>
                     </div>
 
                     <div class="contact-info-list text-start mx-auto" style="max-width: 300px;">
@@ -201,7 +217,8 @@
                             </div>
                             <div>
                                 <small class="text-muted d-block">Email</small>
-                                <a href="mailto:inspektorat@probolinggokab.go.id" class="fw-bold text-dark text-decoration-none">inspektorat@probolinggokab.go.id</a>
+                                <a href="mailto:inspektorat@probolinggokab.go.id"
+                                    class="fw-bold text-dark text-decoration-none">inspektorat@probolinggokab.go.id</a>
                             </div>
                         </div>
 
@@ -211,7 +228,8 @@
                             </div>
                             <div>
                                 <small class="text-muted d-block">Call Center</small>
-                                <a href="tel:+62335844110" class="fw-bold text-dark text-decoration-none">+62335844110</a>
+                                <a href="tel:+62335844110"
+                                    class="fw-bold text-dark text-decoration-none">+62335844110</a>
                             </div>
                         </div>
                     </div>
