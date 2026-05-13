@@ -45,8 +45,16 @@
     <!-- Favicon -->
     <link rel="icon" type="image/png" sizes="16x16"
         href="{{ asset('templates/administration/images/Logo_Kabupaten_Probolinggo.svg') }}" />
-    @yield('this-page-style') <!-- Menyertakan Style
-        tambahan dari halaman -->
+    @yield('this-page-style') <!-- Menyertakan Style tambahan dari halaman -->
+    
+    <style>
+        .drop-shadow {
+            filter: drop-shadow(0px 10px 20px rgba(0,0,0,0.1));
+        }
+        .cursor-pointer {
+            cursor: pointer;
+        }
+    </style>
 
     <!-- Global style start -->
     <link href="{{ asset('templates/administration/vendor/bootstrap-select/dist/css/bootstrap-select.min.css') }}"
@@ -57,60 +65,78 @@
 </head>
 
 <body class="h-100">
-    <!-- Background Image Container -->
-    <div
-        style="background-image: url({{ asset('templates/administration/images/student-bg.jpg') }}); background-repeat: no-repeat; background-size: cover; min-height: 100vh;">
-        <div class="d-flex justify-content-center align-items-center px-3 px-sm-4"
-            style="min-height: 100vh; backdrop-filter: brightness(0.9);">
-            <div class="login-container p-4 p-md-5 rounded shadow-lg w-100"
-                style="background-color: rgba(255, 255, 255, 0.92); max-width: 420px;">
-                <div class="text-center mb-4">
-                    <div class="d-inline-flex align-items-center mb-4">
-                        <img src="{{ asset('templates/administration/images/Logo_Kabupaten_Probolinggo.svg') }}"
-                            alt="Logo Kabupaten Probolinggo" width="60" class="me-3" />
-                        <div class="text-start border-start border-2 ps-3" style="border-color: #eee !important;">
-                            <h1 class="mb-0 fw-black" style="letter-spacing: 2px; line-height: 0.9; font-size: 32px;">
-                                <span class="text-dark">SIDESA</span><span class="text-primary">APK</span>
-                            </h1>
-                            <span class="text-muted fw-bold" style="font-size: 11px; letter-spacing: 1.5px; text-transform: uppercase;">Inspektorat</span>
+    <div class="container-fluid p-0 m-0 min-vh-100">
+        <div class="row g-0 min-vh-100">
+            <!-- Sisi Form Login (Atas di Mobile, Kanan di Desktop) -->
+            <div class="col-lg-5 col-12 d-flex align-items-center justify-content-center bg-white p-3 p-sm-5 order-1 order-lg-2">
+                <div class="login-container w-100" style="max-width: 420px;">
+                    <div class="text-center mb-4">
+                        <div class="d-inline-flex align-items-center justify-content-center mb-4">
+                            <img src="{{ asset('templates/administration/images/Logo_Kabupaten_Probolinggo.svg') }}"
+                                alt="Logo Kabupaten Probolinggo" width="60" class="me-3" />
+                            <div class="text-start border-start border-2 ps-3" style="border-color: #eee !important;">
+                                <h1 class="mb-0 fw-black" style="letter-spacing: 2px; line-height: 0.9; font-size: 32px;">
+                                    <span class="text-dark">SIDESA</span><span class="text-primary">APK</span>
+                                </h1>
+                                <span class="text-muted fw-bold" style="font-size: 11px; letter-spacing: 1.5px; text-transform: uppercase;">Inspektorat</span>
+                            </div>
                         </div>
+                        <h4 class="fw-bold">Selamat Datang Kembali</h4>
+                        <p class="text-muted small">Silakan masuk untuk melanjutkan akses ke Sistem Monev Kegiatan Desa.</p>
                     </div>
-                    <h4 class="fw-bold">Selamat Datang Kembali</h4>
-                    <p class="text-muted small">Silakan masuk untuk melanjutkan akses ke Sistem Monev Kegiatan Desa.</p>
+
+                    <h6 class="text-center mb-3"><span class="border-bottom pb-1">Masuk ke SIDESA APK</span></h6>
+
+                    <!-- Throttle Timer -->
+                    <div class="alert alert-warning d-none" id="throttle-timer" role="alert">
+                        <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                        Anda dapat mencoba lagi dalam <strong id="timer"></strong> detik.
+                    </div>
+
+                    <form id="loginForm" action="{{ route('login') }}" method="POST">
+                        @csrf
+                        <div class="mb-3">
+                            <label for="login" class="form-label fw-semibold">Email atau Username</label>
+                            <input type="text" class="form-control form-control-lg bg-light border-0" id="login" name="login"
+                                placeholder="Masukkan email atau username" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="password" class="form-label fw-semibold">Kata Sandi</label>
+                            <div class="input-group">
+                                <input type="password" class="form-control form-control-lg bg-light border-0" id="password" name="password"
+                                    placeholder="Masukkan kata sandi" required>
+                                <span class="input-group-text bg-light border-0 cursor-pointer" onclick="togglePassword()">
+                                    <i class="fa fa-eye-slash" id="togglePasswordIcon"></i>
+                                </span>
+                            </div>
+                        </div>
+                        <div class="form-check mb-4 d-flex justify-content-between align-items-center">
+                            <div>
+                                <input type="checkbox" class="form-check-input" id="remember" name="remember">
+                                <label class="form-check-label text-muted" for="remember">Ingat saya</label>
+                            </div>
+                            <a href="javascript:void(0);" class="text-decoration-none text-primary small fw-semibold" data-bs-toggle="modal"
+                                data-bs-target="#forgotPasswordModal">Lupa kata sandi?</a>
+                        </div>
+                        <div class="d-grid mb-3">
+                            <button type="submit" class="btn btn-primary btn-lg rounded-pill shadow-sm" id="submitBtn">Masuk Aplikasi</button>
+                        </div>
+                    </form>
+                    
+                    <div class="text-center mt-5">
+                        <p class="text-muted small mb-0">&copy; {{ date('Y') }} Inspektorat Kab. Probolinggo.</p>
+                    </div>
                 </div>
+            </div>
 
-                <h6 class="text-center mb-3"><span class="border-bottom pb-1">Masuk ke SIDESA APK</span></h6>
-
-                <!-- Throttle Timer -->
-                <div class="alert alert-warning d-none" id="throttle-timer" role="alert">
-                    <i class="bi bi-exclamation-triangle-fill me-2"></i>
-                    Anda dapat mencoba lagi dalam <strong id="timer"></strong> detik.
+            <!-- Sisi Gambar Siklus (Bawah di Mobile, Kiri di Desktop) -->
+            <div class="col-lg-7 col-12 d-flex bg-light align-items-center justify-content-center p-4 p-lg-5 border-end order-2 order-lg-1">
+                <div class="text-center w-100">
+                    <img src="{{ asset('templates/administration/images/siklus_perencanaan_desa.png') }}" 
+                         alt="Siklus Perencanaan Desa" 
+                         class="img-fluid drop-shadow" 
+                         style="max-height: 80vh; object-fit: contain;">
                 </div>
-
-                <form id="loginForm" action="{{ route('login') }}" method="POST">
-                    @csrf
-                    <div class="mb-3">
-                        <label for="login" class="form-label">Email atau Username</label>
-                        <input type="text" class="form-control" id="login" name="login"
-                            placeholder="Masukkan email atau username" required>
-                    </div>
-                    <div class="mb-3">
-                        <label for="password" class="form-label">Kata Sandi</label>
-                        <input type="password" class="form-control" id="password" name="password"
-                            placeholder="Masukkan kata sandi" required>
-                    </div>
-                    <div class="form-check mb-3">
-                        <input type="checkbox" class="form-check-input" id="remember" name="remember">
-                        <label class="form-check-label" for="remember">Ingat saya</label>
-                    </div>
-                    <div class="d-grid mb-3">
-                        <button type="submit" class="btn btn-primary" id="submitBtn">Masuk</button>
-                    </div>
-                    <div class="text-center">
-                        <a href="javascript:void(0);" class="text-decoration-none text-muted small" data-bs-toggle="modal"
-                            data-bs-target="#forgotPasswordModal">Lupa kata sandi?</a>
-                    </div>
-                </form>
             </div>
         </div>
     </div>
@@ -132,6 +158,20 @@
                 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
             }
         });
+
+        function togglePassword() {
+            const passwordInput = document.getElementById('password');
+            const icon = document.getElementById('togglePasswordIcon');
+            if (passwordInput.type === 'password') {
+                passwordInput.type = 'text';
+                icon.classList.remove('fa-eye-slash');
+                icon.classList.add('fa-eye');
+            } else {
+                passwordInput.type = 'password';
+                icon.classList.remove('fa-eye');
+                icon.classList.add('fa-eye-slash');
+            }
+        }
     </script>
     <!-- Script token end -->
 

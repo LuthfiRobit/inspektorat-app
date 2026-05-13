@@ -12,8 +12,11 @@
         // Format time in HH:mm:ss
         var timeString = hours + ':' + minutes + ':' + seconds;
 
-        // Set the time in the HTML element
-        document.getElementById('current-time').textContent = timeString;
+        // Set the time in the HTML element if it exists
+        var timeElement = document.getElementById('current-time');
+        if (timeElement) {
+            timeElement.textContent = timeString;
+        }
     }
 
     // Update time immediately and every second thereafter
