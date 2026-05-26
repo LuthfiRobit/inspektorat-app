@@ -13,7 +13,7 @@ return new class extends Migration
     {
         Schema::create('kecamatan', function (Blueprint $table) {
             $table->smallIncrements('id_kecamatan');
-            $table->string('kode_kecamatan', 10)->unique()->index();
+            $table->string('kode_kecamatan', 20)->unique()->index();
             $table->string('nama_kecamatan', 100)->index();
             $table->enum('status', ['active', 'inactive'])->default('active')->index();
             $table->unsignedInteger('created_by')->nullable();

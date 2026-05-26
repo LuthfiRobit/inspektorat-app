@@ -22,7 +22,7 @@
                     <div class="mb-3">
                         <label for="edit_kode_desa" class="form-label">Kode Desa</label>
                         <input type="text" class="form-control form-control-sm" id="edit_kode_desa" name="kode_desa"
-                            placeholder="Masukkan kode desa" maxlength="10" required />
+                            placeholder="Masukkan kode desa" maxlength="20" required />
                     </div>
                     <div class="mb-3">
                         <label for="edit_nama_desa" class="form-label">Nama Desa</label>

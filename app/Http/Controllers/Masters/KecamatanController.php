@@ -113,7 +113,7 @@ class KecamatanController extends Controller
     public function store(Request $request)
     {
         $validationRules = [
-            'kode_kecamatan' => 'required|string|max:10|unique:kecamatan,kode_kecamatan',
+            'kode_kecamatan' => 'required|string|max:20|unique:kecamatan,kode_kecamatan',
             'nama_kecamatan' => 'required|string|max:100|unique:kecamatan,nama_kecamatan',
             'status' => 'required|in:active,inactive',
         ];
@@ -163,7 +163,7 @@ class KecamatanController extends Controller
         }
 
         $validationRules = [
-            'kode_kecamatan' => 'required|string|max:10|unique:kecamatan,kode_kecamatan,' . $id . ',id_kecamatan',
+            'kode_kecamatan' => 'required|string|max:20|unique:kecamatan,kode_kecamatan,' . $id . ',id_kecamatan',
             'nama_kecamatan' => 'required|string|max:100|unique:kecamatan,nama_kecamatan,' . $id . ',id_kecamatan',
             'status' => 'required|in:active,inactive',
         ];

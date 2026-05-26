@@ -13,7 +13,7 @@
                         <label for="kode_kecamatan" class="form-label">Kode Kecamatan</label>
                         <input type="text" class="form-control form-control-sm" id="kode_kecamatan"
                             name="kode_kecamatan" placeholder="Masukkan kode kecamatan" aria-label="Kode Kecamatan"
-                            maxlength="10" autocomplete="off" required />
+                            maxlength="20" autocomplete="off" required />
                     </div>
                     <div class="mb-3">
                         <label for="nama_kecamatan" class="form-label">Nama Kecamatan</label>

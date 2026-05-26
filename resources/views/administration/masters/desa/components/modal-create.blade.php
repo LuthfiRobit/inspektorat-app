@@ -22,7 +22,7 @@
                     <div class="mb-3">
                         <label for="kode_desa" class="form-label">Kode Desa</label>
                         <input type="text" class="form-control form-control-sm" id="kode_desa" name="kode_desa"
-                            placeholder="Masukkan kode desa" maxlength="10" autocomplete="off" required />
+                            placeholder="Masukkan kode desa" maxlength="20" autocomplete="off" required />
                     </div>
                     <div class="mb-3">
                         <label for="nama_desa" class="form-label">Nama Desa</label>

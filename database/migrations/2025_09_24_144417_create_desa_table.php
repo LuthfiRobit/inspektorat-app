@@ -14,7 +14,7 @@ return new class extends Migration
         Schema::create('desa', function (Blueprint $table) {
             $table->smallIncrements('id_desa');
             $table->unsignedSmallInteger('kecamatan_id')->index();
-            $table->string('kode_desa', 10)->unique()->index();
+            $table->string('kode_desa', 20)->unique()->index();
             $table->string('nama_desa', 200)->index();
             $table->enum('status', ['active', 'inactive'])->default('active')->index();
             $table->unsignedInteger('created_by')->nullable();

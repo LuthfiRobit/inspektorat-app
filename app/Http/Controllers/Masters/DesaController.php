@@ -120,7 +120,7 @@ class DesaController extends Controller
     {
         $validationRules = [
             'kecamatan_id' => ['required', 'exists:kecamatan,id_kecamatan'],
-            'kode_desa' => ['required', 'string', 'max:10', 'unique:desa,kode_desa'],
+            'kode_desa' => ['required', 'string', 'max:20', 'unique:desa,kode_desa'],
             'nama_desa' => [
                 'required',
                 'string',
@@ -186,7 +186,7 @@ class DesaController extends Controller
 
         $validationRules = [
             'kecamatan_id' => ['required', 'exists:kecamatan,id_kecamatan'],
-            'kode_desa' => ['required', 'string', 'max:10', Rule::unique('desa', 'kode_desa')->ignore($id, 'id_desa')],
+            'kode_desa' => ['required', 'string', 'max:20', Rule::unique('desa', 'kode_desa')->ignore($id, 'id_desa')],
             'nama_desa' => [
                 'required',
                 'string',
