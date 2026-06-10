@@ -100,7 +100,7 @@
 
         <!-- Footer with copyright information -->
         <div class="copyright">
-            <p><strong>SIDESA APK</strong> © <span class="current-year"></span> All Rights Reserved</p>
+            <p><strong>SIDESA-SAE</strong> © <span class="current-year"></span> All Rights Reserved</p>
             <p>Developed by <a href="#" target="_blank">FAKULTAS TEKNIK UNUJA</a></p>
         </div>
     </div>

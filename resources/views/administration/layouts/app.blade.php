@@ -4,7 +4,7 @@
 <head>
     <!-- Judul Halaman -->
     <title>
-        SIDESA APK - Inspektorat Kabupaten Probolinggo
+        SIDESA-SAE - Inspektorat Kabupaten Probolinggo
     </title>
 
     <meta name="csrf-token" content="{{ csrf_token() }}">
@@ -21,22 +21,22 @@
 
     <!-- Kata Kunci SEO -->
     <meta name="keywords"
-        content="SIDESA APK, Inspektorat Kabupaten Probolinggo, Monev Kegiatan Desa, Monitoring Evaluasi, Pelaporan Desa, Kabupaten Probolinggo, Sistem Monev, Digitalisasi Pemerintahan, Transparansi, Kraksaan, Jawa Timur, Aplikasi Web, Laporan Digital, Pelaporan Online" />
+        content="SIDESA-SAE, Inspektorat Kabupaten Probolinggo, Monev Kegiatan Desa, Monitoring Evaluasi, Pelaporan Desa, Kabupaten Probolinggo, Sistem Monev, Digitalisasi Pemerintahan, Transparansi, Kraksaan, Jawa Timur, Aplikasi Web, Laporan Digital, Pelaporan Online" />
 
     <!-- Deskripsi Halaman -->
     <meta name="description"
-        content="SIDESA APK adalah sistem monitoring dan evaluasi (monev) milik Inspektorat Kabupaten Probolinggo untuk mendukung pelaporan, pengawasan, dan evaluasi kegiatan desa secara digital dan efisien." />
+        content="SIDESA-SAE adalah sistem monitoring dan evaluasi (monev) milik Inspektorat Kabupaten Probolinggo untuk mendukung pelaporan, pengawasan, dan evaluasi kegiatan desa secara digital dan efisien." />
 
     <!-- Metadata Open Graph -->
-    <meta property="og:title" content="SIDESA APK - Inspektorat Kabupaten Probolinggo" />
+    <meta property="og:title" content="SIDESA-SAE - Inspektorat Kabupaten Probolinggo" />
     <meta property="og:description"
-        content="SIDESA APK adalah sistem monev berbasis web milik Inspektorat Kabupaten Probolinggo untuk mendukung pelaporan dan evaluasi kegiatan desa secara transparan dan efisien." />
+        content="SIDESA-SAE adalah sistem monev berbasis web milik Inspektorat Kabupaten Probolinggo untuk mendukung pelaporan dan evaluasi kegiatan desa secara transparan dan efisien." />
     <meta property="og:image" content="{{ asset('templates/administration/images/Logo_Kabupaten_Probolinggo.svg') }}" />
 
     <!-- Twitter Card Metadata -->
-    <meta name="twitter:title" content="SIDESA APK - Inspektorat Kabupaten Probolinggo" />
+    <meta name="twitter:title" content="SIDESA-SAE - Inspektorat Kabupaten Probolinggo" />
     <meta name="twitter:description"
-        content="SIDESA APK adalah sistem monev berbasis web milik Inspektorat Kabupaten Probolinggo untuk mendukung pelaporan dan evaluasi kegiatan desa secara transparan dan efisien." />
+        content="SIDESA-SAE adalah sistem monev berbasis web milik Inspektorat Kabupaten Probolinggo untuk mendukung pelaporan dan evaluasi kegiatan desa secara transparan dan efisien." />
     <meta name="twitter:image" content="{{ asset('templates/administration/images/Logo_Kabupaten_Probolinggo.svg') }}" />
     <meta name="twitter:card" content="summary_large_image" />
     <!-- Meta end -->
