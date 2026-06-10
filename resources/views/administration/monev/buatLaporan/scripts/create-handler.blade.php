@@ -322,7 +322,7 @@
                             class="form-control file-input"
                             id="file-${key}"
                             name="file-${key}"
-                            accept=".pdf,.doc,.docx,.xls,.xlsx,.jpg,.png"
+                            accept=".pdf"
                             data-question-id="${questionId}"
                             data-requirement-id="${req.id_persyaratan}"
                             ${isRequired} />

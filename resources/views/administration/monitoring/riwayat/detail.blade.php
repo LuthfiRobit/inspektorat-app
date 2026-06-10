@@ -8,6 +8,8 @@
 @section('this-page-style')
     <link href="{{ asset('templates/administration/vendor/datatables/css/jquery.dataTables.min.css') }}" rel="stylesheet" />
     <link href="{{ asset('templates/administration/vendor/datatables/responsive/responsive.css') }}" rel="stylesheet" />
+    <link href="https://cdn.jsdelivr.net/npm/dflip/css/dflip.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/dflip/css/themify-icons.min.css" rel="stylesheet">
     <style>
         /* Timeline Styles */
         .timeline {
@@ -383,5 +385,6 @@
     <script src="{{ asset('templates/assets/plugins/datatables/jquery.dataTables.min.js') }}"></script>
     <script src="{{ asset('templates/administration/vendor/datatables/responsive/responsive.js') }}"></script>
     <script src="{{ asset('templates/assets/plugins/datatables/lodash.min.js') }}"></script>
+    <script src="https://cdn.jsdelivr.net/npm/dflip/js/dflip.min.js"></script>
     @include('administration.monitoring.riwayat.scripts.detail-handler')
 @endsection

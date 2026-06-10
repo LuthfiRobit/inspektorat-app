@@ -4,6 +4,8 @@
 @section('meta-description', 'Halaman untuk mengedit laporan kegiatan')
 
 @section('this-page-style')
+    <link href="https://cdn.jsdelivr.net/npm/dflip/css/dflip.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/dflip/css/themify-icons.min.css" rel="stylesheet">
     <style>
         /* Compact styles untuk edit form */
         .info-label {
@@ -333,18 +335,16 @@
                             </form>
 
                             <!-- Action Buttons - Compact -->
-                            <div class="d-flex justify-content-between mt-3 pt-3 border-top">
+                            <div class="d-flex justify-content-between align-items-center mt-3 pt-3 border-top">
                                 <a href="{{ route('administrator.monev.laporan.index') }}" class="btn btn-secondary btn-sm">
-                                    <i class="las la-arrow-left me-1"></i>Kembali
-                                </a>
-                                <div class="d-flex gap-2">
-                                    <button type="button" class="btn btn-outline-primary btn-sm" id="saveDraftBottom">
-                                        <i class="las la-save me-1"></i>Simpan Draft
-                                    </button>
-                                    <button type="button" class="btn btn-success btn-sm" id="submitLaporanBottom">
-                                        <i class="las la-paper-plane me-1"></i>Submit Laporan
-                                    </button>
-                                </div>
+                                     <i class="las la-arrow-left me-1"></i>Kembali
+                                 </a>
+                                <button type="button" class="btn btn-outline-primary btn-sm" id="saveDraftBottom">
+                                    <i class="las la-save me-1"></i>Simpan Draft
+                                </button>
+                                <button type="button" class="btn btn-success btn-sm" id="submitLaporanBottom">
+                                    <i class="las la-paper-plane me-1"></i>Submit Laporan
+                                </button>
                             </div>
                         </div>
                     </div>
@@ -355,5 +355,6 @@
 @endsection
 
 @section('this-page-scripts')
+    <script src="https://cdn.jsdelivr.net/npm/dflip/js/dflip.min.js"></script>
     @include('administration.monev.buatLaporan.scripts.edit-handler')
 @endsection

@@ -29,10 +29,10 @@
                 $('#modalDetail').modal('show');
                 showLoadingState();
 
-                console.log('Sending request to:', url);
+                // console.log('Sending request to:', url);
 
                 AjaxHandler.sendGetRequest(url, response => {
-                    console.log('Response received:', response);
+                    // console.log('Response received:', response);
 
                     if (response.status === 200 && response.data) {
                         hideLoadingState();
@@ -61,7 +61,7 @@
         }
 
         function handleShow(data, rowData, desaId, kegiatanId) {
-            console.log('Handling show data:', data);
+            // console.log('Handling show data:', data);
 
             // Pastikan data yang diperlukan ada
             if (!data || !data.desa || !data.kegiatan) {
@@ -264,7 +264,7 @@
         function toggleLaporkanButton(status, laporanId, desaId, kegiatanId) {
             const $btnLaporkan = $('.btn-laporkan');
 
-            console.log('Toggle button with:', { status, laporanId, desaId, kegiatanId });
+            // console.log('Toggle button with:', { status, laporanId, desaId, kegiatanId });
 
             // Pastikan desaId dan kegiatanId valid
             if (!desaId || !kegiatanId) {
@@ -277,7 +277,7 @@
             if (!status || !laporanId) {
                 $btnLaporkan.show().html('<i class="las la-plus me-1"></i> Buat Laporan');
                 $btnLaporkan.off('click').on('click', function () {
-                    console.log('Creating report with:', { desaId, kegiatanId });
+                    // console.log('Creating report with:', { desaId, kegiatanId });
                     const url = '{{ route("administrator.monev.laporan.create") }}?desa_id=' + desaId + '&kegiatan_id=' + kegiatanId;
                     window.location.href = url;
                 });
@@ -288,7 +288,7 @@
             if (['draft', 'revision'].includes(status)) {
                 $btnLaporkan.show().html('<i class="las la-edit me-1"></i> Edit Laporan');
                 $btnLaporkan.off('click').on('click', function () {
-                    console.log('Editing report with:', { desaId, kegiatanId, laporanId });
+                    // console.log('Editing report with:', { desaId, kegiatanId, laporanId });
                     const url = '{{ route("administrator.monev.laporan.edit") }}?desa_id=' + desaId + '&kegiatan_id=' + kegiatanId + '&id_laporan=' + laporanId;
                     window.location.href = url;
                 });

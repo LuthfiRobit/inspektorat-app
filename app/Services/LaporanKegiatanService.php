@@ -298,7 +298,7 @@ class LaporanKegiatanService
         $filePath = $this->fileUploadService->uploadSingleFile(
             $file,
             'dokumen/laporan',
-            ['mimes:pdf,doc,docx', 'max:2048'],
+            ['mimes:pdf', 'max:2048'],
             $customFileName
         );
 
@@ -363,7 +363,7 @@ class LaporanKegiatanService
         $filePath = $this->fileUploadService->uploadSingleFile(
             $file,
             'dokumen/laporan',
-            ['mimes:pdf,doc,docx', 'max:2048'],
+            ['mimes:pdf', 'max:2048'],
             $customFileName
         );
 

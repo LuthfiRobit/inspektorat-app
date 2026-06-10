@@ -1,5 +1,4 @@
-@section('this-page-scripts')
-    <script>
+<script>
         // Configuration constants
         const CONFIG = {
             ROUTES: {
@@ -198,11 +197,11 @@
             // Check if dokumen is approved and should be readonly
             isDokumenReadonly(questionId, persyaratanId) {
                 const key = `${questionId}-${persyaratanId}`;
-                console.log("🔍 Checking dokumen readonly:", {
-                    key,
-                    status: AppState.dokumenStatus[key],
-                    allStatuses: AppState.dokumenStatus
-                });
+                // console.log("🔍 Checking dokumen readonly:", {
+                //     key,
+                //     status: AppState.dokumenStatus[key],
+                //     allStatuses: AppState.dokumenStatus
+                // });
                 return AppState.dokumenStatus[key] === 'approved';
             }
         };
@@ -223,7 +222,7 @@
             },
 
             async loadExistingLaporan(laporanId) {
-                console.log("🔄 Loading laporan data for:", laporanId);
+                // console.log("🔄 Loading laporan data for:", laporanId);
 
                 const url = CONFIG.ROUTES.GET_LAPORAN_DATA.replace(':id', laporanId);
 
@@ -231,16 +230,16 @@
                     const response = await AjaxHandler.sendGetRequestAsync(url);
 
                     if (response?.status === 200 && response.data) {
-                        console.log("✅ Laporan data loaded:", {
-                            total_dokumen: response.data.dokumen?.length || 0,
-                            dokumen_list: response.data.dokumen ? response.data.dokumen.map(d => ({
-                                id: d.id_dokumen,
-                                persyaratan_id: d.persyaratan_id,
-                                is_current: d.is_current,
-                                version: d.version,
-                                status_persetujuan: d.status_persetujuan
-                            })) : []
-                        });
+                        // console.log("✅ Laporan data loaded:", {
+                        //     total_dokumen: response.data.dokumen?.length || 0,
+                        //     dokumen_list: response.data.dokumen ? response.data.dokumen.map(d => ({
+                        //         id: d.id_dokumen,
+                        //         persyaratan_id: d.persyaratan_id,
+                        //         is_current: d.is_current,
+                        //         version: d.version,
+                        //         status_persetujuan: d.status_persetujuan
+                        //     })) : []
+                        // });
                         this.processLaporanData(response.data);
                     } else {
                         Utils.showErrorAlert('Gagal memuat data laporan: ' + (response?.message ||
@@ -307,17 +306,17 @@
 
                             // Simpan status persetujuan
                             AppState.dokumenStatus[key] = dokumen.status;
-                            console.log("💾 Storing dokumen status:", {
-                                key,
-                                status: dokumen.status,
-                                pertanyaanId,
-                                persyaratanId: dokumen.persyaratan_id
-                            });
+                            // console.log("💾 Storing dokumen status:", {
+                            //     key,
+                            //     status: dokumen.status,
+                            //     pertanyaanId,
+                            //     persyaratanId: dokumen.persyaratan_id
+                            // });
                         }
                     });
 
-                    console.log("📁 UploadedFiles after populate:", AppState.uploadedFiles);
-                    console.log("📊 DokumenStatus after populate:", AppState.dokumenStatus);
+                    // console.log("📁 UploadedFiles after populate:", AppState.uploadedFiles);
+                    // console.log("📊 DokumenStatus after populate:", AppState.dokumenStatus);
                 }
 
                 // RE-RENDER QUESTIONS SETELAH DATA DOKUMEN TERISI
@@ -341,7 +340,7 @@
                         $(`input[name="jawaban[${jawaban.pertanyaan_id}]"][value="${jawaban.jawaban_text}"]`)
                             .prop('checked', true);
                     });
-                    console.log("✅ Radio buttons set from data:", jawabanData);
+                    // console.log("✅ Radio buttons set from data:", jawabanData);
                 }
             },
 
@@ -454,6 +453,11 @@
                         });
                     }
                 });
+
+                // Re-parse dynamic dFlip elements
+                if (window.DEARFLIP && typeof window.DEARFLIP.parseBooks === 'function') {
+                    window.DEARFLIP.parseBooks();
+                }
             },
 
             renderQuestion(question, index) {
@@ -505,18 +509,20 @@
                 return requirements.map(req => {
                     const key = `${questionId}-${req.id_persyaratan}`;
                     const hasTemplate = !!req.template_persyaratan;
+                    const isPdfTemplate = hasTemplate && req.template_persyaratan.toLowerCase().endsWith('.pdf');
+                    const templatePath = hasTemplate ? `/uploads/${req.template_persyaratan}` : '';
                     const isRequired = req.tipe === 'wajib' ? 'required' : '';
                     const isReadonly = Utils.isDokumenReadonly(questionId, req.id_persyaratan);
                     const readonlyAttr = isReadonly ? 'readonly' : '';
                     const disabledAttr = isReadonly ? 'disabled' : '';
 
-                    console.log("🎯 Rendering requirement:", {
-                        questionId,
-                        persyaratanId: req.id_persyaratan,
-                        key,
-                        isReadonly,
-                        status: AppState.dokumenStatus[key]
-                    });
+                    // console.log("🎯 Rendering requirement:", {
+                    //     questionId,
+                    //     persyaratanId: req.id_persyaratan,
+                    //     key,
+                    //     isReadonly,
+                    //     status: AppState.dokumenStatus[key]
+                    // });
 
                     return `<div class="mb-3 position-relative requirement-item" data-requirement-id="${req.id_persyaratan}">
                                     <div class="d-flex justify-content-between align-items-center">
@@ -541,20 +547,20 @@
                                             name="files[${questionId}][${req.id_persyaratan}]"
                                             data-question-id="${questionId}"
                                             data-requirement-id="${req.id_persyaratan}"
-                                            accept=".pdf,.doc,.docx"
+                                            accept=".pdf"
                                             ${isRequired}
                                             ${readonlyAttr}
                                             ${disabledAttr} />
 
                                         <button type="button"
-                                            class="btn btn-outline-primary ms-2 ${hasTemplate ? '' : 'd-none'}"
+                                            class="btn btn-outline-primary ms-2 ${hasTemplate ? '' : 'd-none'} ${isPdfTemplate ? '_df_custom' : ''}"
                                             id="btn_template_${key}"
-                                            ${hasTemplate ? `onclick="window.open('${req.template_persyaratan}', '_blank')"` : ''}>
+                                            ${isPdfTemplate ? `source="${templatePath}"` : `onclick="window.open('${templatePath}', '_blank')"`}>
                                             Template
                                         </button>
                                     </div>
                                     <div class="text-danger small mt-1 d-none file-error fw-bold" id="error-${key}"></div>
-                                    <small class="text-muted mt-1 d-block"><i class="las la-info-circle me-1"></i>Maks 2MB. Format: PDF, DOC, DOCX</small>
+                                    <small class="text-muted mt-1 d-block"><i class="las la-info-circle me-1"></i>Maks 2MB. Format: PDF</small>
                                     <div class="alert alert-warning alert-dismissible alert-alt mt-1 show d-flex align-items-center gap-1 py-2 px-3">
                                         <strong class="me-1">Catatan revisi:</strong>
                                         <div id="catatan-${questionId}-${req.id_persyaratan}" class="flex-grow-1"></div>
@@ -575,7 +581,7 @@
                         container.append(`
                                 <span class="text-success">
                                     <i class="las la-check-circle me-1"></i>
-                                    <a href="/uploads/${currentFile.path}" target="_blank" class="text-success">
+                                    <a href="javascript:void(0)" class="_df_custom text-success text-decoration-none fw-semibold" source="/uploads/${currentFile.path}">
                                         ${currentFile.name}
                                     </a>
                                     <small class="text-muted">(v${currentFile.version})</small>
@@ -674,26 +680,26 @@
 
                     // Skip jika dokumen sudah approved
                     if (Utils.isDokumenReadonly(questionId, requirementId)) {
-                        console.log('⏭️ Skipping approved dokumen:', {
-                            questionId,
-                            requirementId
-                        });
+                        // console.log('⏭️ Skipping approved dokumen:', {
+                        //     questionId,
+                        //     requirementId
+                        // });
                         return;
                     }
 
                     if (file?.size > 0) {
                         formData.append(`files[${questionId}][${requirementId}]`, file);
                         fileCount++;
-                        console.log('📤 File added to FormData:', {
-                            questionId,
-                            requirementId,
-                            fileName: file.name,
-                            fileSize: file.size
-                        });
+                        // console.log('📤 File added to FormData:', {
+                        //     questionId,
+                        //     requirementId,
+                        //     fileName: file.name,
+                        //     fileSize: file.size
+                        // });
                     }
                 });
 
-                console.log(`📊 Total files being sent: ${fileCount}`);
+                // console.log(`📊 Total files being sent: ${fileCount}`);
 
                 // Existing files data untuk tracking
                 formData.append('existing_files', JSON.stringify(AppState.uploadedFiles));
@@ -870,14 +876,14 @@
                     if (fileInput.files.length > 0) {
                         const file = fileInput.files[0];
                         const fileSizeMB = file.size / 1024 / 1024;
-                        const allowedExts = ['pdf', 'doc', 'docx'];
+                        const allowedExts = ['pdf'];
                         const fileExt = file.name.split('.').pop().toLowerCase();
                         
                         let errorMessage = '';
                         if (fileSizeMB > 2) {
                             errorMessage = 'Ukuran file lebih dari 2MB. Harap perkecil file Anda.';
                         } else if (!allowedExts.includes(fileExt)) {
-                            errorMessage = 'Format file tidak valid. Dokumen harus berformat PDF, DOC, atau DOCX.';
+                            errorMessage = 'Format file tidak valid. Dokumen harus berformat PDF.';
                         }
 
                         if (errorMessage) {
@@ -901,6 +907,14 @@
 
         // Main initialization
         $(document).ready(function () {
+            if (window.DFLIP) {
+                window.DFLIP.defaults.onReady = function (app) {
+                    if (app.numPages === 1) {
+                        app.setViewMode(window.DFLIP.PAGE_MODE.SINGLE);
+                    }
+                };
+            }
+
             DOM.initialize();
             EventHandlers.initialize();
             DataLoader.initializeForm();
@@ -915,4 +929,3 @@
             };
         }
     </script>
-@endsection

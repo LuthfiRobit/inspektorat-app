@@ -298,11 +298,11 @@ class LaporanKegiatanController extends Controller
             'jawaban' => 'required|array',
             'jawaban.*' => 'required|in:sudah,belum',
             'files' => 'nullable|array',
-            'files.*.*' => 'nullable|file|mimes:pdf,doc,docx|max:2048',
+            'files.*.*' => 'nullable|file|mimes:pdf|max:2048',
         ];
 
         $messages = [
-            'files.*.*.mimes' => 'Format dokumen harus berformat PDF, DOC, atau DOCX.',
+            'files.*.*.mimes' => 'Format dokumen harus berformat PDF.',
             'files.*.*.max' => 'Ukuran dokumen maksimal adalah 2MB.',
         ];
 

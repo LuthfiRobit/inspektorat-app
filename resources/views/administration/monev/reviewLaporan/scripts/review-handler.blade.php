@@ -1,5 +1,4 @@
-@section('this-page-scripts')
-    <script>
+<script>
         // Configuration constants
         const CONFIG = {
             ROUTES: {
@@ -172,7 +171,7 @@
         // Data loading functions
         const DataLoader = {
             async loadLaporanData(laporanId) {
-                console.log("🔄 Loading laporan data for review:", laporanId);
+                // console.log("🔄 Loading laporan data for review:", laporanId);
 
                 const url = CONFIG.ROUTES.GET_LAPORAN_DATA.replace(':id', laporanId);
 
@@ -180,10 +179,10 @@
                     const response = await AjaxHandler.sendGetRequestAsync(url);
 
                     if (response?.status === 200 && response.data) {
-                        console.log("✅ Laporan data loaded for review:", {
-                            status: response.data.laporan.status,
-                            total_dokumen: response.data.dokumen?.length || 0
-                        });
+                        // console.log("✅ Laporan data loaded for review:", {
+                        //     status: response.data.laporan.status,
+                        //     total_dokumen: response.data.dokumen?.length || 0
+                        // });
 
                         this.processLaporanData(response.data);
                         // Store laporan context for detailed info population
@@ -379,6 +378,11 @@
                 ).join('');
 
                 DOM.elements.questionsContainer.html(questionsHtml);
+
+                // Re-parse dynamic dFlip elements
+                if (window.DEARFLIP && typeof window.DEARFLIP.parseBooks === 'function') {
+                    window.DEARFLIP.parseBooks();
+                }
             },
 
             renderQuestion(question, index) {
@@ -462,7 +466,7 @@
                                 ${currentDokumen ?
                         `<div class="d-flex align-items-center">
                                                                 <i class="las la-file-pdf text-danger me-2"></i>
-                                                                <a href="/uploads/${currentDokumen.path_file}" target="_blank" class="text-decoration-none">
+                                                                <a href="javascript:void(0)" class="_df_custom text-decoration-none" source="/uploads/${currentDokumen.path_file}">
                                                                     ${currentDokumen.nama_file}
                                                                 </a>
                                                                 <small class="text-muted ms-2">V.(${currentDokumen.version})</small>
@@ -613,8 +617,8 @@
                         <div class="d-flex justify-content-between align-items-start">
                             <div class="flex-grow-1">
                                 <strong class="d-block">v${rev.version}</strong>
-                                <a href="/uploads/${rev.path_file}" target="_blank" class="text-decoration-none small">
-                                    <i class="las la-download me-1"></i>${rev.nama_file}
+                                <a href="javascript:void(0)" class="_df_custom text-decoration-none small" source="/uploads/${rev.path_file}">
+                                    <i class="las la-book-open me-1"></i>${rev.nama_file}
                                 </a>
                                 ${rev.catatan_revisi ? `
                                                                         <div class="mt-1">
@@ -798,7 +802,7 @@
 
                 try {
                     // FIX: Remove the problematic showLoadingAlert and use simpler approach
-                    console.log("🔄 Processing review submission...");
+                    // console.log("🔄 Processing review submission...");
 
                     const formData = this.prepareFormData(status);
                     const response = await this.sendReviewData(formData);
@@ -846,7 +850,7 @@
 
             async handleSuccessResponse(status) {
                 // FIX: Use simpler success handling without nested Swal alerts
-                console.log("✅ Review submitted successfully");
+                // console.log("✅ Review submitted successfully");
 
                 const successMessage = status === 'approved' ?
                     'Laporan berhasil disetujui!' :
@@ -949,6 +953,14 @@
 
         // Main initialization
         $(document).ready(function () {
+            if (window.DFLIP) {
+                window.DFLIP.defaults.onReady = function (app) {
+                    if (app.numPages === 1) {
+                        app.setViewMode(window.DFLIP.PAGE_MODE.SINGLE);
+                    }
+                };
+            }
+
             DOM.initialize();
             EventHandlers.initialize();
 
@@ -972,4 +984,3 @@
             };
         }
     </script>
-@endsection

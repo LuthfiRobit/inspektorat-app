@@ -50,7 +50,7 @@
     }
 
     function handleEdit(data) {
-        console.log(data);
+        // console.log(data);
 
         // Jangan hapus data-id ini karena krusial untuk proses update
         $('#editForm').attr('data-id', data.id_persyaratan);

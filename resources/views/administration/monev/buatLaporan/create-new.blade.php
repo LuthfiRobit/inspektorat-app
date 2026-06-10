@@ -4,6 +4,8 @@
 @section('meta-description', 'Halaman untuk membuat laporan kegiatan baru')
 
 @section('this-page-style')
+    <link href="https://cdn.jsdelivr.net/npm/dflip/css/dflip.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/dflip/css/themify-icons.min.css" rel="stylesheet">
 @endsection
 
 @section('content')
@@ -196,18 +198,16 @@
                             </form>
 
                             <!-- Action Buttons -->
-                            <div class="d-flex justify-content-between mt-4 pt-3 border-top">
+                            <div class="d-flex justify-content-between align-items-center mt-4 pt-3 border-top">
                                 <a href="{{ route('administrator.monev.laporan.index') }}" class="btn btn-secondary">
                                     <i class="las la-arrow-left me-1"></i>Kembali ke Daftar
                                 </a>
-                                <div class="d-flex gap-2">
-                                    <button type="button" class="btn btn-primary" id="saveDraftBottom">
-                                        <i class="las la-save me-1"></i>Simpan Draft
-                                    </button>
-                                    <button type="button" class="btn btn-success" id="submitLaporanBottom">
-                                        <i class="las la-paper-plane me-1"></i>Submit Laporan
-                                    </button>
-                                </div>
+                                <button type="button" class="btn btn-primary" id="saveDraftBottom">
+                                    <i class="las la-save me-1"></i>Simpan Draft
+                                </button>
+                                <button type="button" class="btn btn-success" id="submitLaporanBottom">
+                                    <i class="las la-paper-plane me-1"></i>Submit Laporan
+                                </button>
                             </div>
                         </div>
                     </div>
@@ -218,5 +218,6 @@
 @endsection
 
 @section('this-page-scripts')
+    <script src="https://cdn.jsdelivr.net/npm/dflip/js/dflip.min.js"></script>
     @include('administration.monev.buatLaporan.scripts.create-handler-new')
 @endsection

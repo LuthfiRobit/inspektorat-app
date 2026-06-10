@@ -270,7 +270,7 @@
         }
 
         async loadLaporanData(laporanId) {
-            console.log("🔄 Loading laporan data for detail:", laporanId);
+            // console.log("🔄 Loading laporan data for detail:", laporanId);
 
             const url = CONFIG.ROUTES.GET_LAPORAN_DATA.replace(':id', laporanId);
 
@@ -282,7 +282,7 @@
                 });
 
                 if (response?.status === 200 && response.data) {
-                    console.log("✅ Laporan data loaded for detail:", response.data);
+                    // console.log("✅ Laporan data loaded for detail:", response.data);
                     this.appState.setLaporanData(response.data);
                     this.processLaporanData(response.data);
                     Utils.showSuccessAlert('Data laporan berhasil dimuat');
@@ -430,6 +430,11 @@
 
             container.html(questionsHtml);
             this.initializeRevisionHistory();
+
+            // Re-parse dynamic dFlip elements
+            if (window.DEARFLIP && typeof window.DEARFLIP.parseBooks === 'function') {
+                window.DEARFLIP.parseBooks();
+            }
         }
 
         /**
@@ -526,7 +531,7 @@
                                 ${currentDokumen ?
                     `<div class="d-flex align-items-center flex-wrap gap-1">
                                         <i class="las la-file-pdf text-danger"></i>
-                                        <a href="/uploads/${currentDokumen.path_file}" target="_blank" class="text-decoration-none small">
+                                        <a href="javascript:void(0)" class="_df_custom text-decoration-none small fw-semibold" source="/uploads/${currentDokumen.path_file}">
                                             ${currentDokumen.nama_file}
                                         </a>
                                         <span class="badge bg-secondary" style="font-size: 0.65rem;">V.${currentDokumen.version}</span>
@@ -566,8 +571,8 @@
                 <div class="d-flex justify-content-between align-items-start">
                     <div class="flex-grow-1">
                         <strong class="d-block small">v${rev.version} - ${Utils.getStatusDisplay(rev.status)}</strong>
-                        <a href="/uploads/${rev.path_file}" target="_blank" class="text-decoration-none" style="font-size: 0.75rem;">
-                            <i class="las la-download me-1"></i>${rev.nama_file}
+                        <a href="javascript:void(0)" class="_df_custom text-decoration-none" style="font-size: 0.75rem;" source="/uploads/${rev.path_file}">
+                            <i class="las la-book-open me-1"></i>${rev.nama_file}
                         </a>
                         ${rev.catatan_revisi ? `
                             <div class="mt-1">
@@ -690,7 +695,7 @@
         }
 
         initialize() {
-            console.log('🚀 Initializing Laporan Detail App (Refactored)...');
+            // console.log('🚀 Initializing Laporan Detail App (Refactored)...');
 
             this.eventHandler.initialize();
             this.loadLaporanData();
@@ -715,6 +720,14 @@
 
     // Initialize application when DOM is ready
     $(document).ready(function () {
+        if (window.DFLIP) {
+            window.DFLIP.defaults.onReady = function (app) {
+                if (app.numPages === 1) {
+                    app.setViewMode(window.DFLIP.PAGE_MODE.SINGLE);
+                }
+            };
+        }
+
         const app = new LaporanDetailApp();
         app.initialize();
     });

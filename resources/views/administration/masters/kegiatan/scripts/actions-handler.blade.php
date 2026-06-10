@@ -13,7 +13,7 @@
             const dataId = $(this).data('id');
             const url = '{{ route('administrator.master.kegiatan.show', ':id') }}'.replace(':id', dataId);
 
-            console.log('Action Clicked:', action, 'ID:', dataId); // Debug logging
+            // console.log('Action Clicked:', action, 'ID:', dataId); // Debug logging
 
             if (!dataId) {
                 console.error('ID not found on element');
@@ -29,7 +29,7 @@
             if (handlers[action]) {
                 // Show loading/processing state if needed
                 AjaxHandler.sendGetRequest(url, response => {
-                    console.log('AJAX Response:', response); // Debug logging
+                    // console.log('AJAX Response:', response); // Debug logging
                     if (response.status === 200 && response.data) {
                         handlers[action](response.data);
                     } else {
@@ -44,7 +44,7 @@
 
         function handleShow(data) {
             try {
-                console.log('Rendering Detail Modal', data);
+                // console.log('Rendering Detail Modal', data);
                 const kegiatan = data.kegiatan || {};
                 const pertanyaan = data.pertanyaan || [];
                 const year = kegiatan.tahun || '-';

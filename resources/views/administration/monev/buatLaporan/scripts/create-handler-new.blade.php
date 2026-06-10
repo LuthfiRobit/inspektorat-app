@@ -1,5 +1,4 @@
-@section('this-page-scripts')
-    <script>
+<script>
         // Configuration constants
         const CONFIG = {
             ROUTES: {
@@ -294,6 +293,11 @@
                 ).join('');
 
                 DOM.elements.questionsContainer.html(questionsHtml);
+
+                // Re-parse dynamic dFlip elements
+                if (window.DEARFLIP && typeof window.DEARFLIP.parseBooks === 'function') {
+                    window.DEARFLIP.parseBooks();
+                }
             },
 
             renderQuestion(question, index) {
@@ -347,6 +351,8 @@
                 return requirements.map(req => {
                     const key = `${questionId}-${req.id_persyaratan}`;
                     const hasTemplate = !!req.template_persyaratan;
+                    const isPdfTemplate = hasTemplate && req.template_persyaratan.toLowerCase().endsWith('.pdf');
+                    const templatePath = hasTemplate ? `/uploads/${req.template_persyaratan}` : '';
                     const isRequired = req.tipe === 'wajib' ? 'required' : '';
 
                     return `
@@ -366,21 +372,21 @@
                                 class="form-control file-input"
                                 id="file-${key}"
                                 name="files[${questionId}][${req.id_persyaratan}]"
-                                accept=".pdf,.doc,.docx"
+                                accept=".pdf"
                                 data-question-id="${questionId}"
                                 data-requirement-id="${req.id_persyaratan}"
                                 data-requirement-type="${req.tipe}"
                                 ${isRequired} />
 
                             <button type="button"
-                                class="btn btn-outline-primary ms-2 ${hasTemplate ? '' : 'd-none'}"
+                                class="btn btn-outline-primary ms-2 ${hasTemplate ? '' : 'd-none'} ${isPdfTemplate ? '_df_custom' : ''}"
                                 id="btn_template_${key}"
-                                ${hasTemplate ? `onclick="window.open('/uploads/${req.template_persyaratan}', '_blank')"` : ''}>
+                                ${isPdfTemplate ? `source="${templatePath}"` : `onclick="window.open('${templatePath}', '_blank')"`}>
                                 Template
                             </button>
                         </div>
                         <div class="text-danger small mt-1 d-none file-error fw-bold" id="error-${key}"></div>
-                        <small class="text-muted mt-1 d-block"><i class="las la-info-circle me-1"></i>Maks 2MB. Format: PDF, DOC, DOCX</small>
+                        <small class="text-muted mt-1 d-block"><i class="las la-info-circle me-1"></i>Maks 2MB. Format: PDF</small>
                     </div>
                 `;
                 }).join('');
@@ -447,16 +453,16 @@
                         const file = this.files[0];
                         formData.append(`files[${questionId}][${requirementId}]`, file);
                         fileCount++;
-                        console.log('📤 File added to FormData:', {
-                            questionId,
-                            requirementId,
-                            fileName: file.name,
-                            fileSize: file.size
-                        });
+                        // console.log('📤 File added to FormData:', {
+                        //     questionId,
+                        //     requirementId,
+                        //     fileName: file.name,
+                        //     fileSize: file.size
+                        // });
                     }
                 });
 
-                console.log(`📊 Total files being sent: ${fileCount}`);
+                // console.log(`📊 Total files being sent: ${fileCount}`);
                 return formData;
             },
 
@@ -595,10 +601,10 @@
                 const canSubmit = this.validateSubmitConditions();
                 const canDraft = this.validateDraftConditions();
 
-                console.log('Status Tombol:', {
-                    canDraft,
-                    canSubmit
-                });
+                // console.log('Status Tombol:', {
+                //     canDraft,
+                //     canSubmit
+                // });
 
                 // Update tombol draft
                 DOM.elements.saveDraftBtn.prop('disabled', !canDraft);
@@ -714,14 +720,14 @@
                     if (fileInput.files.length > 0) {
                         const file = fileInput.files[0];
                         const fileSizeMB = file.size / 1024 / 1024;
-                        const allowedExts = ['pdf', 'doc', 'docx'];
+                        const allowedExts = ['pdf'];
                         const fileExt = file.name.split('.').pop().toLowerCase();
                         
                         let errorMessage = '';
                         if (fileSizeMB > 2) {
                             errorMessage = 'Ukuran file lebih dari 2MB. Harap perkecil file Anda.';
                         } else if (!allowedExts.includes(fileExt)) {
-                            errorMessage = 'Format file tidak valid. Dokumen harus berformat PDF, DOC, atau DOCX.';
+                            errorMessage = 'Format file tidak valid. Dokumen harus berformat PDF.';
                         }
 
                         if (errorMessage) {
@@ -748,6 +754,14 @@
 
         // Main initialization
         $(document).ready(function () {
+            if (window.DFLIP) {
+                window.DFLIP.defaults.onReady = function (app) {
+                    if (app.numPages === 1) {
+                        app.setViewMode(window.DFLIP.PAGE_MODE.SINGLE);
+                    }
+                };
+            }
+
             DOM.initialize();
             EventHandlers.initialize();
             DataLoader.initializeForm();
@@ -764,4 +778,3 @@
             font-size: 0.875rem;
         }
     </style>
-@endsection

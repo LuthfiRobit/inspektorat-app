@@ -4,6 +4,8 @@
 @section('meta-description', 'Halaman untuk mereview laporan kegiatan')
 
 @section('this-page-style')
+    <link href="https://cdn.jsdelivr.net/npm/dflip/css/dflip.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/dflip/css/themify-icons.min.css" rel="stylesheet">
     <style>
         /* Compact styles untuk review form */
         .info-label {
@@ -381,19 +383,16 @@
                                 </div>
                             </form>
 
-                            <!-- Action Buttons - Compact -->
-                            <div class="d-flex justify-content-between mt-3 pt-3 border-top">
-                                <a href="" class="btn btn-secondary btn-sm">
-                                    <i class="las la-arrow-left me-1"></i>Kembali
-                                </a>
-                                <div class="d-flex gap-2">
-                                    <button type="button" class="btn btn-warning btn-sm" id="requestRevisionBottom">
-                                        <i class="las la-redo-alt me-1"></i>Minta Revisi
-                                    </button>
-                                    <button type="button" class="btn btn-success btn-sm" id="approveLaporanBottom">
-                                        <i class="las la-check-circle me-1"></i>Setujui Laporan
-                                    </button>
-                                </div>
+                            <div class="d-flex justify-content-between align-items-center mt-3 pt-3 border-top">
+                                <a href="{{ route('administrator.monev.review.index') }}" class="btn btn-secondary btn-sm">
+                                     <i class="las la-arrow-left me-1"></i>Kembali
+                                 </a>
+                                <button type="button" class="btn btn-warning btn-sm" id="requestRevisionBottom">
+                                    <i class="las la-redo-alt me-1"></i>Minta Revisi
+                                </button>
+                                <button type="button" class="btn btn-success btn-sm" id="approveLaporanBottom">
+                                    <i class="las la-check-circle me-1"></i>Setujui Laporan
+                                </button>
                             </div>
                         </div>
                     </div>
@@ -404,5 +403,6 @@
 @endsection
 
 @section('this-page-scripts')
+    <script src="https://cdn.jsdelivr.net/npm/dflip/js/dflip.min.js"></script>
     @include('administration.monev.reviewLaporan.scripts.review-handler')
 @endsection

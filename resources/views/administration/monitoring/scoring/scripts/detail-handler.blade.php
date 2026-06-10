@@ -262,7 +262,7 @@
          * Load laporan data from server
          */
         async loadLaporanData(laporanId) {
-            console.log("🔄 Loading laporan data for detail:", laporanId);
+            // console.log("🔄 Loading laporan data for detail:", laporanId);
 
             const url = CONFIG.ROUTES.GET_LAPORAN_DATA.replace(':id', laporanId);
 
@@ -274,7 +274,7 @@
                 });
 
                 if (response?.status === 200 && response.data) {
-                    console.log("✅ Laporan data loaded for detail:", response.data);
+                    // console.log("✅ Laporan data loaded for detail:", response.data);
                     this.appState.setLaporanData(response.data);
                     this.processLaporanData(response.data);
                     Utils.showSuccessAlert('Data laporan berhasil dimuat');
@@ -658,7 +658,7 @@
         }
 
         initialize() {
-            console.log('🚀 Initializing Laporan Detail App...');
+            // console.log('🚀 Initializing Laporan Detail App...');
 
             this.eventHandler.initialize();
             this.loadLaporanData();

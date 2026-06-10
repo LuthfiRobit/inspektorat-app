@@ -110,9 +110,9 @@
 
     <!-- Script token start -->
     <script>
-        $.ajaxSetup({
-            headers: {
-                'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+        $.ajaxPrefilter(function(options, originalOptions, jqXHR) {
+            if (!options.crossDomain) {
+                jqXHR.setRequestHeader('X-CSRF-TOKEN', $('meta[name="csrf-token"]').attr('content'));
             }
         });
     </script>
