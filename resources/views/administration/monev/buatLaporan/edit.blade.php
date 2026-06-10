@@ -109,12 +109,14 @@
 
                                 <!-- Tombol Aksi -->
                                 <div class="d-flex gap-2">
+                                    @if (auth()->user()->hasPermissionTo('monev.laporan.edit'))
                                     <button type="button" class="btn btn-outline-primary btn-sm" id="saveDraftBtn">
                                         <i class="las la-save me-1"></i>Simpan Draft
                                     </button>
                                     <button type="button" class="btn btn-success btn-sm" id="submitLaporanBtn">
                                         <i class="las la-paper-plane me-1"></i>Submit Laporan
                                     </button>
+                                    @endif
                                 </div>
                             </div>
                         </div>
@@ -339,12 +341,14 @@
                                 <a href="{{ route('administrator.monev.laporan.index') }}" class="btn btn-secondary btn-sm">
                                      <i class="las la-arrow-left me-1"></i>Kembali
                                  </a>
+                                @if (auth()->user()->hasPermissionTo('monev.laporan.edit'))
                                 <button type="button" class="btn btn-outline-primary btn-sm" id="saveDraftBottom">
                                     <i class="las la-save me-1"></i>Simpan Draft
                                 </button>
                                 <button type="button" class="btn btn-success btn-sm" id="submitLaporanBottom">
                                     <i class="las la-paper-plane me-1"></i>Submit Laporan
                                 </button>
+                                @endif
                             </div>
                         </div>
                     </div>

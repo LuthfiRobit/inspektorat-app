@@ -38,7 +38,7 @@ class PermissionSyncController extends Controller
     {
         try {
             // Run the custom Artisan command to sync permissions
-            Artisan::call('permission:sync');
+            Artisan::call('app:sync-permissions', ['--prune' => true]);
             $output = Artisan::output();
 
             // Log user activity

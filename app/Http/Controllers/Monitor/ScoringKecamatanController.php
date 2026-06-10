@@ -99,9 +99,13 @@ class ScoringKecamatanController extends Controller
         return DataTables::of($returnData)
             ->with('userRanking', $userRankInfo)
             ->addColumn('aksi', function ($row) {
-                return '<button class="btn btn-outline-primary btn-xs" onclick="showKecamatanDetail(' . $row->id_kecamatan . ')">
-                        <i class="fa fa-eye"></i> Detail
-                    </button>';
+                $user = auth()->user();
+                if ($user && $user->hasPermissionTo('monitoring.scoring.kecamatan.view')) {
+                    return '<button class="btn btn-outline-primary btn-xs" onclick="showKecamatanDetail(' . $row->id_kecamatan . ')">
+                            <i class="fa fa-eye"></i> Detail
+                        </button>';
+                }
+                return '-';
             })
             // ->addColumn('persentase_dokumen', function ($row) {
             //     return $row->persentase_dokumen_formatted;

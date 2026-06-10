@@ -87,8 +87,10 @@ public function list(Request $request)
     return DataTables::of($data)
         ->addColumn('aksi', function ($row) {
 
+            $user = \Illuminate\Support\Facades\Auth::user();
             $btnReview = '';
-            if ($row['status'] === 'submitted') {
+            
+            if ($row['status'] === 'submitted' && $user && $user->hasPermissionTo('monev.review.edit')) {
                 $btnReview = '<a class="dropdown-item" 
                                 href="'.route('administrator.monev.review.review', [
                                     'id_laporan'  => $row['id_laporan'],

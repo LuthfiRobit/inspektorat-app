@@ -52,7 +52,7 @@ class RoleController extends Controller
         $query = Role::query();
 
         // 🚀 Security: Jangan tampilkan role developer ke user dengan role selain developer.
-        if (!auth()->user()->hasRole('developer')) {
+        if (!auth()->user()->isDeveloper()) {
             $query->where('role_name', '!=', 'developer');
         }
 
@@ -128,7 +128,7 @@ class RoleController extends Controller
         }
 
         // 🚀 Security: Jangan tampilkan detail role developer ke non-developer
-        if ($role->role_name === 'developer' && !auth()->user()->hasRole('developer')) {
+        if ($role->role_name === 'developer' && !auth()->user()->isDeveloper()) {
             return $this->responseService->error('Data not found', 404);
         }
 
@@ -150,7 +150,7 @@ class RoleController extends Controller
         }
 
         // 🚀 Security: Jangan tampilkan edit role developer ke non-developer
-        if ($role->role_name === 'developer' && !auth()->user()->hasRole('developer')) {
+        if ($role->role_name === 'developer' && !auth()->user()->isDeveloper()) {
             abort(404);
         }
         LogActivityService::log('Accessed the edit permission view for Role');
@@ -189,7 +189,7 @@ class RoleController extends Controller
         }
 
         // 🚀 Security: Jangan biarkan non-developer update role developer
-        if ($role->role_name === 'developer' && !auth()->user()->hasRole('developer')) {
+        if ($role->role_name === 'developer' && !auth()->user()->isDeveloper()) {
             return $this->responseService->error('Unauthorized to update developer role', 403);
         }
 
@@ -217,16 +217,57 @@ class RoleController extends Controller
         }
 
         // 🚀 Security: Jangan tampilkan permission role developer ke non-developer
-        if ($role->role_name === 'developer' && !auth()->user()->hasRole('developer')) {
+        if ($role->role_name === 'developer' && !auth()->user()->isDeveloper()) {
             return $this->responseService->error('Data not found', 404);
         }
 
         $permissions = Permission::select('id_permission', 'permission_name')->get();
         $rolePermissions = RolePermission::where('role_id', $id)->pluck('permission_id');
 
+        $groupedPermissions = [];
+
+        foreach ($permissions as $p) {
+            $parts = explode('.', $p->permission_name);
+            
+            if (count($parts) >= 3) {
+                // e.g. master.kecamatan.view -> Modul: Master, Submodul: Kecamatan, Aksi: View
+                // e.g. master.petugas.inspektorat.view -> Modul: Master, Submodul: Petugas Inspektorat, Aksi: View
+                $modul = ucfirst($parts[0]);
+                
+                // Ambil semua bagian di tengah (dari index 1 sampai sebelum index terakhir)
+                $middleParts = array_slice($parts, 1, count($parts) - 2);
+                $submodul = ucwords(str_replace('-', ' ', implode(' ', $middleParts)));
+                
+                $aksi = ucfirst($parts[count($parts) - 1]);
+            } elseif (count($parts) == 2) {
+                // e.g. dashboard.view
+                $modul = ucfirst($parts[0]);
+                $submodul = ucfirst($parts[0]);
+                $aksi = ucfirst($parts[1]);
+            } else {
+                // e.g. unknown
+                $modul = 'Lainnya';
+                $submodul = 'Umum';
+                $aksi = $p->permission_name;
+            }
+
+            if (!isset($groupedPermissions[$modul])) {
+                $groupedPermissions[$modul] = [];
+            }
+            if (!isset($groupedPermissions[$modul][$submodul])) {
+                $groupedPermissions[$modul][$submodul] = [];
+            }
+
+            $groupedPermissions[$modul][$submodul][] = [
+                'id' => $p->id_permission,
+                'name' => $aksi,
+                'slug' => $p->permission_name
+            ];
+        }
+
         $records = [
             'role' => $role,
-            'permissions' => $permissions,
+            'permissions' => $groupedPermissions,
             'role_permissions' => $rolePermissions,
         ];
 
@@ -254,7 +295,7 @@ class RoleController extends Controller
         $role = Role::findOrFail($roleId);
 
         // 🚀 Security: Jangan biarkan non-developer update permission role developer
-        if ($role->role_name === 'developer' && !auth()->user()->hasRole('developer')) {
+        if ($role->role_name === 'developer' && !auth()->user()->isDeveloper()) {
             return $this->responseService->error('Unauthorized to update developer permissions', 403);
         }
 

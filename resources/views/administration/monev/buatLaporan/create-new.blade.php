@@ -202,12 +202,14 @@
                                 <a href="{{ route('administrator.monev.laporan.index') }}" class="btn btn-secondary">
                                     <i class="las la-arrow-left me-1"></i>Kembali ke Daftar
                                 </a>
+                                @if (auth()->user()->hasPermissionTo('monev.laporan.create'))
                                 <button type="button" class="btn btn-primary" id="saveDraftBottom">
                                     <i class="las la-save me-1"></i>Simpan Draft
                                 </button>
                                 <button type="button" class="btn btn-success" id="submitLaporanBottom">
                                     <i class="las la-paper-plane me-1"></i>Submit Laporan
                                 </button>
+                                @endif
                             </div>
                         </div>
                     </div>

@@ -145,6 +145,16 @@ class User extends Authenticatable
         })->exists();
     }
 
+    /**
+     * Check if the user is a developer based on their roles.
+     *
+     * @return bool
+     */
+    public function isDeveloper(): bool
+    {
+        return $this->hasRole('developer');
+    }
+
     public function petugas(): HasOne
     {
         return $this->hasOne(Petugas::class, 'user_id', 'id_user');

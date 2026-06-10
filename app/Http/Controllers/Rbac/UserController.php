@@ -57,7 +57,7 @@ class UserController extends Controller
         $query = User::query();
 
         // 🚀 Pastikan user dengan role developer tidak ditampilkan ke user dengan role selain developer.
-        if (!auth()->user()->hasRole('developer')) {
+        if (!auth()->user()->isDeveloper()) {
             $query->whereDoesntHave('roles', function ($q) {
                 $q->where('role_name', 'developer');
             });
@@ -148,7 +148,7 @@ class UserController extends Controller
         }
 
         // 🚀 Security: Jangan tampilkan detail developer ke non-developer
-        if ($user->hasRole('developer') && !auth()->user()->hasRole('developer')) {
+        if ($user->isDeveloper() && !auth()->user()->isDeveloper()) {
             return $this->responseService->error('User not found', 404);
         }
 
@@ -190,7 +190,7 @@ class UserController extends Controller
         }
 
         // 🚀 Security: Jangan biarkan non-developer update akun developer
-        if ($user->hasRole('developer') && !auth()->user()->hasRole('developer')) {
+        if ($user->isDeveloper() && !auth()->user()->isDeveloper()) {
             return $this->responseService->error('Unauthorized to update developer user', 403);
         }
 
@@ -244,7 +244,7 @@ class UserController extends Controller
         }
 
         // 🚀 Security: Jangan biarkan non-developer update status akun developer
-        if ($user->hasRole('developer') && !auth()->user()->hasRole('developer')) {
+        if ($user->isDeveloper() && !auth()->user()->isDeveloper()) {
             return $this->responseService->error('Unauthorized to update developer status', 403);
         }
 
@@ -290,7 +290,7 @@ class UserController extends Controller
         $query = User::whereIn('id_user', $selectedIds);
 
         // 🚀 Security: Filter akun developer jika yang mengupdate bukan developer
-        if (!auth()->user()->hasRole('developer')) {
+        if (!auth()->user()->isDeveloper()) {
             $query->whereDoesntHave('roles', function ($q) {
                 $q->where('role_name', 'developer');
             });
@@ -330,14 +330,14 @@ class UserController extends Controller
         }
 
         // 🚀 Security: Jangan tampilkan role developer ke non-developer
-        if ($user->hasRole('developer') && !auth()->user()->hasRole('developer')) {
+        if ($user->isDeveloper() && !auth()->user()->isDeveloper()) {
             return $this->responseService->error('Data not found', 404);
         }
 
         $roles = Role::select('id_role', 'role_name')->get();
 
         // 🚀 Security: Jangan tampilkan role developer sebagai opsi jika user saat ini bukan developer
-        if (!auth()->user()->hasRole('developer')) {
+        if (!auth()->user()->isDeveloper()) {
             $roles = $roles->where('role_name', '!=', 'developer');
         }
 
@@ -373,12 +373,12 @@ class UserController extends Controller
         $user = User::findOrFail($userId);
 
         // 🚀 Security: Jangan biarkan non-developer update role akun developer
-        if ($user->hasRole('developer') && !auth()->user()->hasRole('developer')) {
+        if ($user->isDeveloper() && !auth()->user()->isDeveloper()) {
             return $this->responseService->error('Unauthorized to update developer roles', 403);
         }
 
         // 🚀 Security: Jangan biarkan assign role developer jika user saat ini bukan developer
-        if (!auth()->user()->hasRole('developer')) {
+        if (!auth()->user()->isDeveloper()) {
             $developerRole = Role::where('role_name', 'developer')->first();
             if ($developerRole && in_array($developerRole->id_role, $request->roles)) {
                 return $this->responseService->error('Cannot assign developer role', 403);
@@ -408,12 +408,12 @@ class UserController extends Controller
         }
 
         // 🚀 Security: Jangan biarkan non-developer assign role ke akun developer
-        if ($user->hasRole('developer') && !auth()->user()->hasRole('developer')) {
+        if ($user->isDeveloper() && !auth()->user()->isDeveloper()) {
             return $this->responseService->error('Unauthorized to assign roles to developer', 403);
         }
 
         // 🚀 Security: Jangan biarkan assign role developer jika user saat ini bukan developer
-        if (!auth()->user()->hasRole('developer')) {
+        if (!auth()->user()->isDeveloper()) {
             $developerRole = Role::where('role_name', 'developer')->first();
             if ($developerRole && in_array($developerRole->id_role, $request->role_ids)) {
                 return $this->responseService->error('Cannot assign developer role', 403);
@@ -440,7 +440,7 @@ class UserController extends Controller
         }
 
         // 🚀 Security: Jangan biarkan non-developer revoke role dari akun developer
-        if ($user->hasRole('developer') && !auth()->user()->hasRole('developer')) {
+        if ($user->isDeveloper() && !auth()->user()->isDeveloper()) {
             return $this->responseService->error('Unauthorized to revoke roles from developer', 403);
         }
 

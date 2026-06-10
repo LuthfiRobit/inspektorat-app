@@ -47,7 +47,7 @@
                                     @endforeach
                                 </select>
                             </div>
-                            @if (auth()->user()->hasPermissionTo('administrator.master.desa.store'))
+                            @if (auth()->user()->hasPermissionTo('master.desa.create'))
                             <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal"
                                 data-bs-target="#modalCreate" data-bs-toggle="tooltip" title="Tambah desa baru">
                                 <i class="las la-plus me-1"></i>Tambah
@@ -60,7 +60,7 @@
                         <!-- Aksi Tambahan -->
                         <div class="row mb-3 gy-2">
                             <div class="col-12 col-md d-flex flex-wrap gap-2">
-                                @if (auth()->user()->hasPermissionTo('administrator.master.desa.update-status-multiple'))
+                                @if (auth()->user()->hasPermissionTo('master.desa.edit'))
                                 <button class="btn-update-status btn btn-sm btn-primary" data-status="active"
                                     data-bs-toggle="tooltip" title="Aktifkan desa yang dipilih">
                                     <i class="las la-check-circle me-1"></i>Aktifkan

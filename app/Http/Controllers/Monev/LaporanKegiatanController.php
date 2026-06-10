@@ -314,25 +314,37 @@ class LaporanKegiatanController extends Controller
      */
     private function buildActionButtons($row)
     {
-        $btnDetail = '<a class="dropdown-item" href="javascript:void(0);" data-action="action_show" 
-                            data-laporan-id="' . $row['id_laporan'] . '"
-                            data-kegiatan-id="' . $row['kegiatan_id'] . '" 
-                            data-desa-id="' . $row['desa_id'] . '" 
-                            data-tahun="' . $row['tahun'] . '" 
-                            data-bulan="' . $row['bulan'] . '"
-                            data-id="' . $row['kegiatan_id'] . '">
-                        <i class="fas fa-eye me-2"></i>Detail
-                    </a>';
+        $user = \Illuminate\Support\Facades\Auth::user();
+        $btnDetail = '';
+        
+        if ($user && $user->hasPermissionTo('monev.laporan.view')) {
+            $btnDetail = '<a class="dropdown-item" href="javascript:void(0);" data-action="action_show" 
+                                data-laporan-id="' . $row['id_laporan'] . '"
+                                data-kegiatan-id="' . $row['kegiatan_id'] . '" 
+                                data-desa-id="' . $row['desa_id'] . '" 
+                                data-tahun="' . $row['tahun'] . '" 
+                                data-bulan="' . $row['bulan'] . '"
+                                data-id="' . $row['kegiatan_id'] . '">
+                            <i class="fas fa-eye me-2"></i>Detail
+                        </a>';
+        }
 
         $btnLaporkan = $this->buildLaporkanButton($row);
+        
+        $dropdownItems = $btnDetail . $btnLaporkan;
+        
+        if (empty(trim(strip_tags($dropdownItems)))) {
+            $dropdownItems = '<div class="dropdown-item text-muted">
+                                <i class="fas fa-info-circle me-2"></i>Tidak ada aksi
+                               </div>';
+        }
 
         return '<div class="btn-group">
                     <button type="button" class="btn btn-outline-primary btn-xs dropdown-toggle" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                         <i class="fas fa-cogs"></i> Aksi
                     </button>
                     <div class="dropdown-menu">
-                        ' . $btnDetail . '
-                        ' . $btnLaporkan . '
+                        ' . $dropdownItems . '
                     </div>
                 </div>';
     }
@@ -342,20 +354,29 @@ class LaporanKegiatanController extends Controller
      */
     private function buildLaporkanButton($row)
     {
+        $user = \Illuminate\Support\Facades\Auth::user();
+        
         if (in_array($row['status'], ['belum_dilaporkan', 'draft', 'revision', 'rejected'])) {
             if ($row['id_laporan'] && $row['status'] !== 'belum_dilaporkan') {
-                $url = route('administrator.monev.laporan.edit') . '?desa_id=' . $row['desa_id'] . '&kegiatan_id=' . $row['kegiatan_id'] . '&id_laporan=' . $row['id_laporan'];
-                $icon = 'fas fa-edit';
-                $text = 'Edit Laporan';
+                if ($user && $user->hasPermissionTo('monev.laporan.edit')) {
+                    $url = route('administrator.monev.laporan.edit') . '?desa_id=' . $row['desa_id'] . '&kegiatan_id=' . $row['kegiatan_id'] . '&id_laporan=' . $row['id_laporan'];
+                    $icon = 'fas fa-edit';
+                    $text = 'Edit Laporan';
+                    return '<a class="dropdown-item" href="' . $url . '">
+                                <i class="' . $icon . ' me-2"></i>' . $text . '
+                            </a>';
+                }
             } else {
-                $url = route('administrator.monev.laporan.create') . '?desa_id=' . $row['desa_id'] . '&kegiatan_id=' . $row['kegiatan_id'];
-                $icon = 'fas fa-plus';
-                $text = 'Buat Laporan';
+                if ($user && $user->hasPermissionTo('monev.laporan.create')) {
+                    $url = route('administrator.monev.laporan.create') . '?desa_id=' . $row['desa_id'] . '&kegiatan_id=' . $row['kegiatan_id'];
+                    $icon = 'fas fa-plus';
+                    $text = 'Buat Laporan';
+                    return '<a class="dropdown-item" href="' . $url . '">
+                                <i class="' . $icon . ' me-2"></i>' . $text . '
+                            </a>';
+                }
             }
-
-            return '<a class="dropdown-item" href="' . $url . '">
-                        <i class="' . $icon . ' me-2"></i>' . $text . '
-                    </a>';
+            return '';
         }
 
         return '<a class="dropdown-item disabled" href="javascript:void(0);">

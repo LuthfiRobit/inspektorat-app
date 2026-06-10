@@ -111,9 +111,11 @@
                                 <button id="btnResetFilter" type="button" class="btn btn-outline-secondary">
                                     <i class="fas fa-sync-alt me-1"></i> Reset
                                 </button>
+                                @if (auth()->user()->hasPermissionTo('monitoring.tarik-data.view'))
                                 <button id="btnTarikData" type="button" class="btn btn-success">
                                     <i class="fas fa-file-excel me-1"></i> Tarik Data
                                 </button>
+                                @endif
                             </div>
 
                         </div>

@@ -68,8 +68,8 @@ class DesaController extends Controller
             })
             ->addColumn('aksi', function ($item) {
                 $user = \Illuminate\Support\Facades\Auth::user();
-                $hasShow = $user->hasPermissionTo('administrator.master.desa.show');
-                $hasEdit = $user->hasPermissionTo('administrator.master.desa.update');
+                $hasShow = $user->hasPermissionTo('master.desa.view');
+                $hasEdit = $user->hasPermissionTo('master.desa.edit');
 
                 if (!$hasShow && !$hasEdit) {
                     return '<span class="text-muted">-</span>';

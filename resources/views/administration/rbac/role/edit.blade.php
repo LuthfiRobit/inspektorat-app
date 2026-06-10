@@ -5,18 +5,18 @@
 
 @section('this-page-style')
     <style>
-        .accordion-button:not(.collapsed) {
-            background-color: #f8f9fa;
-            color: #000;
+        .module-card {
+            border-radius: 0.5rem;
         }
 
-        .permission-card {
+        .submodule-card {
             transition: all 0.3s ease;
         }
 
-        .permission-card:hover {
+        .submodule-card:hover {
             transform: translateY(-2px);
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 .5rem 1rem rgba(0,0,0,.08)!important;
+            border-color: #0d6efd !important;
         }
 
         #permissions_list {
@@ -41,6 +41,11 @@
         #permissions_list::-webkit-scrollbar-thumb:hover {
             background: #a8a8a8;
         }
+
+        .bg-light-primary {
+            background-color: rgba(13, 110, 253, 0.1);
+            color: #0d6efd;
+        }
     </style>
 @endsection
 
@@ -52,159 +57,96 @@
                 <h4 class="text-dark fw-semibold mb-0">Role Permission Management</h4>
             </div>
 
-            <div class="row">
-                <div class="col-12">
-                    <div class="card">
-                        <div class="card-header d-sm-flex d-block border-0 pb-0 flex-wrap align-items-center">
-                            <div class="pr-3 me-auto mb-sm-0 mb-3">
-                                <h4 class="fs-20 text-black mb-1">Kelola Permissions Role</h4>
-                                <span class="fs-12 text-muted">Atur hak akses dan permissions untuk role tertentu</span>
+            <!-- Loading Indicator -->
+            <div id="loadingIndicator" class="text-center py-5 my-5">
+                <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">Loading...</span>
+                </div>
+                <p class="mt-2 text-muted">Memuat data permissions...</p>
+            </div>
+
+            <!-- Error Message -->
+            <div id="errorMessage" class="alert alert-danger d-none" role="alert">
+                <i class="fas fa-exclamation-triangle me-2"></i>
+                <span id="errorText">Terjadi kesalahan saat memuat data.</span>
+            </div>
+
+            <!-- Main Content -->
+            <div class="row g-4 d-none" id="mainContent">
+                <!-- Left Column: Role Info -->
+                <div class="col-12 col-lg-4" style="max-height: 100vh; overflow-y: auto;">
+                    <div class="card border-0 shadow-sm mb-4">
+                        <div class="card-header bg-white py-3 border-bottom">
+                            <h5 class="mb-0 fw-bold text-dark"><i class="fas fa-shield-alt me-2 text-primary"></i>Edit Role Pengguna</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="mb-4">
+                                <label class="form-label fw-bold text-dark small">Scope Role</label>
+                                <input type="text" class="form-control bg-light text-capitalize" id="detail_p_role_scope" readonly>
                             </div>
-                            <div class="d-flex align-items-center gap-1">
-                                <a href="{{ route('administrator.rbac.role.index') }}"
-                                    class="btn btn-outline-primary btn-sm btn-rounded" title="Kembali">
-                                    <i class="las la-arrow-left scale5 me-1"></i> Kembali
+                            <div class="mb-4">
+                                <label class="form-label fw-bold text-dark small">Nama Role</label>
+                                <input type="text" class="form-control bg-light" id="detail_p_role_name" readonly>
+                            </div>
+                            <div class="mb-4">
+                                <label class="form-label fw-bold text-dark small">Deskripsi Role</label>
+                                <textarea class="form-control bg-light" id="detail_p_role_description" rows="3" readonly></textarea>
+                            </div>
+
+                            <div class="alert alert-info border-0 bg-info bg-opacity-10 text-info small mb-4">
+                                <i class="fas fa-info-circle me-1"></i> Centang kotak pada modul di sebelah kanan untuk memberikan akses fitur kepada role ini.
+                            </div>
+
+                            <div class="d-grid gap-2">
+                                <button type="submit" form="permissionForm" id="savePermissions" class="btn btn-primary shadow-sm">
+                                    <i class="fas fa-save me-2"></i>Simpan Role
+                                </button>
+                                <a href="{{ route('administrator.rbac.role.index') }}" class="btn btn-light border shadow-sm">
+                                    Batal
                                 </a>
                             </div>
                         </div>
+                    </div>
+                </div>
 
-                        <div class="card-body">
-                            <!-- Loading Indicator -->
-                            <div id="loadingIndicator" class="text-center py-4">
-                                <div class="spinner-border " role="status">
-                                    <span class="visually-hidden">Loading...</span>
+                <!-- Right Column: Permissions -->
+                <div class="col-12 col-lg-8">
+                    <div class="card border-0 shadow-sm mb-4">
+                            <div class="card-header bg-white py-3 border-bottom d-flex justify-content-between align-items-center flex-wrap gap-2">
+                                <h5 class="mb-0 fw-bold text-dark"><i class="fas fa-key me-2 text-warning"></i>Hak Akses (Permissions)</h5>
+                                
+                                <div class="d-flex align-items-center gap-2">
+                                    <div class="input-group input-group-sm" style="width: 200px;">
+                                        <span class="input-group-text bg-light border-end-0">
+                                            <i class="fas fa-search text-muted"></i>
+                                        </span>
+                                        <input type="text" id="searchPermissions" class="form-control border-start-0" placeholder="Cari modul...">
+                                    </div>
+                                    <button type="button" id="resetSelection" class="btn btn-sm btn-outline-secondary" title="Reset Selections">
+                                        <i class="fas fa-undo"></i>
+                                    </button>
                                 </div>
-                                <p class="mt-2 text-muted">Memuat data permissions...</p>
                             </div>
-
-                            <!-- Error Message -->
-                            <div id="errorMessage" class="alert alert-danger d-none" role="alert">
-                                <i class="fas fa-exclamation-triangle me-2"></i>
-                                <span id="errorText">Terjadi kesalahan saat memuat data.</span>
-                            </div>
-
-                            <!-- Main Content -->
-                            <div id="mainContent" class="d-none">
+                            <div class="card-body bg-light">
+                                <div class="d-flex justify-content-between align-items-center mb-3">
+                                    <small class="text-muted fw-medium">
+                                        <i class="fas fa-check-circle me-1 text-success"></i>
+                                        <span id="selectedCount">0</span> of <span id="totalCount">0</span> selected
+                                    </small>
+                                </div>
                                 <form id="permissionForm" method="POST" class="form">
                                     @csrf
-                                    <div class="row mb-4">
-                                        <div class="col-12">
-                                            <div class="card">
-                                                <div class="card-header text-white py-3">
-                                                    <h6 class="mb-0"><i class="fas fa-info-circle me-2"></i>Informasi Role
-                                                    </h6>
-                                                </div>
-                                                <div class="card-body">
-                                                    <div class="row">
-                                                        <div class="col-md-6 mb-3">
-                                                            <span class="fw-bold ">Nama Role</span><br>
-                                                            <span id="detail_p_role_name"
-                                                                class="badge light badge-success">-</span>
-                                                        </div>
-                                                        <div class="col-md-6 mb-3">
-                                                            <span class="fw-bold ">Deskripsi Role</span><br>
-                                                            <span id="detail_p_role_description"
-                                                                class="text-dark fs-6">-</span>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    <div class="mb-4">
-                                        <div class="d-flex justify-content-between align-items-center mb-3">
-                                            <div>
-                                                <span class="fs-5 fw-bold text-dark">Daftar Permissions</span>
-                                                <small class="text-muted d-block">Pilih permissions yang akan diberikan
-                                                    kepada role</small>
-                                            </div>
-                                        </div>
-                                        <!-- Search + Selected Count -->
-                                        <div class="row mb-3">
-                                            <div class="col-md-12">
-                                                <div class="alert alert-light border mb-0">
-                                                    <div class="row align-items-center">
-                                                        <!-- Search -->
-                                                        <div class="col-md-6 mb-2 mb-md-0">
-                                                            <div class="input-group">
-                                                                <span class="input-group-text bg-light border-end-0">
-                                                                    <i class="fas fa-search text-muted"></i>
-                                                                </span>
-                                                                <input type="text" id="searchPermissions"
-                                                                    class="form-control border-start-0"
-                                                                    placeholder="Cari permissions...">
-                                                            </div>
-                                                        </div>
-
-                                                        <!-- Selected Count -->
-                                                        <div class="col-md-6">
-                                                            <div class="d-flex justify-content-between align-items-center">
-                                                                <small class="text-muted">
-                                                                    <i class="fas fa-check-circle me-1 text-success"></i>
-                                                                    <span id="selectedCount">0</span> of <span
-                                                                        id="totalCount">0</span>
-                                                                    permissions selected
-                                                                </small>
-                                                                <button type="button" id="resetSelection"
-                                                                    class="btn btn-sm btn-outline-secondary">
-                                                                    <i class="fas fa-undo me-1"></i>Reset
-                                                                </button>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-
-                                        <!-- Permissions List -->
-                                        <div id="permissions_list" class="accordion border rounded p-2"
-                                            style="max-height: 60vh; overflow-y: auto;">
-                                            <!-- Structured permission groups will be injected here -->
-                                        </div>
-                                    </div>
-
-                                    <div class="d-flex justify-content-between align-items-center border-top pt-4 mt-3">
-                                        <div>
-                                            <a href="{{ route('administrator.rbac.role.index') }}"
-                                                class="btn btn-secondary">
-                                                <i class="las la-arrow-left me-2"></i>Kembali
-                                            </a>
-                                        </div>
-                                        <div class="d-flex gap-2">
-                                            <button type="button" id="resetForm" class="btn btn-outline-warning">
-                                                <i class="fas fa-undo me-2"></i>Reset All
-                                            </button>
-                                            <button type="submit" id="savePermissions" class="btn btn-primary">
-                                                <i class="fas fa-save me-2"></i>Simpan Permissions
-                                            </button>
-                                        </div>
+                                    <!-- Permissions List -->
+                                    <div id="permissions_list" class="pb-3" style="min-height: 50vh;">
+                                        <!-- Structured permission groups will be injected here -->
                                     </div>
                                 </form>
-                            </div>
-
-                            <!-- Information Alert -->
-                            <div class="alert alert-info mt-4">
-                                <div class="d-flex">
-                                    <i class="fas fa-info-circle mt-1 me-3"></i>
-                                    <div>
-                                        <strong class="d-block mb-2">Informasi Penting:</strong>
-                                        <ul class="mb-0 ps-3">
-                                            <li>Permissions menentukan hak akses dan kemampuan yang dimiliki oleh role</li>
-                                            <li>Pilih permissions sesuai dengan kebutuhan dan tanggung jawab role</li>
-                                            <li>Perubahan permissions akan langsung berlaku setelah disimpan</li>
-                                            <li>Gunakan fitur pencarian untuk menemukan permissions tertentu dengan cepat
-                                            </li>
-                                        </ul>
-                                    </div>
-                                </div>
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
-    </div>
 @endsection
 
 @section('this-page-scripts')

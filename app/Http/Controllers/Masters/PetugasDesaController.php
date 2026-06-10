@@ -64,8 +64,8 @@ class PetugasDesaController extends Controller
             )
             ->addColumn('aksi', function ($item) {
                 $user = \Illuminate\Support\Facades\Auth::user();
-                $hasShow = $user->hasPermissionTo('administrator.master.petugas.desa.show');
-                $hasEdit = $user->hasPermissionTo('administrator.master.petugas.desa.edit');
+                $hasShow = $user->hasPermissionTo('master.petugas.desa.view');
+                $hasEdit = $user->hasPermissionTo('master.petugas.desa.edit');
 
                 if (!$hasShow && !$hasEdit) {
                     return '<span class="text-muted">-</span>';
@@ -374,13 +374,18 @@ class PetugasDesaController extends Controller
             return $this->responseService->error('Akun login tidak ditemukan', ResponseService::STATUS_NOT_FOUND);
         }
 
+        $temporaryPassword = bin2hex(random_bytes(4));
+
         $user->update([
             'username' => $petugas->nip,
-            'password' => \Illuminate\Support\Facades\Hash::make($petugas->nip),
+            'password' => \Illuminate\Support\Facades\Hash::make($temporaryPassword),
         ]);
 
         $this->logActivityService->log('Reset Password Petugas Desa', 'ID: ' . $id . ' NIP: ' . $petugas->nip);
 
-        return $this->responseService->success(null, 'Password dan username berhasil direset menjadi NIP.');
+        return $this->responseService->success(
+            ['temporary_password' => $temporaryPassword], 
+            'Password berhasil direset.'
+        );
     }
 }

@@ -65,8 +65,8 @@ class KecamatanController extends Controller
             })
             ->addColumn('aksi', function ($item) {
                 $user = \Illuminate\Support\Facades\Auth::user();
-                $hasShow = $user->hasPermissionTo('administrator.master.kecamatan.show');
-                $hasEdit = $user->hasPermissionTo('administrator.master.kecamatan.update');
+                $hasShow = $user->hasPermissionTo('master.kecamatan.view');
+                $hasEdit = $user->hasPermissionTo('master.kecamatan.edit');
 
                 if (!$hasShow && !$hasEdit) {
                     return '<span class="text-muted">-</span>';

@@ -45,23 +45,23 @@ class CheckPermission
     //     // abort(403, 'Unauthorized.');
     // }
 
-    public function handle(Request $request, Closure $next): Response
+    public function handle(Request $request, Closure $next, string $permission = null): Response
     {
         if (!Auth::check()) {
             return $this->unauthorized($request);
         }
 
-        $user = Auth::user();
-        $routeName = $request->route()?->getName();
-
-        // Jika route tidak dinamai, tolak akses sebagai pengaman tambahan
-        if (!$routeName) {
-            return $this->unauthorized($request, 'Route is not named.');
+        if ($permission === null) {
+            // Jika tidak ada permission yang didefinisikan di route, kita bisa membiarkannya (atau menolaknya)
+            // Untuk keamanan, sebaiknya tolak jika middleware dipanggil tanpa parameter
+            return $this->unauthorized($request, 'Permission parameter is missing.');
         }
+
+        $user = Auth::user();
 
         // Periksa apakah user punya permission melalui role
         foreach ($user->roles as $role) {
-            if ($role->permissions->contains('permission_name', $routeName)) {
+            if ($role->permissions->contains('permission_name', $permission)) {
                 return $next($request);
             }
         }

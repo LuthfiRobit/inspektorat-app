@@ -187,12 +187,14 @@
 
                                 <!-- Tombol Aksi -->
                                 <div class="d-flex gap-2">
+                                    @if (auth()->user()->hasPermissionTo('monev.review.create'))
                                     <button type="button" class="btn btn-warning btn-sm" id="requestRevisionBtn">
                                         <i class="las la-redo-alt me-1"></i>Minta Revisi
                                     </button>
                                     <button type="button" class="btn btn-success btn-sm" id="approveLaporanBtn">
                                         <i class="las la-check-circle me-1"></i>Setujui Laporan
                                     </button>
+                                    @endif
                                 </div>
                             </div>
                         </div>
@@ -387,12 +389,14 @@
                                 <a href="{{ route('administrator.monev.review.index') }}" class="btn btn-secondary btn-sm">
                                      <i class="las la-arrow-left me-1"></i>Kembali
                                  </a>
+                                @if (auth()->user()->hasPermissionTo('monev.review.create'))
                                 <button type="button" class="btn btn-warning btn-sm" id="requestRevisionBottom">
                                     <i class="las la-redo-alt me-1"></i>Minta Revisi
                                 </button>
                                 <button type="button" class="btn btn-success btn-sm" id="approveLaporanBottom">
                                     <i class="las la-check-circle me-1"></i>Setujui Laporan
                                 </button>
+                                @endif
                             </div>
                         </div>
                     </div>

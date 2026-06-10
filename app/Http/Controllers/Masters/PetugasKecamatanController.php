@@ -64,8 +64,8 @@ class PetugasKecamatanController extends Controller
             )
             ->addColumn('aksi', function ($item) {
                 $user = \Illuminate\Support\Facades\Auth::user();
-                $hasShow = $user->hasPermissionTo('administrator.master.petugas.kecamatan.show');
-                $hasEdit = $user->hasPermissionTo('administrator.master.petugas.kecamatan.edit');
+                $hasShow = $user->hasPermissionTo('master.petugas.kecamatan.view');
+                $hasEdit = $user->hasPermissionTo('master.petugas.kecamatan.edit');
 
                 if (!$hasShow && !$hasEdit) {
                     return '<span class="text-muted">-</span>';
@@ -364,13 +364,18 @@ class PetugasKecamatanController extends Controller
             return $this->responseService->error('Akun login tidak ditemukan', ResponseService::STATUS_NOT_FOUND);
         }
 
+        $temporaryPassword = bin2hex(random_bytes(4));
+
         $user->update([
             'username' => $petugas->nip,
-            'password' => \Illuminate\Support\Facades\Hash::make($petugas->nip),
+            'password' => \Illuminate\Support\Facades\Hash::make($temporaryPassword),
         ]);
 
         $this->logActivityService->log('Reset Password Petugas Kecamatan', 'ID: ' . $id . ' NIP: ' . $petugas->nip);
 
-        return $this->responseService->success(null, 'Password dan username berhasil direset menjadi NIP.');
+        return $this->responseService->success(
+            ['temporary_password' => $temporaryPassword], 
+            'Password berhasil direset.'
+        );
     }
 }

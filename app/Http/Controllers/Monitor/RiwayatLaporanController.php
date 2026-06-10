@@ -80,16 +80,24 @@ class RiwayatLaporanController extends Controller
         return DataTables::of($data)
 
             ->addColumn('aksi', function ($row) {
+                $user = \Illuminate\Support\Facades\Auth::user();
+                $btnDetail = '';
+                
+                if ($user && $user->hasPermissionTo('monitoring.riwayat.view')) {
+                    $url = route('administrator.monitoring.riwayat.detail')
+                        . '?desa_id=' . $row['desa_id']
+                        . '&kegiatan_id=' . $row['kegiatan_id']
+                        . '&id_laporan=' . $row['id_laporan'];
 
-                $url = route('administrator.monitoring.riwayat.detail')
-                    . '?desa_id=' . $row['desa_id']
-                    . '&kegiatan_id=' . $row['kegiatan_id']
-                    . '&id_laporan=' . $row['id_laporan'];
+                    $btnDetail = '
+                    <a class="dropdown-item" href="' . $url . '">
+                        <i class="fas fa-eye me-2"></i>Detail Laporan
+                    </a>';
+                }
 
-                $btnDetail = '
-                <a class="dropdown-item" href="' . $url . '">
-                    <i class="fas fa-eye me-2"></i>Detail Laporan
-                </a>';
+                if ($btnDetail === '') {
+                    return '-';
+                }
 
                 return '
                 <div class="btn-group">

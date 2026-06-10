@@ -40,14 +40,19 @@
     // ===========================
     function initializeEventListeners() {
         // Form submission
-        document.getElementById('permissionForm').addEventListener('submit', handleFormSubmit);
+        const form = document.getElementById('permissionForm');
+        if (form) form.addEventListener('submit', handleFormSubmit);
 
         // Reset buttons
-        document.getElementById('resetSelection').addEventListener('click', resetSelection);
-        document.getElementById('resetForm').addEventListener('click', resetForm);
+        const btnResetSel = document.getElementById('resetSelection');
+        if (btnResetSel) btnResetSel.addEventListener('click', resetSelection);
+
+        const btnResetForm = document.getElementById('resetForm');
+        if (btnResetForm) btnResetForm.addEventListener('click', resetForm);
 
         // Search input
-        document.getElementById('searchPermissions').addEventListener('input', handleSearch);
+        const searchInput = document.getElementById('searchPermissions');
+        if (searchInput) searchInput.addEventListener('input', handleSearch);
 
         // Delegated event listeners for dynamic content
         document.addEventListener('change', handleDelegatedEvents);
@@ -186,9 +191,15 @@
 
                 // Display role information
                 document.getElementById('permissionForm').setAttribute('data-id', roleId);
-                document.getElementById('detail_p_role_name').textContent = role.role_name || 'N/A';
-                document.getElementById('detail_p_role_description').textContent = role.role_description ||
-                    'N/A';
+                
+                const roleScopeEl = document.getElementById('detail_p_role_scope');
+                if (roleScopeEl) roleScopeEl.value = role.role_scope || 'N/A';
+
+                const roleNameEl = document.getElementById('detail_p_role_name');
+                if (roleNameEl) roleNameEl.value = role.role_name || 'N/A';
+                
+                const roleDescEl = document.getElementById('detail_p_role_description');
+                if (roleDescEl) roleDescEl.value = role.role_description || 'N/A';
 
                 // Create structured permission list
                 createStructuredPermissionList(permissions, role_permissions);
@@ -236,13 +247,15 @@
     function createStructuredPermissionList(permissions, rolePermissions) {
         const permissionsList = document.getElementById('permissions_list');
         permissionsList.innerHTML = '';
+        
+        // Remove accordion styling classes
+        permissionsList.className = 'p-0'; 
 
-        // Group permissions by category and module
-        const structuredPermissions = structurePermissions(permissions);
-
-        Object.keys(structuredPermissions).forEach(category => {
-            createCategoryAccordion(category, structuredPermissions[category], permissionsList,
-                rolePermissions);
+        // permissions is now already a grouped object from backend
+        // e.g. {"Master": {"Kecamatan": [{id: 1, name: "View", slug: "master.kecamatan.view"}]}}
+        
+        Object.keys(permissions).forEach(modul => {
+            createModuleSection(modul, permissions[modul], permissionsList, rolePermissions);
         });
 
         // Update UI states
@@ -250,194 +263,97 @@
     }
 
     // ===========================
-    // = Structure Permissions =
-    // ===========================
-    function structurePermissions(permissions) {
-        const structured = {};
-
-        if (!Array.isArray(permissions)) {
-            console.error('Permissions is not an array:', permissions);
-            return structured;
-        }
-
-        permissions.forEach(permission => {
-            const parts = permission.permission_name.split('.');
-
-            if (parts.length < 2) {
-                if (!structured.other) structured.other = {};
-                if (!structured.other.general) structured.other.general = {};
-                if (!structured.other.general.general) structured.other.general.general = [];
-                structured.other.general.general.push(permission);
-                return;
-            }
-
-            const category = parts[0];
-            const subCategory = parts[1] || 'general';
-            const module = parts[2] || 'general';
-            const action = parts.slice(3).join('.') || 'general';
-
-            if (!structured[category]) structured[category] = {};
-            if (!structured[category][subCategory]) structured[category][subCategory] = {};
-            if (!structured[category][subCategory][module]) structured[category][subCategory][module] = [];
-
-            structured[category][subCategory][module].push({
-                ...permission,
-                action: action
-            });
-        });
-
-        return structured;
-    }
-
-    // ===========================
-    // = Create Category Accordion =
-    // ===========================
-    function createCategoryAccordion(category, subCategories, container, rolePermissions) {
-        const categoryKey = category.replace(/[^a-zA-Z0-9]/g, '-');
-        const categoryId = `category-${categoryKey}`;
-
-        const accordionItem = document.createElement('div');
-        accordionItem.className = 'accordion-item border-0';
-
-        accordionItem.innerHTML = `
-            <h2 class="accordion-header" id="heading-${categoryId}">
-                <button class="accordion-button collapsed fw-bold fs-6 text-dark bg-light" type="button" 
-                        data-bs-toggle="collapse" data-bs-target="#collapse-${categoryId}" 
-                        aria-expanded="false" aria-controls="collapse-${categoryId}">
-                    <div class="d-flex justify-content-between align-items-center w-100 me-5">
-                        <span class="text-uppercase">${category}</span>
-                        <div class="form-check form-switch mb-0">
-                            <input class="form-check-input check-all-group" type="checkbox" 
-                                data-group="${categoryKey}" id="checkAll-${categoryKey}">
-                            <label class="form-check-label small" for="checkAll-${categoryKey}">Select All</label>
-                        </div>
-                    </div>
-                </button>
-            </h2>
-            <div id="collapse-${categoryId}" class="accordion-collapse collapse" 
-                aria-labelledby="heading-${categoryId}">
-                <div class="accordion-body p-3">
-                    <div class="row g-3" id="subcategories-${categoryKey}">
-                        <!-- Subcategories will be injected here -->
-                    </div>
-                </div>
-            </div>
-        `;
-
-        const subcategoriesContainer = accordionItem.querySelector(`#subcategories-${categoryKey}`);
-
-        Object.keys(subCategories).forEach(subCategory => {
-            createSubCategorySection(category, categoryKey, subCategory, subCategories[subCategory],
-                subcategoriesContainer, rolePermissions);
-        });
-
-        container.appendChild(accordionItem);
-    }
-
-    // ===========================
-    // = Create SubCategory Section =
-    // ===========================
-    function createSubCategorySection(category, categoryKey, subCategory, modules, container, rolePermissions) {
-        const subCategoryKey = `${categoryKey}-${subCategory.replace(/[^a-zA-Z0-9]/g, '-')}`;
-
-        const subCategoryCol = document.createElement('div');
-        subCategoryCol.className = 'col-12 col-md-6 col-lg-4';
-
-        subCategoryCol.innerHTML = `
-        <div class="card h-100 border-0 shadow-sm permission-card">
-            <div class="card-header bg-white py-3 border-bottom">
-                <div class="d-flex justify-content-between align-items-center">
-                    <h6 class="mb-0 fw-semibold text-capitalize text-primary">${subCategory}</h6>
-                </div>
-            </div>
-            <div class="card-body p-3">
-                <div class="modules-container" id="modules-${subCategoryKey}">
-                    <!-- Modules will be injected here -->
-                </div>
-            </div>
-        </div>
-    `;
-
-        const modulesContainer = subCategoryCol.querySelector(`#modules-${subCategoryKey}`);
-
-        Object.keys(modules).forEach(module => {
-            createModuleSection(categoryKey, subCategoryKey, module, modules[module],
-                modulesContainer, rolePermissions);
-        });
-
-        container.appendChild(subCategoryCol);
-    }
-
-    // ===========================
     // = Create Module Section =
     // ===========================
-    function createModuleSection(categoryKey, subCategoryKey, module, permissions, container, rolePermissions) {
-        if (!Array.isArray(permissions)) {
-            console.warn(`Permissions for module ${module} is not an array:`, permissions);
-            permissions = [];
-        }
+    function createModuleSection(modul, submodules, container, rolePermissions) {
+        const modulKey = modul.replace(/[^a-zA-Z0-9]/g, '-');
+        
+        const moduleContainer = document.createElement('div');
+        moduleContainer.className = 'mb-4 module-card';
 
-        const moduleKey = `${subCategoryKey}-${module.replace(/[^a-zA-Z0-9]/g, '-')}`;
-
-        const moduleSection = document.createElement('div');
-        moduleSection.className = 'mb-3';
-
-        if (module !== 'general') {
-            moduleSection.innerHTML = `
-            <div class="d-flex justify-content-between align-items-center mb-2 pb-2 border-bottom">
-                <small class="fw-bold text-dark text-capitalize">${module}</small>
-                <div class="form-check form-switch">
-                    <input class="form-check-input check-all-module" type="checkbox" 
-                           data-module="${moduleKey}" id="checkAll-${moduleKey}">
-                    <label class="form-check-label" for="checkAll-${moduleKey}">
-                        <small>All</small>
-                    </label>
+        moduleContainer.innerHTML = `
+            <div class="bg-light-primary text-primary px-3 py-2 rounded-3 mb-3 fw-bold d-flex align-items-center justify-content-between">
+                <div>Modul: ${modul}</div>
+                <div class="form-check form-switch mb-0">
+                    <input class="form-check-input check-all-group" type="checkbox" 
+                        data-group="${modulKey}" id="checkAll-${modulKey}">
+                    <label class="form-check-label small" for="checkAll-${modulKey}">Pilih Semua</label>
                 </div>
             </div>
+            <div class="row g-3" id="subcategories-${modulKey}">
+                <!-- Submodules will be injected here -->
+            </div>
         `;
-        }
 
-        const permissionsList = document.createElement('div');
-        permissionsList.className = 'ps-1';
+        const submodulesContainer = moduleContainer.querySelector(`#subcategories-${modulKey}`);
 
-        if (Array.isArray(permissions)) {
-            permissions.forEach(permission => {
-                const checkbox = createPermissionCheckbox(permission, categoryKey, moduleKey, rolePermissions);
-                permissionsList.appendChild(checkbox);
-            });
-        }
+        Object.keys(submodules).forEach(submodul => {
+            createSubmoduleSection(modulKey, submodul, submodules[submodul], submodulesContainer, rolePermissions);
+        });
 
-        moduleSection.appendChild(permissionsList);
-        container.appendChild(moduleSection);
+        container.appendChild(moduleContainer);
     }
 
     // ===========================
-    // = Create Permission Checkbox =
+    // = Create Submodule Section =
     // ===========================
-    function createPermissionCheckbox(permission, categoryKey, moduleKey, rolePermissions) {
+    function createSubmoduleSection(modulKey, submodul, actions, container, rolePermissions) {
+        const submodulKey = `${modulKey}-${submodul.replace(/[^a-zA-Z0-9]/g, '-')}`;
+
+        const colDiv = document.createElement('div');
+        colDiv.className = 'col-12 col-md-6 col-lg-4';
+
+        colDiv.innerHTML = `
+            <div class="p-3 border rounded-3 bg-white h-100 shadow-sm submodule-card transition-all">
+                <div class="fw-bold mb-3 border-bottom pb-2 small text-dark d-flex align-items-center justify-content-between">
+                    <div class="text-capitalize"><i class="fas fa-layer-group me-2 text-muted"></i>${submodul}</div>
+                    <div class="form-check form-switch mb-0">
+                        <input class="form-check-input check-all-module" type="checkbox" 
+                               data-module="${submodulKey}" id="checkAll-${submodulKey}">
+                    </div>
+                </div>
+                <div class="d-flex flex-wrap gap-3" id="actions-${submodulKey}">
+                    <!-- Action checkboxes will be injected here -->
+                </div>
+            </div>
+        `;
+
+        const actionsContainer = colDiv.querySelector(`#actions-${submodulKey}`);
+
+        if (Array.isArray(actions)) {
+            actions.forEach(actionObj => {
+                const checkbox = createActionCheckbox(actionObj, modulKey, submodulKey, rolePermissions);
+                actionsContainer.appendChild(checkbox);
+            });
+        }
+
+        container.appendChild(colDiv);
+    }
+
+    // ===========================
+    // = Create Action Checkbox =
+    // ===========================
+    function createActionCheckbox(actionObj, modulKey, submodulKey, rolePermissions) {
         const checkboxDiv = document.createElement('div');
-        checkboxDiv.className = 'form-check mb-2';
+        checkboxDiv.className = 'form-check me-3 mb-1';
 
         const checkbox = document.createElement('input');
         checkbox.type = 'checkbox';
         checkbox.name = 'permissions[]';
-        checkbox.className = `form-check-input permission-group-${categoryKey} permission-module-${moduleKey}`;
-        checkbox.id = `check-${permission.id_permission}`;
-        checkbox.value = permission.id_permission;
+        checkbox.className = `form-check-input permission-group-${modulKey} permission-module-${submodulKey}`;
+        checkbox.id = `check-${actionObj.id}`;
+        checkbox.value = actionObj.id;
 
-        if (rolePermissions.includes(permission.id_permission)) {
+        if (rolePermissions.includes(actionObj.id)) {
             checkbox.checked = true;
         }
 
         const label = document.createElement('label');
-        label.className = 'form-check-label small text-muted';
+        label.className = 'form-check-label small text-dark fw-medium';
         label.setAttribute('for', checkbox.id);
 
-        const displayName = permission.action && permission.action !== 'general' ?
-            permission.action :
-            permission.permission_name.split('.').pop();
-        label.textContent = displayName;
-        label.title = permission.permission_name;
+        label.textContent = actionObj.name;
+        label.title = actionObj.slug;
 
         checkboxDiv.appendChild(checkbox);
         checkboxDiv.appendChild(label);
@@ -451,61 +367,57 @@
     function handleSearch(e) {
         const searchTerm = e.target.value.toLowerCase();
 
-        const accordionItems = document.querySelectorAll('.accordion-item');
+        const moduleCards = document.querySelectorAll('.module-card');
 
-        accordionItems.forEach(item => {
-            const categoryHeader = item.querySelector('.accordion-button');
-            const categoryText = categoryHeader.textContent.toLowerCase();
+        moduleCards.forEach(moduleCard => {
+            const moduleHeader = moduleCard.querySelector('.card-header h5');
+            const moduleText = moduleHeader ? moduleHeader.textContent.toLowerCase() : '';
 
-            const subCategories = item.querySelectorAll('.col-12.col-md-6.col-lg-4');
-            let hasVisibleSubCategories = false;
+            const submoduleCards = moduleCard.querySelectorAll('.col-12.col-md-6.col-lg-4');
+            let hasVisibleSubmodules = false;
 
-            subCategories.forEach(subCat => {
-                const subCatHeader = subCat.querySelector('.card-header h6');
-                const subCatText = subCatHeader.textContent.toLowerCase();
+            submoduleCards.forEach(subCard => {
+                const subCardHeader = subCard.querySelector('.card-header h6');
+                const subCardText = subCardHeader ? subCardHeader.textContent.toLowerCase() : '';
 
-                let subCatVisible = true;
+                let subCardVisible = true;
 
                 // Apply search filter
-                if (searchTerm && !subCatText.includes(searchTerm)) {
-                    // Check modules within this subcategory
-                    const modules = subCat.querySelectorAll('.modules-container > div');
-                    let hasVisibleModules = false;
+                if (searchTerm && !subCardText.includes(searchTerm) && !moduleText.includes(searchTerm)) {
+                    // Check permissions within this submodule
+                    const permissions = subCard.querySelectorAll('.form-check');
+                    let hasVisiblePermissions = false;
 
-                    modules.forEach(module => {
-                        const permissions = module.querySelectorAll('.form-check');
+                    permissions.forEach(permission => {
+                        const label = permission.querySelector('label');
+                        if (!label) return;
+                        
+                        const labelText = label.textContent.toLowerCase();
+                        const labelTitle = label.title ? label.title.toLowerCase() : '';
 
-                        let moduleVisible = false;
-
-                        // Check if any permission matches search
-                        permissions.forEach(permission => {
-                            const label = permission.querySelector('label');
-                            const labelText = label.textContent.toLowerCase();
-                            const labelTitle = label.title.toLowerCase();
-
-                            if (labelText.includes(searchTerm) || labelTitle.includes(
-                                    searchTerm)) {
-                                moduleVisible = true;
-                                permission.style.display = 'block';
-                            } else {
+                        if (labelText.includes(searchTerm) || labelTitle.includes(searchTerm)) {
+                            hasVisiblePermissions = true;
+                            permission.style.display = 'block';
+                        } else {
+                            // Only hide if it's not a master "Select All" switch (which we don't have inside form-check anymore, but just in case)
+                            if (!permission.classList.contains('form-switch')) {
                                 permission.style.display = 'none';
                             }
-                        });
-
-                        // Show/hide module based on visibility
-                        module.style.display = moduleVisible ? 'block' : 'none';
-                        if (module.style.display === 'block') hasVisibleModules = true;
+                        }
                     });
 
-                    subCatVisible = hasVisibleModules;
+                    subCardVisible = hasVisiblePermissions;
+                } else {
+                    // If the submodule or module matches, show all permissions
+                    subCard.querySelectorAll('.form-check').forEach(p => p.style.display = 'block');
                 }
 
-                subCat.style.display = subCatVisible ? 'block' : 'none';
-                if (subCat.style.display === 'block') hasVisibleSubCategories = true;
+                subCard.style.display = subCardVisible ? 'block' : 'none';
+                if (subCard.style.display === 'block') hasVisibleSubmodules = true;
             });
 
-            // Show/hide category based on visible subcategories
-            item.style.display = hasVisibleSubCategories ? 'block' : 'none';
+            // Show/hide module based on visible submodules
+            moduleCard.style.display = hasVisibleSubmodules ? 'block' : 'none';
         });
     }
 

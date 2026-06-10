@@ -119,9 +119,13 @@ class ScoringDesaController extends Controller
         return DataTables::of($returnData)
             ->with('userRanking', $userRankInfo)
             ->addColumn('aksi', function ($row) {
-                return '<button class="btn btn-outline-primary btn-xs" onclick="showDesaDetail(' . $row->id_desa . ')">
-                        <i class="fa fa-eye"></i> Detail
-                    </button>';
+                $user = auth()->user();
+                if ($user && $user->hasPermissionTo('monitoring.scoring.desa.view')) {
+                    return '<button class="btn btn-outline-primary btn-xs" onclick="showDesaDetail(' . $row->id_desa . ')">
+                            <i class="fa fa-eye"></i> Detail
+                        </button>';
+                }
+                return '-';
             })
             // Update Columns
             // ->addColumn('persentase_dokumen', function ($row) {
