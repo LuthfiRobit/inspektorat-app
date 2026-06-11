@@ -13,6 +13,7 @@ use App\Http\Controllers\Masters\PetugasDesaController;
 use App\Http\Controllers\Masters\PetugasInspektoratController;
 use App\Http\Controllers\Masters\PetugasKecamatanController;
 use App\Http\Controllers\Masters\TahunAnggaranController;
+use App\Http\Controllers\Masters\WilayahBinaanController;
 use App\Http\Controllers\Monev\LaporanHistoryController;
 use App\Http\Controllers\Monev\LaporanKegiatanController;
 use App\Http\Controllers\Monev\LaporanReviewController;
@@ -161,6 +162,16 @@ Route::middleware(['auth'])->prefix('administrator')->name('administrator.')->gr
                 Route::put('/update/{id}', [PetugasDesaController::class, 'update'])->name('update')->middleware('permission:master.petugas.desa.edit');
                 Route::post('/reset-password/{id}', [PetugasDesaController::class, 'resetPassword'])->name('reset-password')->middleware('permission:master.petugas.desa.edit');
             });
+        });
+
+        Route::prefix('wilayah-binaan')->name('wilayah-binaan.')->group(function () {
+            Route::get('/', [WilayahBinaanController::class, 'index'])->name('index')->middleware('permission:master.wilayah-binaan.view');
+            Route::get('/list-inspektorat', [WilayahBinaanController::class, 'listInspektorat'])->name('list-inspektorat')->middleware('permission:master.wilayah-binaan.view');
+            Route::get('/list-kecamatan', [WilayahBinaanController::class, 'listKecamatan'])->name('list-kecamatan')->middleware('permission:master.wilayah-binaan.view');
+            Route::get('/{id}', [WilayahBinaanController::class, 'show'])->name('show')->middleware('permission:master.wilayah-binaan.view');
+            Route::get('/{id}/data', [WilayahBinaanController::class, 'getAssignedAndAvailable'])->name('data')->middleware('permission:master.wilayah-binaan.view');
+            Route::post('/bulk', [WilayahBinaanController::class, 'bulkStore'])->name('bulk')->middleware('permission:master.wilayah-binaan.create');
+            Route::delete('/{id}', [WilayahBinaanController::class, 'destroy'])->name('destroy')->middleware('permission:master.wilayah-binaan.delete');
         });
     });
 

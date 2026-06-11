@@ -318,6 +318,23 @@ class LaporanKegiatan extends Model
             ->join('tahun_anggaran as ta', 'k.tahun_anggaran_id', '=', 'ta.id_tahun_anggaran')
             ->forReview();
 
+        // Filter by Inspektorat's Wilayah Binaan
+        $user = Auth::user();
+        if ($user && $user->petugas) {
+            $petugas = $user->petugas;
+            // Petugas Inspektorat (no kecamatan_id and no desa_id)
+            if (is_null($petugas->kecamatan_id) && is_null($petugas->desa_id)) {
+                $kecamatanBinaanIds = DB::table('petugas_wilayah_binaan')
+                    ->where('petugas_id', $petugas->id_petugas)
+                    ->whereNotNull('kecamatan_id')
+                    ->pluck('kecamatan_id');
+
+                if ($kecamatanBinaanIds->isNotEmpty()) {
+                    $query->whereIn('d.kecamatan_id', $kecamatanBinaanIds);
+                }
+            }
+        }
+
         // Apply filters
         if (!empty($filters['filter_tahun'])) {
             // FIX: Filter by ID, not Year value
@@ -393,8 +410,18 @@ class LaporanKegiatan extends Model
                 // Desa - show only their desa
                 $desaQuery->where('d.id_desa', $petugas->desa_id);
             } elseif ($petugas->kecamatan_id) {
-                // Kecamatan - show all desa in their kecamatan
-                $desaQuery->where('d.kecamatan_id', $petugas->kecamatan_id);
+                // Kecamatan - check if has assigned desa binaan
+                $desaBinaanIds = DB::table('petugas_wilayah_binaan')
+                    ->where('petugas_id', $petugas->id_petugas)
+                    ->whereNotNull('desa_id')
+                    ->pluck('desa_id');
+
+                if ($desaBinaanIds->isNotEmpty()) {
+                    $desaQuery->whereIn('d.id_desa', $desaBinaanIds);
+                } else {
+                    // Fallback to all desa in their kecamatan
+                    $desaQuery->where('d.kecamatan_id', $petugas->kecamatan_id);
+                }
             }
         }
 
@@ -580,8 +607,28 @@ class LaporanKegiatan extends Model
                 // Desa - show only their desa
                 $desaQuery->where('d.id_desa', $petugas->desa_id);
             } elseif ($petugas->kecamatan_id) {
-                // Kecamatan - show all desa in their kecamatan
-                $desaQuery->where('d.kecamatan_id', $petugas->kecamatan_id);
+                // Kecamatan - check if has assigned desa binaan
+                $desaBinaanIds = DB::table('petugas_wilayah_binaan')
+                    ->where('petugas_id', $petugas->id_petugas)
+                    ->whereNotNull('desa_id')
+                    ->pluck('desa_id');
+
+                if ($desaBinaanIds->isNotEmpty()) {
+                    $desaQuery->whereIn('d.id_desa', $desaBinaanIds);
+                } else {
+                    // Fallback to all desa in their kecamatan
+                    $desaQuery->where('d.kecamatan_id', $petugas->kecamatan_id);
+                }
+            } elseif (is_null($petugas->kecamatan_id) && is_null($petugas->desa_id)) {
+                // Inspektorat - check wilayah binaan (assigned kecamatan)
+                $kecamatanBinaanIds = DB::table('petugas_wilayah_binaan')
+                    ->where('petugas_id', $petugas->id_petugas)
+                    ->whereNotNull('kecamatan_id')
+                    ->pluck('kecamatan_id');
+
+                if ($kecamatanBinaanIds->isNotEmpty()) {
+                    $desaQuery->whereIn('d.kecamatan_id', $kecamatanBinaanIds);
+                }
             }
         }
 

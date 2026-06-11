@@ -39,7 +39,7 @@
                     </a>
                     <ul aria-expanded="false">
                         <!-- Wilayah -->
-                        @if ($user->hasAnyPermission(['master.kecamatan.view', 'master.desa.view']))
+                        @if ($user->hasAnyPermission(['master.kecamatan.view', 'master.desa.view', 'master.wilayah-binaan.view']))
                             <li class="nav-label mt-2 text-uppercase small text-muted px-2">Wilayah</li>
                         @endif
 
@@ -49,6 +49,10 @@
 
                         @if ($user->hasPermissionTo('master.desa.view'))
                             <li><a href="{{ route('administrator.master.desa.index') }}" class="fs-6">Desa</a></li>
+                        @endif
+
+                        @if ($user->hasPermissionTo('master.wilayah-binaan.view'))
+                            <li><a href="{{ route('administrator.master.wilayah-binaan.index') }}" class="fs-6">Wilayah Binaan</a></li>
                         @endif
 
                         <!-- Petugas -->

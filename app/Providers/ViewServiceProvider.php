@@ -8,6 +8,7 @@ use App\Models\JabatanGuru;
 use App\Models\JenisKegiatan;
 use App\Models\Jurusan;
 use App\Models\Kecamatan;
+use App\Models\PetugasWilayahBinaan;
 use App\Models\Role;
 use App\Models\TahunAnggaran;
 use App\Models\TahunPelajaran;
@@ -169,6 +170,7 @@ class ViewServiceProvider extends ServiceProvider
             'administration.masters.desa.*',
             'administration.masters.petugas.kecamatan.*',
             'administration.masters.petugas.desa.*',
+            'administration.masters.wilayahBinaan.*',
             'administration.monitoring.*',
             'administration.dashboard.*',
         ], function ($view) {
@@ -177,6 +179,22 @@ class ViewServiceProvider extends ServiceProvider
 
             if (!$kecamatanList) {
                 $kecamatanList = Kecamatan::getActive();
+            }
+
+            // --- Untuk Petugas Inspektorat ---
+            $user = Auth::user();
+            if ($user) {
+                $petugas = $user->petugas;
+                // Jika petugas adalah inspektorat (tidak ada kecamatan/desa)
+                if ($petugas && is_null($petugas->kecamatan_id) && is_null($petugas->desa_id)) {
+                    $kecamatanBinaanIds = PetugasWilayahBinaan::where('petugas_id', $petugas->id_petugas)
+                        ->whereNotNull('kecamatan_id')
+                        ->pluck('kecamatan_id');
+
+                    if ($kecamatanBinaanIds->isNotEmpty()) {
+                        $kecamatanList = $kecamatanList->whereIn('id_kecamatan', $kecamatanBinaanIds)->values();
+                    }
+                }
             }
 
             $view->with('kecamatanList', $kecamatanList);
@@ -201,9 +219,19 @@ class ViewServiceProvider extends ServiceProvider
                 });
 
                 // Tentukan list desa sesuai user
-                if ($petugas && $petugas->kecamatan_id) {
-                    // Filter dari global list tanpa query ulang
-                    $desaList = $globalDesaList->where('kecamatan_id', $petugas->kecamatan_id)->values();
+                if ($petugas && $petugas->kecamatan_id && is_null($petugas->desa_id)) {
+                    // Petugas Kecamatan
+                    $desaBinaanIds = PetugasWilayahBinaan::where('petugas_id', $petugas->id_petugas)
+                        ->whereNotNull('desa_id')
+                        ->pluck('desa_id');
+
+                    if ($desaBinaanIds->isNotEmpty()) {
+                        // Ada wilayah binaan → filter berdasarkan binaan saja
+                        $desaList = $globalDesaList->whereIn('id_desa', $desaBinaanIds)->values();
+                    } else {
+                        // Belum ada binaan → fallback ke seluruh desa kecamatan
+                        $desaList = $globalDesaList->where('kecamatan_id', $petugas->kecamatan_id)->values();
+                    }
                 } else {
                     // Admin / global → pakai cached global list
                     $desaList = $globalDesaList;

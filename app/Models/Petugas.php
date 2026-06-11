@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Facades\Auth;
 
@@ -144,6 +145,32 @@ class Petugas extends Model
     // {
     //     return $this->hasMany(Laporan::class, 'petugas_id', 'id_petugas');
     // }
+
+    /**
+     * Get all wilayah binaan for the Petugas.
+     */
+    public function wilayahBinaan(): HasMany
+    {
+        return $this->hasMany(PetugasWilayahBinaan::class, 'petugas_id', 'id_petugas');
+    }
+
+    /**
+     * Get all kecamatan binaan (For Petugas Inspektorat).
+     */
+    public function kecamatanBinaan(): BelongsToMany
+    {
+        return $this->belongsToMany(Kecamatan::class, 'petugas_wilayah_binaan', 'petugas_id', 'kecamatan_id')
+                    ->whereNotNull('petugas_wilayah_binaan.kecamatan_id');
+    }
+
+    /**
+     * Get all desa binaan (For Petugas Kecamatan).
+     */
+    public function desaBinaan(): BelongsToMany
+    {
+        return $this->belongsToMany(Desa::class, 'petugas_wilayah_binaan', 'petugas_id', 'desa_id')
+                    ->whereNotNull('petugas_wilayah_binaan.desa_id');
+    }
 
     /**
      * Get the user who created this Petugas.

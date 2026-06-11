@@ -7,6 +7,7 @@ use App\Models\LaporanKegiatan;
 use App\Models\JawabanPertanyaan;
 use App\Models\DokumenPersyaratan;
 use App\Models\Kegiatan;
+use App\Models\PetugasWilayahBinaan;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 
@@ -212,7 +213,24 @@ class LaporanKegiatanRepository
                 $desaQuery->where('d.id_desa', $petugas->desa_id);
             } elseif ($petugas->kecamatan_id) {
                 // Kecamatan - show all desa in their kecamatan
-                $desaQuery->where('d.kecamatan_id', $petugas->kecamatan_id);
+                $desaBinaanIds = PetugasWilayahBinaan::where('petugas_id', $petugas->id_petugas)
+                    ->whereNotNull('desa_id')
+                    ->pluck('desa_id');
+
+                if ($desaBinaanIds->isNotEmpty()) {
+                    $desaQuery->whereIn('d.id_desa', $desaBinaanIds);
+                } else {
+                    $desaQuery->where('d.kecamatan_id', $petugas->kecamatan_id);
+                }
+            } else {
+                // Inspektorat - check wilayah binaan
+                $kecamatanBinaanIds = PetugasWilayahBinaan::where('petugas_id', $petugas->id_petugas)
+                    ->whereNotNull('kecamatan_id')
+                    ->pluck('kecamatan_id');
+
+                if ($kecamatanBinaanIds->isNotEmpty()) {
+                    $desaQuery->whereIn('d.kecamatan_id', $kecamatanBinaanIds);
+                }
             }
         }
 
