@@ -75,7 +75,7 @@ Route::middleware(['auth'])->prefix('administrator')->name('administrator.')->gr
         Route::prefix('desa')->name('desa.')->group(function () {
             Route::get('/', [DesaController::class, 'index'])->name('index')->middleware('permission:master.desa.view');
             Route::get('/list', [DesaController::class, 'list'])->name('list')->middleware('permission:master.desa.view');
-            Route::get('/list-by-kecamatan/{id}', [DesaController::class, 'getByKecamatan'])->name('list-by-kecamatan')->middleware('permission:master.desa.view');
+            Route::get('/list-by-kecamatan/{id}', [DesaController::class, 'getByKecamatan'])->name('list-by-kecamatan')->middleware('permission:master.desa.json');
             Route::post('/store', [DesaController::class, 'store'])->name('store')->middleware('permission:master.desa.create');
             Route::get('/show/{id}', [DesaController::class, 'show'])->name('show')->middleware('permission:master.desa.view');
             Route::put('/update/{id}', [DesaController::class, 'update'])->name('update')->middleware('permission:master.desa.edit');
@@ -94,7 +94,7 @@ Route::middleware(['auth'])->prefix('administrator')->name('administrator.')->gr
         Route::prefix('jenis-kegiatan')->name('jenis-kegiatan.')->group(function () {
             Route::get('/', [JenisKegiatanController::class, 'index'])->name('index')->middleware('permission:master.jenis-kegiatan.view');
             Route::get('/list', [JenisKegiatanController::class, 'list'])->name('list')->middleware('permission:master.jenis-kegiatan.view');
-            Route::get('/list-by-tahun/{id}', [JenisKegiatanController::class, 'getByTahunAnggaran'])->name('list-by-tahun')->middleware('permission:master.jenis-kegiatan.view');
+            Route::get('/list-by-tahun/{id}', [JenisKegiatanController::class, 'getByTahunAnggaran'])->name('list-by-tahun')->middleware('permission:master.jenis-kegiatan.json');
             Route::post('/store', [JenisKegiatanController::class, 'store'])->name('store')->middleware('permission:master.jenis-kegiatan.create');
             Route::get('/show/{id}', [JenisKegiatanController::class, 'show'])->name('show')->middleware('permission:master.jenis-kegiatan.view');
             Route::put('/update/{id}', [JenisKegiatanController::class, 'update'])->name('update')->middleware('permission:master.jenis-kegiatan.edit');
@@ -113,7 +113,7 @@ Route::middleware(['auth'])->prefix('administrator')->name('administrator.')->gr
         Route::prefix('pertanyaan-kegiatan')->name('pertanyaan-kegiatan.')->group(function () {
             Route::get('/', [PertanyaanKegiatanController::class, 'index'])->name('index')->middleware('permission:master.pertanyaan-kegiatan.view');
             Route::get('/list', [PertanyaanKegiatanController::class, 'list'])->name('list')->middleware('permission:master.pertanyaan-kegiatan.view');
-            Route::get('/list-by-kegiatan/{id}', [PertanyaanKegiatanController::class, 'getByKegiatan'])->name('list-by-kegiatan')->middleware('permission:master.pertanyaan-kegiatan.view');
+            Route::get('/list-by-kegiatan/{id}', [PertanyaanKegiatanController::class, 'getByKegiatan'])->name('list-by-kegiatan')->middleware('permission:master.pertanyaan-kegiatan.json');
             Route::post('/store', [PertanyaanKegiatanController::class, 'store'])->name('store')->middleware('permission:master.pertanyaan-kegiatan.create');
             Route::get('/show/{id}', [PertanyaanKegiatanController::class, 'show'])->name('show')->middleware('permission:master.pertanyaan-kegiatan.view');
             Route::put('/update/{id}', [PertanyaanKegiatanController::class, 'update'])->name('update')->middleware('permission:master.pertanyaan-kegiatan.edit');
