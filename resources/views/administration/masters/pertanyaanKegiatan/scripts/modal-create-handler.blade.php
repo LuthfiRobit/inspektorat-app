@@ -21,7 +21,7 @@
         AjaxHandler.sendStoreRequest(url, this,
             () => {
                 $('#modalCreate').modal('hide');
-                table.ajax.reload();
+                window.table.ajax.reload();
                 resetSubmitButton();
             },
             res => {

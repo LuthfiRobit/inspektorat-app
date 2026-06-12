@@ -2,7 +2,7 @@
     $('.btn-update-status').click(function() {
         const $btn = $(this);
         const status = $(this).data('status');
-        const url = '{{ route('administrator.master.jenis-kegiatan.update-status-multiple') }}';
+        const url = '{{ route('administrator.master.pertanyaan-kegiatan.update-status-multiple') }}';
 
         const selectedIds = $('.table-checkbox:checked').map(function() {
             return $(this).val();
@@ -23,7 +23,7 @@
                 status
             }),
             () => {
-                table.ajax.reload();
+                window.table.ajax.reload();
                 $('#selectAll').prop('checked', false);
                 $btn.prop('disabled', false).html(originalHtml); // Reset tombol
             },

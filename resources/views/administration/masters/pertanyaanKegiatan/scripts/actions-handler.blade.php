@@ -35,6 +35,16 @@
 
     function handleEdit(data) {
         $('#editForm').attr('data-id', data.id_pertanyaan);
+        $('#edit_kegiatan_id').val(data.kegiatan_id).selectpicker('refresh');
+        $('#edit_pertanyaan').val(data.pertanyaan);
+        $('#edit_urutan').val(data.urutan);
+        
+        if (data.status === 'active') {
+            $('#edit_statusActive').prop('checked', true);
+        } else {
+            $('#edit_statusInactive').prop('checked', true);
+        }
+
         $('.selectpicker').selectpicker('refresh');
         $('#modalEdit').modal('show');
     }

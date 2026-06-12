@@ -4,7 +4,7 @@
         /* -------------------------------------------------
          *  INIT DATATABLE
          * ------------------------------------------------- */
-        const table = $('#example').DataTable({
+        window.table = $('#example').DataTable({
             processing: true,
             serverSide: true,
             ajax: {
@@ -36,7 +36,7 @@
          * ------------------------------------------------- */
         const optimizedSearch = _.debounce(query => {
             if (query.length >= 4 || query.length === 0) {
-                table.search(query).draw();
+                window.table.search(query).draw();
             }
         }, 3000);
 
@@ -51,7 +51,7 @@
          *  FILTER CHANGE → RELOAD TABLE
          * ------------------------------------------------- */
         $('#filter_status, #filter_kegiatan')
-            .change(() => table.ajax.reload());
+            .change(() => window.table.ajax.reload());
 
 
         /* -------------------------------------------------
@@ -67,7 +67,7 @@
             $('.selectpicker').selectpicker('refresh');
 
             // Reload table
-            table.ajax.reload();
+            window.table.ajax.reload();
         });
 
 
