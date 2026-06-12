@@ -594,18 +594,45 @@ class LaporanKegiatan extends Model
      */
     public static function getListHistory($user, array $filters = [])
     {
-        // Step 1: Get all desa under user's jurisdiction
-        $desaQuery = DB::table('desa as d')
-            ->select('d.id_desa', 'd.nama_desa', 'd.kode_desa', 'd.kecamatan_id', 'kec.nama_kecamatan')
-            ->leftJoin('kecamatan as kec', 'd.kecamatan_id', '=', 'kec.id_kecamatan')
-            ->where('d.status', 'active');
-
-        // Role-based filtering for desa
         $petugas = $user->petugas;
+        
+        $query = DB::table('laporan_kegiatan as lk')
+            ->select(
+                'lk.id_laporan',
+                'lk.desa_id',
+                'lk.kegiatan_id',
+                'lk.tahun',
+                'lk.bulan',
+                'lk.status',
+                'lk.tanggal_target',
+                'lk.tanggal_submit',
+                'lk.tanggal_approve',
+                'd.nama_desa',
+                'd.kode_desa',
+                'kec.nama_kecamatan',
+                'k.nama_kegiatan',
+                'k.kode_kegiatan',
+                'k.tanggal_mulai',
+                'k.tanggal_selesai',
+                'k.batas_akhir_upload',
+                'jk.nama_jenis as jenis_kegiatan',
+                'ta.tahun as tahun_anggaran'
+            )
+            ->join('desa as d', 'lk.desa_id', '=', 'd.id_desa')
+            ->join('kecamatan as kec', 'd.kecamatan_id', '=', 'kec.id_kecamatan')
+            ->join('kegiatan as k', 'lk.kegiatan_id', '=', 'k.id_kegiatan')
+            ->join('jenis_kegiatan as jk', 'k.jenis_kegiatan_id', '=', 'jk.id_jenis_kegiatan')
+            ->join('tahun_anggaran as ta', 'k.tahun_anggaran_id', '=', 'ta.id_tahun_anggaran')
+            ->whereIn('lk.status', ['submitted', 'approved'])
+            ->where('d.status', 'active')
+            ->where('k.status', 'active')
+            ->where('jk.status', 'active');
+
+        // Apply role-based filtering
         if ($petugas) {
             if ($petugas->desa_id) {
                 // Desa - show only their desa
-                $desaQuery->where('d.id_desa', $petugas->desa_id);
+                $query->where('d.id_desa', $petugas->desa_id);
             } elseif ($petugas->kecamatan_id) {
                 // Kecamatan - check if has assigned desa binaan
                 $desaBinaanIds = DB::table('petugas_wilayah_binaan')
@@ -614,10 +641,10 @@ class LaporanKegiatan extends Model
                     ->pluck('desa_id');
 
                 if ($desaBinaanIds->isNotEmpty()) {
-                    $desaQuery->whereIn('d.id_desa', $desaBinaanIds);
+                    $query->whereIn('d.id_desa', $desaBinaanIds);
                 } else {
                     // Fallback to all desa in their kecamatan
-                    $desaQuery->where('d.kecamatan_id', $petugas->kecamatan_id);
+                    $query->where('d.kecamatan_id', $petugas->kecamatan_id);
                 }
             } elseif (is_null($petugas->kecamatan_id) && is_null($petugas->desa_id)) {
                 // Inspektorat - check wilayah binaan (assigned kecamatan)
@@ -627,141 +654,77 @@ class LaporanKegiatan extends Model
                     ->pluck('kecamatan_id');
 
                 if ($kecamatanBinaanIds->isNotEmpty()) {
-                    $desaQuery->whereIn('d.kecamatan_id', $kecamatanBinaanIds);
+                    $query->whereIn('d.kecamatan_id', $kecamatanBinaanIds);
                 }
             }
         }
 
-        // Apply filter_desa here for optimization
-        if (!empty($filters['filter_desa'])) {
-            $desaQuery->where('d.id_desa', $filters['filter_desa']);
-        }
-
-        $desaList = $desaQuery->get();
-
-        // Step 2: Get all active kegiatan
-        $kegiatanQuery = DB::table('kegiatan as k')
-            ->select(
-                'k.id_kegiatan',
-                'k.nama_kegiatan',
-                'k.kode_kegiatan',
-                'k.tanggal_mulai',
-                'k.tanggal_selesai',
-                'k.bulan',
-                // New Columns
-                'k.frekuensi_pelaporan',
-                'k.bulan_mulai',
-                'k.bulan_selesai',
-                'k.batas_akhir_upload',
-                'jk.nama_jenis as jenis_kegiatan',
-                'ta.tahun as tahun_anggaran'
-            )
-            ->leftJoin('jenis_kegiatan as jk', 'k.jenis_kegiatan_id', '=', 'jk.id_jenis_kegiatan')
-            ->leftJoin('tahun_anggaran as ta', 'k.tahun_anggaran_id', '=', 'ta.id_tahun_anggaran')
-            ->where('k.status', 'active')
-            ->where('jk.status', 'active');
-
-        // Filter by tahun if provided
+        // Apply filters
         if (!empty($filters['filter_tahun'])) {
-            // FIX: Filter by ID, not Year value
-            $kegiatanQuery->where('ta.id_tahun_anggaran', $filters['filter_tahun']);
+            $query->where('ta.id_tahun_anggaran', $filters['filter_tahun']);
         }
 
-        // Filter by kegiatan if provided
         if (!empty($filters['filter_kegiatan'])) {
-            $kegiatanQuery->where('k.id_kegiatan', $filters['filter_kegiatan']);
+            $query->where('k.id_kegiatan', $filters['filter_kegiatan']);
         }
 
-        $kegiatanList = $kegiatanQuery->get();
+        if (!empty($filters['filter_desa'])) {
+            $query->where('d.id_desa', $filters['filter_desa']);
+        }
 
-        // Normalize Recurring Fields
-        $kegiatanList->transform(function ($k) {
-            $k->id_kegiatan = (int) $k->id_kegiatan;
-            $k->frekuensi_pelaporan = $k->frekuensi_pelaporan ? (int) $k->frekuensi_pelaporan : null;
-            $k->bulan_mulai = $k->bulan_mulai ? (int) $k->bulan_mulai : null;
-            $k->bulan_selesai = $k->bulan_selesai ? (int) $k->bulan_selesai : null;
-            return $k;
+        if (!empty($filters['filter_periode'])) {
+            $query->where('lk.bulan', $filters['filter_periode']);
+        }
+
+        if (!empty($filters['filter_status'])) {
+            $query->where('lk.status', $filters['filter_status']);
+        }
+
+        if (!empty($filters['search'])) {
+            $search = strtolower($filters['search']);
+            $query->where(function ($q) use ($search) {
+                $q->where('d.nama_desa', 'like', '%' . $search . '%')
+                  ->orWhere('k.nama_kegiatan', 'like', '%' . $search . '%')
+                  ->orWhere('k.kode_kegiatan', 'like', '%' . $search . '%')
+                  ->orWhere('jk.nama_jenis', 'like', '%' . $search . '%')
+                  ->orWhere('kec.nama_kecamatan', 'like', '%' . $search . '%');
+            });
+        }
+
+        $laporans = $query->get();
+
+        // Transform collection to match expected structure
+        $result = $laporans->map(function ($laporan) {
+            $record = [
+                'id_laporan' => $laporan->id_laporan,
+                'desa_id' => $laporan->desa_id,
+                'kegiatan_id' => $laporan->kegiatan_id,
+                'tahun' => $laporan->tahun,
+                'bulan' => $laporan->bulan,
+                'status' => $laporan->status,
+                'tanggal_target' => $laporan->tanggal_target,
+                'tanggal_submit' => $laporan->tanggal_submit,
+                'tanggal_approve' => $laporan->tanggal_approve,
+                'nama_desa' => $laporan->nama_desa,
+                'kode_desa' => $laporan->kode_desa,
+                'nama_kecamatan' => $laporan->nama_kecamatan,
+                'nama_kegiatan' => $laporan->nama_kegiatan,
+                'kode_kegiatan' => $laporan->kode_kegiatan,
+                'tanggal_mulai' => $laporan->tanggal_mulai,
+                'tanggal_selesai' => $laporan->tanggal_selesai,
+                'batas_akhir_upload' => $laporan->batas_akhir_upload,
+                'jenis_kegiatan' => $laporan->jenis_kegiatan,
+                'tahun_anggaran' => $laporan->tahun_anggaran,
+            ];
+
+            $record['status_display'] = self::getStatusDisplayForUser($record['status']);
+            $record['status_class'] = self::getStatusClass($record['status']);
+            $record['timeline_status'] = self::calculateTimelineStatus($record);
+            $record['priority_order'] = self::getPriorityOrderForHistory($record['status']);
+            $record['days_until_deadline'] = $record['tanggal_target'] ? Carbon::parse($record['tanggal_target'])->diffInDays(now(), false) : 0;
+
+            return $record;
         });
-
-        // Step 3: Create combination of all desa and kegiatan
-        $result = collect();
-
-        foreach ($desaList as $desa) {
-            foreach ($kegiatanList as $kegiatan) {
-
-                // --- Determine Target Months based on Frequency ---
-                $targetMonths = [];
-                if ($kegiatan->frekuensi_pelaporan) {
-                    $startMonth = $kegiatan->bulan_mulai ?? 1;
-                    $endMonth = $kegiatan->bulan_selesai ?? 12;
-                    $step = $kegiatan->frekuensi_pelaporan;
-                    for ($m = $startMonth; $m <= $endMonth; $m += $step) {
-                        $targetMonths[] = $m;
-                    }
-                } else {
-                    $targetMonths[] = $kegiatan->bulan; // Insidentil
-                }
-
-                // Iterate through months
-                foreach ($targetMonths as $targetBulan) {
-                    if (!empty($filters['filter_periode']) && $targetBulan != $filters['filter_periode']) {
-                        continue;
-                    }
-
-                    // Get existing laporan
-                    $existingLaporan = DB::table('laporan_kegiatan as lk')
-                        ->where('lk.desa_id', $desa->id_desa)
-                        ->where('lk.kegiatan_id', $kegiatan->id_kegiatan)
-                        ->where('lk.bulan', $targetBulan) // Strict match
-                        ->where('lk.tahun', $kegiatan->tahun_anggaran)
-                        ->first();
-
-                    // Only include laporan with status submitted or approved
-                    $status = $existingLaporan->status ?? 'belum_dilaporkan';
-                    if (!in_array($status, ['submitted', 'approved'])) {
-                        continue;
-                    }
-
-                    // Calculate tanggal_target
-                    $tanggalTarget = self::calculateTanggalTargetFromKegiatan($kegiatan, $kegiatan->tahun_anggaran, $targetBulan);
-
-                    // Prepare the record
-                    $record = [
-                        'id_laporan' => $existingLaporan->id_laporan ?? null,
-                        'desa_id' => $desa->id_desa,
-                        'kegiatan_id' => $kegiatan->id_kegiatan,
-                        'tahun' => $kegiatan->tahun_anggaran,
-                        'bulan' => $targetBulan, // Specific month
-                        'status' => $status,
-                        'tanggal_target' => $existingLaporan->tanggal_target ?? $tanggalTarget,
-                        'tanggal_submit' => $existingLaporan->tanggal_submit ?? null,
-                        'tanggal_approve' => $existingLaporan->tanggal_approve ?? null,
-                        'nama_desa' => $desa->nama_desa,
-                        'kode_desa' => $desa->kode_desa,
-                        'nama_kecamatan' => $desa->nama_kecamatan,
-                        'nama_kegiatan' => $kegiatan->nama_kegiatan,
-                        'kode_kegiatan' => $kegiatan->kode_kegiatan,
-                        'tanggal_mulai' => $kegiatan->tanggal_mulai,
-                        'tanggal_selesai' => $kegiatan->tanggal_selesai,
-                        'batas_akhir_upload' => $kegiatan->batas_akhir_upload,
-                        'jenis_kegiatan' => $kegiatan->jenis_kegiatan,
-                        'tahun_anggaran' => $kegiatan->tahun_anggaran,
-                    ];
-
-                    // Add display fields
-                    $record['status_display'] = self::getStatusDisplayForUser($record['status']);
-                    $record['status_class'] = self::getStatusClass($record['status']);
-                    $record['timeline_status'] = self::calculateTimelineStatus($record);
-                    $record['priority_order'] = self::getPriorityOrderForHistory($record['status']);
-                    $record['days_until_deadline'] = $tanggalTarget ? Carbon::parse($tanggalTarget)->diffInDays(now(), false) : 0;
-
-                    $result->push($record);
-                }
-            }
-        }
-
-        // Apply additional filters
-        $result = self::applyFiltersForHistory($result, $filters);
 
         // Sort the result - newest first for history
         return self::sortResultForHistory($result);
