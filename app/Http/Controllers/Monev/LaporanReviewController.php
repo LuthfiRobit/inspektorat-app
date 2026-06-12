@@ -229,6 +229,25 @@ public function list(Request $request)
             return $this->responseService->validationError($validationErrors);
         }
 
+        // Validasi tambahan: Laporan tidak boleh disetujui jika masih ada dokumen yang perlu direvisi
+        if ($request->status === 'approved') {
+            $dokumenStatus = $request->dokumen_status ?? [];
+            $hasRevision = false;
+            foreach ($dokumenStatus as $questionId => $requirements) {
+                foreach ($requirements as $requirementId => $status) {
+                    if ($status === 'revision') {
+                        $hasRevision = true;
+                        break 2;
+                    }
+                }
+            }
+            if ($hasRevision) {
+                return $this->responseService->validationError([
+                    'status' => ['Laporan tidak dapat disetujui jika masih ada dokumen yang perlu direvisi.']
+                ]);
+            }
+        }
+
         try {
             $validatedData = $validator->validated();
 

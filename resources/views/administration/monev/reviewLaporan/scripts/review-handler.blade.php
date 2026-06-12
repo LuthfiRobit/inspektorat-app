@@ -644,6 +644,14 @@
                 const status = $('input[name="status"]:checked').val();
                 const catatanApproval = DOM.elements.catatanApproval.val().trim();
 
+                // Validate that approved status doesn't have documents marked for revision
+                const dokumenRevisiCount = $('.dokumen-status:checked[value="revision"]').length;
+                if (status === 'approved' && dokumenRevisiCount > 0) {
+                    this.showValidationError('Persetujuan Ditolak',
+                        `Laporan tidak dapat disetujui jika masih ada ${dokumenRevisiCount} dokumen yang memerlukan revisi. Harap minta revisi atau ubah status dokumen menjadi "Approved".`);
+                    return false;
+                }
+
                 // Validate main review note for revision status
                 if (status === 'revision' && !catatanApproval) {
                     this.showValidationError('Catatan Review Diperlukan',
@@ -760,13 +768,7 @@
                 return `
                     <div class="text-start">
                         <p>Anda akan menyetujui laporan kegiatan ini. Tindakan ini tidak dapat dibatalkan.</p>
-                        ${dokumenRevisiCount > 0 ?
-                        `<div class="alert alert-warning py-2">
-                                                                    <i class="las la-exclamation-triangle me-1"></i>
-                                                                    <strong>Perhatian:</strong> ${dokumenRevisiCount} dari ${totalDokumen} dokumen ditandai perlu revisi, tetapi status laporan akan disetujui.
-                                                                </div>` :
-                        '<p>Semua dokumen telah disetujui.</p>'
-                    }
+                        <p>Semua dokumen telah disetujui.</p>
                         ${this.getCatatanReviewHTML(catatanApproval)}
                     </div>
                 `;
