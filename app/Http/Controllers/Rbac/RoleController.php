@@ -221,7 +221,14 @@ class RoleController extends Controller
             return $this->responseService->error('Data not found', 404);
         }
 
-        $permissions = Permission::select('id_permission', 'permission_name')->get();
+        $permissionsQuery = Permission::select('id_permission', 'permission_name');
+
+        // Hide rbac.permission.* permissions from non-developers
+        if (!auth()->user()->isDeveloper()) {
+            $permissionsQuery->where('permission_name', 'not like', 'rbac.permission.%');
+        }
+
+        $permissions = $permissionsQuery->get();
         $rolePermissions = RolePermission::where('role_id', $id)->pluck('permission_id');
 
         $groupedPermissions = [];
@@ -301,7 +308,26 @@ class RoleController extends Controller
 
         // Synchronize the selected permissions with the role
         // This will replace the existing permissions with the newly selected ones
-        $role->permissions()->sync($request->permissions);
+        $permissionsToSync = $request->permissions;
+
+        if (!auth()->user()->isDeveloper()) {
+            // Get existing permission IDs for this role that match rbac.permission.*
+            $existingRbacPermissionIds = $role->permissions()
+                ->where('permission_name', 'like', 'rbac.permission.%')
+                ->pluck('id_permission')
+                ->toArray();
+
+            // Filter out any permission IDs from the user input that represent rbac.permission.*
+            // to prevent unauthorized injection.
+            $allowedInputPermissionIds = Permission::whereIn('id_permission', $request->permissions)
+                ->where('permission_name', 'not like', 'rbac.permission.%')
+                ->pluck('id_permission')
+                ->toArray();
+
+            $permissionsToSync = array_merge($allowedInputPermissionIds, $existingRbacPermissionIds);
+        }
+
+        $role->permissions()->sync($permissionsToSync);
 
         LogActivityService::log('Stored Role permissions', 'Role ID: ' . $roleId . ' Permissions: ' . json_encode($request->permissions));
 

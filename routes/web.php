@@ -194,8 +194,8 @@ Route::middleware(['auth'])->prefix('administrator')->name('administrator.')->gr
             Route::put('/update/{id}', [LaporanKegiatanController::class, 'update'])->name('update')->middleware('permission:monev.laporan.edit');
 
             // DATA FETCHING (AJAX/API)
-            Route::get('/get-data/{id}', [LaporanKegiatanController::class, 'getData'])->name('get-data')->middleware('permission:monev.laporan.view');
-            Route::get('/get-kegiatan-data', [LaporanKegiatanController::class, 'getKegiatanData'])->name('get-kegiatan-data')->middleware('permission:monev.laporan.view');
+            Route::get('/get-data/{id}', [LaporanKegiatanController::class, 'getData'])->name('get-data')->middleware('permission:monev.laporan.json');
+            Route::get('/get-kegiatan-data', [LaporanKegiatanController::class, 'getKegiatanData'])->name('get-kegiatan-data')->middleware('permission:monev.laporan.json');
         });
 
         Route::prefix('review')->name('review.')->group(function () {
@@ -212,7 +212,7 @@ Route::middleware(['auth'])->prefix('administrator')->name('administrator.')->gr
             Route::get('/', [RiwayatLaporanController::class, 'index'])->name('index')->middleware('permission:monitoring.riwayat.view');
             Route::get('/list', [RiwayatLaporanController::class, 'list'])->name('list')->middleware('permission:monitoring.riwayat.view');
             Route::get('/detail', [RiwayatLaporanController::class, 'detail'])->name('detail')->middleware('permission:monitoring.riwayat.view');
-            Route::get('/get-data/{id}', [RiwayatLaporanController::class, 'getData'])->name('get-data')->middleware('permission:monitoring.riwayat.view');
+            Route::get('/get-data/{id}', [RiwayatLaporanController::class, 'getData'])->name('get-data')->middleware('permission:monitoring.riwayat.json');
         });
 
         Route::prefix('scoring')->name('scoring.')->group(function () {
