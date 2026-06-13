@@ -14,6 +14,7 @@ use App\Repositories\LaporanKegiatanRepository;
 use App\Services\LogActivityService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
 use Yajra\DataTables\Facades\DataTables;
@@ -43,7 +44,13 @@ class LaporanKegiatanController extends Controller
     public function index()
     {
         $this->logActivityService->log('Accessed the index view for Laporan Kegiatan');
-        return view('administration.monev.buatLaporan.index');
+
+        // Pre-select the active tahun anggaran so the initial load is scoped
+        $activeTahun = DB::table('tahun_anggaran')->where('status', 'aktif')->first();
+
+        return view('administration.monev.buatLaporan.index', [
+            'activeTahunId' => $activeTahun?->id_tahun_anggaran,
+        ]);
     }
 
     /**
@@ -61,10 +68,11 @@ class LaporanKegiatanController extends Controller
 
         $filters = [
             'filter_status' => $request->input('filter_status', ''),
-            'filter_tahun' => $request->input('filter_tahun', ''),
-            'filter_periode' => $request->input('filter_periode', ''),
-            'filter_desa' => $request->input('filter_desa', ''),
-            'search' => $request->input('search', ''),
+            // Default to active tahun anggaran if not specified — prevents loading all years at once
+            'filter_tahun'  => $request->input('filter_tahun') ?: DB::table('tahun_anggaran')->where('status', 'aktif')->value('id_tahun_anggaran'),
+            'filter_periode'=> $request->input('filter_periode', ''),
+            'filter_desa'   => $request->input('filter_desa', ''),
+            'search'        => $request->input('search', ''),
         ];
 
         $data = $this->laporanRepository->getListForUser($user, $filters);

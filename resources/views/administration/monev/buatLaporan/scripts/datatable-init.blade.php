@@ -1,4 +1,29 @@
 <script>
+    // Pre-select the active tahun anggaran so initial DataTables load is scoped
+    @if(isset($activeTahunId) && $activeTahunId)
+        $('#filter_tahun').val('{{ $activeTahunId }}').trigger('change');
+        if (typeof $('.selectpicker').selectpicker === 'function') {
+            $('#filter_tahun').selectpicker('refresh');
+        }
+    @endif
+
+    // Logging for Performance Monitoring (di-attach sebelum DataTables init agar menangkap request pertama)
+    let loadStartTime;
+    $('#example').on('preXhr.dt', function (e, settings, data) {
+        loadStartTime = performance.now();
+        console.log('[DataTables] Memulai pengambilan data...');
+    });
+
+    $('#example').on('xhr.dt', function (e, settings, json, xhr) {
+        if (json) {
+            let loadEndTime = performance.now();
+            let timeTaken = loadStartTime ? (loadEndTime - loadStartTime).toFixed(2) : 'N/A';
+            console.log(`%c[DataTables] Selesai! Menampilkan ${json.data ? json.data.length : 0} baris di halaman ini.`, 'color: green; font-weight: bold;');
+            console.log(`%c[DataTables] Total seluruh data (Filtered): ${json.recordsFiltered} records`, 'color: blue; font-weight: bold;');
+            console.log(`%c[DataTables] Waktu response server: ${timeTaken} ms`, 'color: orange; font-weight: bold;');
+        }
+    });
+
     const table = $('#example').DataTable({
         processing: true,
         serverSide: true,
