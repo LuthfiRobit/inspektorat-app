@@ -26,7 +26,59 @@ class LaporanKegiatanRepository
      */
     public function getListForUser($user, $filters)
     {
-        return LaporanKegiatan::getListForUser($user, $filters);
+        $query = \App\Models\TargetPelaporan::query();
+
+        $petugas = $user->petugas;
+        if ($petugas) {
+            if ($petugas->desa_id) {
+                // Petugas Desa — only their single desa
+                $query->where('desa_id', $petugas->desa_id);
+            } elseif ($petugas->kecamatan_id) {
+                // Petugas Kecamatan — check assigned desa binaan first
+                $desaBinaanIds = DB::table('petugas_wilayah_binaan')
+                    ->where('petugas_id', $petugas->id_petugas)
+                    ->whereNotNull('desa_id')
+                    ->pluck('desa_id');
+
+                if ($desaBinaanIds->isNotEmpty()) {
+                    $query->whereIn('desa_id', $desaBinaanIds);
+                } else {
+                    // Fallback: all desa in their kecamatan
+                    $query->where('kecamatan_id', $petugas->kecamatan_id);
+                }
+            } else {
+                // Inspektorat/Admin — check wilayah binaan kecamatan
+                $kecamatanBinaanIds = DB::table('petugas_wilayah_binaan')
+                    ->where('petugas_id', $petugas->id_petugas)
+                    ->whereNotNull('kecamatan_id')
+                    ->pluck('kecamatan_id');
+
+                if ($kecamatanBinaanIds->isNotEmpty()) {
+                    $query->whereIn('kecamatan_id', $kecamatanBinaanIds);
+                }
+            }
+        }
+
+        // Apply explicit filters from frontend
+        if (!empty($filters['filter_desa'])) {
+            $query->where('desa_id', $filters['filter_desa']);
+        }
+        if (!empty($filters['filter_tahun'])) {
+            $query->where('tahun_anggaran_id', $filters['filter_tahun']);
+        }
+        if (!empty($filters['filter_periode'])) {
+            $query->where('bulan', $filters['filter_periode']);
+        }
+
+        // Apply status filter
+        if (!empty($filters['filter_status'])) {
+            $query->where('status', $filters['filter_status']);
+        } else {
+            // Default view: exclude 'submitted' and 'approved' to show actionable to-do list
+            $query->whereNotIn('status', ['submitted', 'approved']);
+        }
+
+        return $query;
     }
 
     /**
