@@ -10,6 +10,7 @@ use App\Models\PetugasWilayahBinaan;
 use App\Services\LogActivityService;
 use App\Services\ResponseService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Yajra\DataTables\Facades\DataTables;
 
@@ -26,8 +27,18 @@ class WilayahBinaanController extends Controller
 
     public function index()
     {
+        $user = Auth::user();
+        $petugas = $user->petugas;
+        $scope = 'inspektorat';
+
+        if ($petugas && !empty($petugas->kecamatan_id) && empty($petugas->desa_id)) {
+            $scope = 'kecamatan';
+        } elseif ($petugas && !empty($petugas->desa_id)) {
+            abort(403, 'Akses ditolak.');
+        }
+
         $this->logActivityService->log('Accessed Wilayah Binaan index view');
-        return view('administration.masters.wilayahBinaan.index');
+        return view('administration.masters.wilayahBinaan.index', compact('scope'));
     }
 
     public function listInspektorat(Request $request)
@@ -62,8 +73,19 @@ class WilayahBinaanController extends Controller
             ->whereNull('desa_id')
             ->where('status', 'active');
 
-        if ($request->has('kecamatan_id') && $request->kecamatan_id) {
-            $query->where('kecamatan_id', $request->kecamatan_id);
+        $user = Auth::user();
+        $petugas = $user->petugas;
+        $scope = 'inspektorat';
+        if ($petugas && !empty($petugas->kecamatan_id) && empty($petugas->desa_id)) {
+            $scope = 'kecamatan';
+        }
+
+        if ($scope === 'kecamatan') {
+            $query->where('kecamatan_id', $petugas->kecamatan_id);
+        } else {
+            if ($request->has('kecamatan_id') && $request->kecamatan_id) {
+                $query->where('kecamatan_id', $request->kecamatan_id);
+            }
         }
 
         return DataTables::of($query)
@@ -86,6 +108,14 @@ class WilayahBinaanController extends Controller
     public function show($id)
     {
         $petugas = Petugas::with(['kecamatanBinaan', 'desaBinaan', 'kecamatan'])->findOrFail($id);
+
+        $user = Auth::user();
+        $userPetugas = $user->petugas;
+        if ($userPetugas && !empty($userPetugas->kecamatan_id) && empty($userPetugas->desa_id)) {
+            if ($petugas->kecamatan_id != $userPetugas->kecamatan_id) {
+                abort(403, 'Akses ditolak.');
+            }
+        }
 
         $this->logActivityService->log('Viewed Wilayah Binaan details', ['petugas_id' => $id]);
 
@@ -116,6 +146,14 @@ class WilayahBinaanController extends Controller
         ]);
 
         $petugas = Petugas::findOrFail($request->petugas_id);
+
+        $user = Auth::user();
+        $userPetugas = $user->petugas;
+        if ($userPetugas && !empty($userPetugas->kecamatan_id) && empty($userPetugas->desa_id)) {
+            if ($petugas->kecamatan_id != $userPetugas->kecamatan_id) {
+                return $this->responseService->error('Akses ditolak.');
+            }
+        }
 
         DB::beginTransaction();
         try {
@@ -166,6 +204,15 @@ class WilayahBinaanController extends Controller
     public function getAssignedAndAvailable($id)
     {
         $petugas = Petugas::with(['kecamatanBinaan', 'desaBinaan', 'kecamatan'])->findOrFail($id);
+
+        $user = Auth::user();
+        $userPetugas = $user->petugas;
+        if ($userPetugas && !empty($userPetugas->kecamatan_id) && empty($userPetugas->desa_id)) {
+            if ($petugas->kecamatan_id != $userPetugas->kecamatan_id) {
+                return $this->responseService->error('Akses ditolak.');
+            }
+        }
+
         $type = (is_null($petugas->kecamatan_id) && is_null($petugas->desa_id)) ? 'inspektorat' : 'kecamatan';
 
         $assigned = [];

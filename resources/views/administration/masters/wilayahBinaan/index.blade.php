@@ -31,15 +31,18 @@
                     <div class="card-body">
                         <!-- Navigation Tabs (style-1) -->
                         <ul class="nav nav-tabs style-1 mb-4" id="myTab" role="tablist">
+                            @if($scope === 'inspektorat')
                             <li class="nav-item" role="presentation">
                                 <button class="nav-link active" id="inspektorat-tab" data-bs-toggle="tab" data-bs-target="#inspektorat" type="button" role="tab" aria-controls="inspektorat" aria-selected="true">Binaan Inspektorat (Kecamatan)</button>
                             </li>
+                            @endif
                             <li class="nav-item" role="presentation">
-                                <button class="nav-link" id="kecamatan-tab" data-bs-toggle="tab" data-bs-target="#kecamatan" type="button" role="tab" aria-controls="kecamatan" aria-selected="false">Binaan Kecamatan (Desa)</button>
+                                <button class="nav-link {{ $scope === 'kecamatan' ? 'active' : '' }}" id="kecamatan-tab" data-bs-toggle="tab" data-bs-target="#kecamatan" type="button" role="tab" aria-controls="kecamatan" aria-selected="{{ $scope === 'kecamatan' ? 'true' : 'false' }}">Binaan Kecamatan (Desa)</button>
                             </li>
                         </ul>
 
                         <div class="tab-content" id="myTabContent">
+                            @if($scope === 'inspektorat')
                             <!-- Tab 1: Inspektorat -->
                             <div class="tab-pane fade show active" id="inspektorat" role="tabpanel" aria-labelledby="inspektorat-tab">
                                 <div class="table-responsive">
@@ -66,10 +69,12 @@
                                     </table>
                                 </div>
                             </div>
+                            @endif
 
                             <!-- Tab 2: Kecamatan -->
-                            <div class="tab-pane fade" id="kecamatan" role="tabpanel" aria-labelledby="kecamatan-tab">
+                            <div class="tab-pane fade {{ $scope === 'kecamatan' ? 'show active' : '' }}" id="kecamatan" role="tabpanel" aria-labelledby="kecamatan-tab">
                                 <!-- Filter Kecamatan -->
+                                @if($scope === 'inspektorat')
                                 <div class="row mb-4 gy-2 align-items-end">
                                     <div class="col-md-4">
                                         <label for="filter_kecamatan" class="form-label">Filter Kecamatan</label>
@@ -86,6 +91,7 @@
                                         </button>
                                     </div>
                                 </div>
+                                @endif
 
                                 <div class="table-responsive">
                                     <table id="table-kecamatan" class="table table-sm align-middle table-striped gs-0 gy-2 nowrap" style="width:100%;">
