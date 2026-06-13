@@ -107,6 +107,9 @@ class LaporanKegiatanController extends Controller
             ->addColumn('timeline', function ($row) {
                 return $this->formatTimeline($row);
             })
+            ->orderColumn('status_display', function ($query, $order) {
+                $query->orderBy('priority_order', $order);
+            })
             ->rawColumns(['checkbox', 'aksi', 'status_display', 'timeline', 'nama_kegiatan', 'nama_desa'])
             ->make(true);
     }

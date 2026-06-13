@@ -78,6 +78,18 @@ class LaporanKegiatanRepository
             $query->whereNotIn('status', ['submitted', 'approved']);
         }
 
+        // Apply global search filter manually to match old behavior
+        if (!empty($filters['search'])) {
+            $search = strtolower($filters['search']);
+            $query->where(function ($q) use ($search) {
+                $q->where('nama_desa', 'LIKE', "%{$search}%")
+                  ->orWhere('nama_kegiatan', 'LIKE', "%{$search}%")
+                  ->orWhere('kode_kegiatan', 'LIKE', "%{$search}%")
+                  ->orWhere('jenis_kegiatan', 'LIKE', "%{$search}%")
+                  ->orWhere('nama_kecamatan', 'LIKE', "%{$search}%");
+            });
+        }
+
         return $query;
     }
 
