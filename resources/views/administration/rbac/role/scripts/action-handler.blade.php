@@ -32,6 +32,41 @@
         window.location.href = editUrl;
     }
 
+    function handleActionDelete(dataId) {
+        let routeTemplate = '{{ route('administrator.rbac.role.destroy', ':id') }}';
+        const url = routeTemplate.replace(':id', dataId);
+
+        Swal.fire({
+            title: 'Apakah Anda yakin?',
+            text: "Data role/jabatan ini akan dihapus!",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#d33',
+            cancelButtonColor: '#3085d6',
+            confirmButtonText: 'Ya, Hapus!',
+            cancelButtonText: 'Batal'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                $.ajax({
+                    url: url,
+                    type: 'DELETE',
+                    headers: { 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') },
+                    success: function (response) {
+                        if (response.status === 200 || response.success) {
+                            ResponseHandler.handleSuccess("Data berhasil dihapus!");
+                            $('#example').DataTable().ajax.reload(null, false);
+                        } else {
+                            ResponseHandler.handleError(response.message || "Gagal menghapus data.");
+                        }
+                    },
+                    error: function (xhr) {
+                        ResponseHandler.handleError(xhr.responseJSON?.message || "Terjadi kesalahan.");
+                    }
+                });
+            }
+        });
+    }
+
     // ========================
     // = Event Handlers =
     // ========================
@@ -53,6 +88,9 @@
                 break;
             case 'action_permission':
                 handleActionPermission(dataId);
+                break;
+            case 'action_delete':
+                handleActionDelete(dataId);
                 break;
         }
     });

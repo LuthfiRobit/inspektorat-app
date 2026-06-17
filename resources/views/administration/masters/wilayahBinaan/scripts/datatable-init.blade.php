@@ -23,9 +23,8 @@
                         return meta.row + meta.settings._iDisplayStart + 1; 
                     } 
                 },
-                { data: 'nama_lengkap', name: 'nama_lengkap', className: 'text-start align-middle' },
-                { data: 'nip', name: 'nip', className: 'text-start align-middle' },
-                { data: 'jabatan', name: 'jabatan', className: 'text-start align-middle' },
+                { data: 'identitas', name: 'nama_lengkap', className: 'text-start align-middle' },
+                { data: 'jabatan', name: 'jabatan', className: 'text-start align-middle', defaultContent: '-' },
                 { 
                     data: 'kecamatan_binaan_count', 
                     name: 'kecamatan_binaan_count', 
@@ -71,8 +70,8 @@
                     return meta.row + meta.settings._iDisplayStart + 1; 
                 } 
             },
-            { data: 'nama_lengkap', name: 'nama_lengkap', className: 'text-start align-middle' },
-            { data: 'nip', name: 'nip', className: 'text-start align-middle' },
+            { data: 'identitas', name: 'nama_lengkap', className: 'text-start align-middle' },
+            { data: 'jabatan', name: 'jabatan', className: 'text-start align-middle', defaultContent: '-' },
             { data: 'kecamatan.nama_kecamatan', name: 'kecamatan.nama_kecamatan', defaultContent: '-', className: 'text-start align-middle' },
             { 
                 data: 'desa_binaan_count', 

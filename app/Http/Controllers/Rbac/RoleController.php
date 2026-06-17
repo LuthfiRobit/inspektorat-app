@@ -54,6 +54,9 @@ class RoleController extends Controller
         // 🚀 Security: Jangan tampilkan role developer ke user dengan role selain developer.
         if (!auth()->user()->isDeveloper()) {
             $query->where('role_name', '!=', 'developer');
+        } else {
+            // Developer bisa melihat data yang sudah di-soft delete
+            $query->withTrashed();
         }
 
         $roles = $query->get();
@@ -61,26 +64,55 @@ class RoleController extends Controller
         LogActivityService::log('Fetched Role list');
 
         return DataTables::of($roles)
-            ->addColumn('checkbox', fn($row) => '<input type="checkbox" class="table-checkbox form-check-input" id="checkbox_' . $row->id_role . '" name="role_ids[]" value="' . $row->id_role . '">')
-            ->addColumn('aksi', function ($item) {
-                return '<div class="btn-group">
-                            <button type="button" class="btn btn-outline-primary btn-xs dropdown-toggle" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                                <i class="fas fa-cogs"></i>  Actions
-                            </button>
-                            <div class="dropdown-menu">
-                                <a class="dropdown-item" href="javascript:void(0);" data-action="action_show" data-id="' . $item->id_role . '">
-                                    <i class="fas fa-eye"></i> View
-                                </a>
-                                <a class="dropdown-item" href="javascript:void(0);" data-action="action_edit" data-id="' . $item->id_role . '">
-                                    <i class="fas fa-edit"></i> Edit
-                                </a>
-                                <a class="dropdown-item" href="javascript:void(0);" data-action="action_permission" data-id="' . $item->id_role . '">
-                                    <i class="fas fa-shield-alt"></i> Permissions
-                                </a>
-                            </div>
-                        </div>';
+            ->editColumn('role_name', function ($item) {
+                $name = htmlspecialchars($item->role_name ?? '');
+                if ($item->trashed()) {
+                    $name .= ' <span class="badge badge-danger ms-1">Terhapus</span>';
+                }
+                return $name;
             })
-            ->rawColumns(['checkbox', 'aksi'])
+            ->addColumn('aksi', function ($item) {
+                $user = \Illuminate\Support\Facades\Auth::user();
+                $hasShow = $user->hasPermissionTo('rbac.role.view');
+                $hasEdit = $user->hasPermissionTo('rbac.role.edit');
+                $hasDelete = $user->hasPermissionTo('rbac.role.delete');
+
+                if (!$hasShow && !$hasEdit && !$hasDelete) {
+                    return '<span class="text-muted">-</span>';
+                }
+
+                $btn = '<div class="btn-group">';
+                $btn .= '<button type="button" class="btn btn-outline-primary btn-xs dropdown-toggle" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">';
+                $btn .= '<i class="fas fa-cogs"></i> Aksi';
+                $btn .= '</button>';
+                $btn .= '<div class="dropdown-menu">';
+
+                if ($hasShow) {
+                    $btn .= '<a class="dropdown-item" href="javascript:void(0);" data-action="action_show" data-id="' . $item->id_role . '">';
+                    $btn .= '<i class="fas fa-eye"></i> Lihat';
+                    $btn .= '</a>';
+                }
+
+                if ($hasEdit) {
+                    $btn .= '<a class="dropdown-item" href="javascript:void(0);" data-action="action_edit" data-id="' . $item->id_role . '">';
+                    $btn .= '<i class="fas fa-edit"></i> Edit';
+                    $btn .= '</a>';
+
+                    $btn .= '<a class="dropdown-item" href="javascript:void(0);" data-action="action_permission" data-id="' . $item->id_role . '">';
+                    $btn .= '<i class="fas fa-shield-alt"></i> Permissions';
+                    $btn .= '</a>';
+                }
+
+                if ($hasDelete) {
+                    $btn .= '<a class="dropdown-item text-danger" href="javascript:void(0);" data-action="action_delete" data-id="' . $item->id_role . '">';
+                    $btn .= '<i class="fas fa-trash-alt"></i> Hapus';
+                    $btn .= '</a>';
+                }
+
+                $btn .= '</div></div>';
+                return $btn;
+            })
+            ->rawColumns(['role_name', 'aksi'])
             ->make(true);
     }
 
@@ -199,6 +231,34 @@ class RoleController extends Controller
         LogActivityService::log('Updated Role', 'ID: ' . $id . ' Data: ' . json_encode($request->all()));
 
         return $result;
+    }
+
+    /**
+     * Remove the specified Role from storage (Soft Delete).
+     *
+     * @param int $id
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function destroy($id)
+    {
+        $role = Role::find($id);
+
+        if (!$role) {
+            return $this->responseService->error('Data not found', ResponseService::STATUS_NOT_FOUND);
+        }
+
+        // 🚀 Security: Jangan biarkan role developer dihapus
+        if ($role->role_name === 'developer') {
+            return $this->responseService->error('Role developer tidak boleh dihapus.', 403);
+        }
+
+        try {
+            $role->delete(); // Soft delete triggered
+            LogActivityService::log('Deleted Role (Soft Delete)', 'ID: ' . $id);
+            return $this->responseService->success(null, 'Data berhasil dihapus');
+        } catch (\Exception $e) {
+            return $this->responseService->error('Gagal menghapus data: ' . $e->getMessage(), 500);
+        }
     }
 
     /**

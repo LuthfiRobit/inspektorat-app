@@ -107,7 +107,7 @@ class LaporanKegiatan extends Model
      */
     public function approvedBy(): BelongsTo
     {
-        return $this->belongsTo(User::class, 'approved_by', 'id_user');
+        return $this->belongsTo(User::class, 'approved_by', 'id_user')->withTrashed();
     }
 
     /**
@@ -115,7 +115,7 @@ class LaporanKegiatan extends Model
      */
     public function creator(): BelongsTo
     {
-        return $this->belongsTo(User::class, 'created_by', 'id_user');
+        return $this->belongsTo(User::class, 'created_by', 'id_user')->withTrashed();
     }
 
     /**

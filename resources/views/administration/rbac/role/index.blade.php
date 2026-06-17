@@ -47,38 +47,14 @@
 
                     <div class="card-body">
 
-                        <!-- Aksi Tambahan -->
-                        <div class="row mb-3 gy-2">
-                            <div class="col-12 col-md d-flex flex-wrap gap-2">
-                                <button class="btn-update-status btn btn-sm btn-primary" data-status="active">
-                                    <i class="las la-check-circle me-1"></i>Aktifkan
-                                </button>
-                                <button class="btn-update-status btn btn-sm btn-danger" data-status="inactive">
-                                    <i class="las la-times-circle me-1"></i>Nonaktifkan
-                                </button>
-                            </div>
-                            <div class="col-12 col-md-auto d-flex flex-wrap gap-2 justify-content-md-end">
-                                <button class="btn btn-sm btn-outline-secondary">
-                                    <i class="las la-file-excel me-1"></i>Import
-                                </button>
-                                <button class="btn btn-sm btn-outline-success">
-                                    <i class="las la-file-excel me-1"></i>Export
-                                </button>
-                            </div>
-                        </div>
+
 
                         <div class="table-responsive">
                             <table id="example" class="table table-sm align-middle table-striped gs-0 gy-2 nowrap"
                                 style="width:100%;">
                                 <thead>
                                     <tr class="text-center text-muted text-uppercase">
-                                        <th style="width: 5%;" class="align-middle">
-                                            <span class="d-inline-flex align-items-center gap-1">
-                                                <input type="checkbox" class="form-check-input m-0" id="selectAllRoles" />
-                                                <i class="bi bi-info-circle-fill text-primary" data-bs-toggle="tooltip"
-                                                    title="Pilih beberapa data pada halaman ini untuk melakukan aksi massal."></i>
-                                            </span>
-                                        </th>
+
                                         <th style="width: 10%;" class="align-middle">Aksi</th>
                                         <th style="width: 10%;" class="align-middle">Scope</th>
                                         <th style="width: 25%;" class="text-start align-middle">Nama/Jabatan</th>

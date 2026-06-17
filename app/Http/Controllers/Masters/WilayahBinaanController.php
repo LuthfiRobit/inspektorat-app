@@ -49,6 +49,17 @@ class WilayahBinaanController extends Controller
             ->where('status', 'active');
 
         return DataTables::of($query)
+            ->addColumn('identitas', function ($item) {
+                $avatar = $item->foto_petugas ? asset('storage/' . $item->foto_petugas) : asset('templates/assets/images/avatar/1.jpg');
+                $nip = $item->nip ? e($item->nip) : '-';
+                return '<div class="d-flex align-items-center">
+                            <img src="' . $avatar . '" class="rounded-lg me-2" width="35" alt=""/>
+                            <div>
+                                <span class="w-space-no fw-bold">' . e($item->nama_lengkap) . '</span><br>
+                                <span class="fs-12 text-muted">' . $nip . '</span>
+                            </div>
+                        </div>';
+            })
             ->addColumn('aksi', function ($row) {
                 return '<div class="btn-group">
                             <button type="button" class="btn btn-outline-primary btn-xs dropdown-toggle" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
@@ -61,7 +72,7 @@ class WilayahBinaanController extends Controller
                             </div>
                         </div>';
             })
-            ->rawColumns(['aksi'])
+            ->rawColumns(['aksi', 'identitas'])
             ->make(true);
     }
 
@@ -89,6 +100,17 @@ class WilayahBinaanController extends Controller
         }
 
         return DataTables::of($query)
+            ->addColumn('identitas', function ($item) {
+                $avatar = $item->foto_petugas ? asset('storage/' . $item->foto_petugas) : asset('templates/assets/images/avatar/1.jpg');
+                $nip = $item->nip ? e($item->nip) : '-';
+                return '<div class="d-flex align-items-center">
+                            <img src="' . $avatar . '" class="rounded-lg me-2" width="35" alt=""/>
+                            <div>
+                                <span class="w-space-no fw-bold">' . e($item->nama_lengkap) . '</span><br>
+                                <span class="fs-12 text-muted">' . $nip . '</span>
+                            </div>
+                        </div>';
+            })
             ->addColumn('aksi', function ($row) {
                 return '<div class="btn-group">
                             <button type="button" class="btn btn-outline-primary btn-xs dropdown-toggle" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
@@ -101,7 +123,7 @@ class WilayahBinaanController extends Controller
                             </div>
                         </div>';
             })
-            ->rawColumns(['aksi'])
+            ->rawColumns(['aksi', 'identitas'])
             ->make(true);
     }
 

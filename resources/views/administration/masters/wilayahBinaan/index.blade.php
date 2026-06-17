@@ -50,17 +50,16 @@
                                         <thead>
                                             <tr class="text-center text-muted text-uppercase">
                                                 <th style="width: 5%;">No</th>
-                                                <th style="width: 25%;" class="text-start">Nama Petugas</th>
-                                                <th style="width: 20%;" class="text-start">NIP</th>
+                                                <th style="width: 35%;" class="text-start">Petugas</th>
                                                 <th style="width: 20%;" class="text-start">Jabatan</th>
-                                                <th style="width: 20%;">Jumlah Kecamatan Binaan</th>
+                                                <th style="width: 30%;">Jumlah Kecamatan Binaan</th>
                                                 <th style="width: 10%;">Aksi</th>
                                             </tr>
                                         </thead>
                                         <tbody class="text-gray-800 fw-bolder fs-sm-8 fs-lg-6">
                                             {{-- Data dimuat via Ajax --}}
                                             <tr>
-                                                <td colspan="6" class="text-center text-muted py-4">
+                                                <td colspan="5" class="text-center text-muted py-4">
                                                     <i class="las la-folder-open fs-1 d-block mb-2"></i>
                                                     Tidak ada data wilayah binaan inspektorat yang tersedia.
                                                 </td>
@@ -98,8 +97,8 @@
                                         <thead>
                                             <tr class="text-center text-muted text-uppercase">
                                                 <th style="width: 5%;">No</th>
-                                                <th style="width: 25%;" class="text-start">Nama Petugas</th>
-                                                <th style="width: 20%;" class="text-start">NIP</th>
+                                                <th style="width: 30%;" class="text-start">Petugas</th>
+                                                <th style="width: 15%;" class="text-start">Jabatan</th>
                                                 <th style="width: 20%;" class="text-start">Kecamatan Asal</th>
                                                 <th style="width: 20%;">Jumlah Desa Binaan</th>
                                                 <th style="width: 10%;">Aksi</th>

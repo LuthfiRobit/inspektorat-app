@@ -93,6 +93,13 @@ class PetugasDesaController extends Controller
                     $btn .= '</a>';
                 }
 
+                $hasDelete = $user->hasPermissionTo('master.petugas.desa.delete');
+                if ($hasDelete) {
+                    $btn .= '<a class="dropdown-item text-danger" href="javascript:void(0);" data-action="action_delete" data-id="' . $item->id_petugas . '">';
+                    $btn .= '<i class="fas fa-trash-alt"></i> Hapus';
+                    $btn .= '</a>';
+                }
+
                 $btn .= '</div></div>';
                 return $btn;
             })
@@ -387,5 +394,46 @@ class PetugasDesaController extends Controller
             ['temporary_password' => $temporaryPassword], 
             'Password berhasil direset.'
         );
+    }
+
+    /**
+     * Remove the specified Petugas Desa from storage (Soft Delete).
+     */
+    public function destroy($id)
+    {
+        $petugas = Petugas::whereNotNull('desa_id')->find($id);
+
+        if (!$petugas) {
+            $this->logActivityService->log('Petugas Desa not found for delete', 'ID: ' . $id);
+            return $this->responseService->error('Data not found', ResponseService::STATUS_NOT_FOUND);
+        }
+
+        try {
+            \Illuminate\Support\Facades\DB::beginTransaction();
+
+            $userId = $petugas->user_id;
+
+            // Hapus petugas (Soft Delete)
+            $petugas->delete();
+
+            // Hapus user terkait (Soft Delete)
+            if ($userId) {
+                $user = \App\Models\User::find($userId);
+                if ($user && !$user->isDeveloper()) {
+                    $user->delete();
+                }
+            }
+
+            // Hapus wilayah binaan agar kecamatan/desa kembali tersedia
+            \App\Models\PetugasWilayahBinaan::where('petugas_id', $petugas->id_petugas)->delete();
+
+            \Illuminate\Support\Facades\DB::commit();
+
+            $this->logActivityService->log('Deleted Petugas Desa (Soft Delete)', 'ID: ' . $id);
+            return $this->responseService->success(null, 'Data petugas beserta akun berhasil dihapus');
+        } catch (\Exception $e) {
+            \Illuminate\Support\Facades\DB::rollBack();
+            return $this->responseService->error('Gagal menghapus data: ' . $e->getMessage(), 500);
+        }
     }
 }

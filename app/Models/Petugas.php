@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -11,7 +12,7 @@ use Illuminate\Support\Facades\Auth;
 
 class Petugas extends Model
 {
-    use HasFactory;
+    use HasFactory, SoftDeletes;
 
     /**
      * The table associated with the model.
@@ -177,7 +178,7 @@ class Petugas extends Model
      */
     public function creator(): BelongsTo
     {
-        return $this->belongsTo(User::class, 'created_by', 'id_user');
+        return $this->belongsTo(User::class, 'created_by', 'id_user')->withTrashed();
     }
 
     /**
@@ -185,7 +186,7 @@ class Petugas extends Model
      */
     public function updater(): BelongsTo
     {
-        return $this->belongsTo(User::class, 'updated_by', 'id_user');
+        return $this->belongsTo(User::class, 'updated_by', 'id_user')->withTrashed();
     }
 
     /**
@@ -245,8 +246,11 @@ class Petugas extends Model
                 $query->where('petugas.desa_id', $petugasLogin->desa_id);
             }
             // kalau inspektorat → bebas lihat semua (karena sudah difilter context di atas)
-        } else {
             // user tanpa relasi petugas (developer) → bisa lihat semua
+        }
+
+        if ($user && $user->isDeveloper()) {
+            $query->withTrashed();
         }
 
         /**

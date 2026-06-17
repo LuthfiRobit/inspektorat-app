@@ -61,6 +61,9 @@ class UserController extends Controller
             $query->whereDoesntHave('roles', function ($q) {
                 $q->where('role_name', 'developer');
             });
+        } else {
+            // Developer bisa melihat data yang sudah di-soft delete
+            $query->withTrashed();
         }
 
         if ($filters['filter_status']) {

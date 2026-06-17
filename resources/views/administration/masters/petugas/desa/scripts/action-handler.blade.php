@@ -13,6 +13,7 @@
             'action_show': handleShow,
             'action_edit': handleEdit,
             'action_reset_password': handleResetPassword,
+            'action_delete': handleDelete,
             // Tambahkan handler lain di sini
         };
 
@@ -117,6 +118,41 @@
                         $('#example').DataTable().ajax.reload(null, false);
                     } else {
                         ResponseHandler.handleError(response.message || "Gagal mereset password.");
+                    }
+                });
+            }
+        });
+    }
+
+    function handleDelete(data) {
+        let routeTemplate = '{{ route('administrator.master.petugas.desa.destroy', ':id') }}';
+        const url = routeTemplate.replace(':id', data.id_petugas);
+
+        Swal.fire({
+            title: 'Apakah Anda yakin?',
+            text: "Data petugas ini beserta akun login yang terhubung akan dihapus!",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#d33',
+            cancelButtonColor: '#3085d6',
+            confirmButtonText: 'Ya, Hapus!',
+            cancelButtonText: 'Batal'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                $.ajax({
+                    url: url,
+                    type: 'DELETE',
+                    headers: { 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') },
+                    success: function (response) {
+                        if (response.status === 200 || response.success) {
+                            ResponseHandler.handleSuccess("Data berhasil dihapus!");
+                            $('#example').DataTable().ajax.reload(null, false);
+                        } else {
+                            ResponseHandler.handleError(response.message || "Gagal menghapus data.");
+                        }
+                    },
+                    error: function (xhr) {
+                        ResponseHandler.handleError(xhr.responseJSON?.message || "Terjadi kesalahan.");
                     }
                 });
             }

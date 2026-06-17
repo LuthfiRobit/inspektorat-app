@@ -10,11 +10,6 @@
             }
         },
         columns: [{
-                data: 'checkbox',
-                orderable: false,
-                searchable: false
-            },
-            {
                 data: 'aksi',
                 orderable: false,
                 searchable: false

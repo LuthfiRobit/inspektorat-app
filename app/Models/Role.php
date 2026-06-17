@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
@@ -31,7 +32,7 @@ use Illuminate\Support\Facades\DB;
  */
 class Role extends Model
 {
-    use HasFactory;
+    use HasFactory, SoftDeletes;
 
     /**
      * The table associated with the model.
@@ -126,8 +127,7 @@ class Role extends Model
 
     public static function getByScope(string $scope): \Illuminate\Support\Collection
     {
-        return DB::table('role')
-            ->select('role_name')
+        return self::select('role_name')
             ->where('role_scope', $scope)
             ->get();
     }

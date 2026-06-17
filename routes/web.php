@@ -138,6 +138,7 @@ Route::middleware(['auth'])->prefix('administrator')->name('administrator.')->gr
                 Route::get('/show/{id}', [PetugasInspektoratController::class, 'show'])->name('show')->middleware('permission:master.petugas.inspektorat.view');
                 Route::get('/edit/{id}', [PetugasInspektoratController::class, 'edit'])->name('edit')->middleware('permission:master.petugas.inspektorat.edit');
                 Route::put('/update/{id}', [PetugasInspektoratController::class, 'update'])->name('update')->middleware('permission:master.petugas.inspektorat.edit');
+                Route::delete('/{id}', [PetugasInspektoratController::class, 'destroy'])->name('destroy')->middleware('permission:master.petugas.inspektorat.delete');
                 Route::post('/reset-password/{id}', [PetugasInspektoratController::class, 'resetPassword'])->name('reset-password')->middleware('permission:master.petugas.inspektorat.edit');
             });
 
@@ -149,6 +150,7 @@ Route::middleware(['auth'])->prefix('administrator')->name('administrator.')->gr
                 Route::get('/show/{id}', [PetugasKecamatanController::class, 'show'])->name('show')->middleware('permission:master.petugas.kecamatan.view');
                 Route::get('/edit/{id}', [PetugasKecamatanController::class, 'edit'])->name('edit')->middleware('permission:master.petugas.kecamatan.edit');
                 Route::put('/update/{id}', [PetugasKecamatanController::class, 'update'])->name('update')->middleware('permission:master.petugas.kecamatan.edit');
+                Route::delete('/{id}', [PetugasKecamatanController::class, 'destroy'])->name('destroy')->middleware('permission:master.petugas.kecamatan.delete');
                 Route::post('/reset-password/{id}', [PetugasKecamatanController::class, 'resetPassword'])->name('reset-password')->middleware('permission:master.petugas.kecamatan.edit');
             });
 
@@ -160,6 +162,7 @@ Route::middleware(['auth'])->prefix('administrator')->name('administrator.')->gr
                 Route::get('/show/{id}', [PetugasDesaController::class, 'show'])->name('show')->middleware('permission:master.petugas.desa.view');
                 Route::get('/edit/{id}', [PetugasDesaController::class, 'edit'])->name('edit')->middleware('permission:master.petugas.desa.edit');
                 Route::put('/update/{id}', [PetugasDesaController::class, 'update'])->name('update')->middleware('permission:master.petugas.desa.edit');
+                Route::delete('/{id}', [PetugasDesaController::class, 'destroy'])->name('destroy')->middleware('permission:master.petugas.desa.delete');
                 Route::post('/reset-password/{id}', [PetugasDesaController::class, 'resetPassword'])->name('reset-password')->middleware('permission:master.petugas.desa.edit');
             });
         });
@@ -256,6 +259,7 @@ Route::middleware(['auth'])->prefix('administrator')->name('administrator.')->gr
             Route::get('/show/{id}', [RoleController::class, 'show'])->name('show')->middleware('permission:rbac.role.view');
             Route::put('/update/{id}', [RoleController::class, 'update'])->name('update')->middleware('permission:rbac.role.edit');
             Route::get('/edit/{id}', [RoleController::class, 'edit'])->name('edit')->middleware('permission:rbac.role.edit');
+            Route::delete('/{id}', [RoleController::class, 'destroy'])->name('destroy')->middleware('permission:rbac.role.delete');
             Route::get('/list-role-permission/{id}', [RoleController::class, 'listRolePermission'])->name('list-role-permission')->middleware('permission:rbac.role.view');
             Route::post('/store-role-permission/{id}', [RoleController::class, 'storeRolePermission'])->name('store-role-permission')->middleware('permission:rbac.role.edit');
         });
