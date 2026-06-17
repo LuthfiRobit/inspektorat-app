@@ -123,6 +123,16 @@
                                 </span>
                             </div>
                         </div>
+                        <div class="mb-4">
+                            <div class="d-flex justify-content-center">
+                                <div class="g-recaptcha" data-sitekey="{{ env('RECAPTCHA_SITE_KEY') }}"></div>
+                            </div>
+                            @error('g-recaptcha-response')
+                                <div class="text-danger small text-center mt-2">
+                                    {{ $message }}
+                                </div>
+                            @enderror
+                        </div>
                         <div class="form-check mb-4 d-flex justify-content-between align-items-center">
                             <div>
                                 <input type="checkbox" class="form-check-input" id="remember" name="remember">
@@ -156,6 +166,7 @@
     </div>
 
     <!-- Required vendors -->
+     <script src="https://www.google.com/recaptcha/api.js" async defer></script>
     <script src="{{ asset('templates/administration/vendor/global/global.min.js') }}"></script>
     <script
         src="{{ asset('templates/administration/vendor/bootstrap-select/dist/js/bootstrap-select.min.js') }}"></script>

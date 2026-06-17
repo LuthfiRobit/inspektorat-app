@@ -255,12 +255,12 @@
 
                                         <div class="col-lg-6 col-md-6 col-12">
                                             <label for="edit_email" class="form-label-sm">
-                                                Alamat Email
+                                                Alamat Email <span class="text-danger">*</span>
                                             </label>
                                             <div class="input-group input-group-sm">
                                                 <span class="input-group-text"><i class="las la-envelope"></i></span>
                                                 <input type="email" class="form-control form-control-sm" id="edit_email"
-                                                    name="email" placeholder="Contoh: imron@kecamatan.local">
+                                                    name="email" placeholder="Contoh: imron@kecamatan.local" required>
                                             </div>
                                         </div>
                                     </div>

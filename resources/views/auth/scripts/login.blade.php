@@ -10,6 +10,7 @@
             const login = document.getElementById('login').value;
             const password = document.getElementById('password').value;
             const remember = document.getElementById('remember').checked;
+            const recaptchaResponse = document.querySelector('[name="g-recaptcha-response"]')?.value || '';
             const submitBtn = document.getElementById('submitBtn');
 
             // Aktifkan loading state
@@ -21,13 +22,16 @@
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
+                        'Accept': 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest',
                         'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')
                             .getAttribute('content')
                     },
                     body: JSON.stringify({
                         login,
                         password,
-                        remember
+                        remember,
+                        'g-recaptcha-response': recaptchaResponse
                     })
                 })
                 .then(response => response.json().then(data => ({
@@ -47,8 +51,12 @@
                     submitBtn.disabled = false;
                     submitBtn.innerHTML = 'Masuk';
 
+                    if (status !== 200 && typeof grecaptcha !== 'undefined') {
+                        grecaptcha.reset();
+                    }
+
                     if (status === 422) {
-                        const errors = body.data || {};
+                        const errors = body.errors || body.data || {};
                         let messages = Object.values(errors).flat().join('\n');
                         Swal.fire({
                             title: 'Validasi Gagal!',
@@ -111,6 +119,9 @@
                     console.error('Unexpected error:', error);
                     submitBtn.disabled = false;
                     submitBtn.innerHTML = 'Masuk';
+                    if (typeof grecaptcha !== 'undefined') {
+                        grecaptcha.reset();
+                    }
                     Swal.fire({
                         title: 'Kesalahan!',
                         text: 'Terjadi kesalahan jaringan atau server.',

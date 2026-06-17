@@ -48,7 +48,23 @@ class AuthController extends Controller
         $validated = $request->validate([
             'login' => 'required|string',
             'password' => 'required|string',
+            'g-recaptcha-response' => 'required',
+        ], [
+            'g-recaptcha-response.required' => 'Harap selesaikan verifikasi reCAPTCHA.'
         ]);
+
+        // Verifikasi reCAPTCHA
+        $response = \Illuminate\Support\Facades\Http::asForm()->post('https://www.google.com/recaptcha/api/siteverify', [
+            'secret' => env('RECAPTCHA_SECRET_KEY'),
+            'response' => $request->input('g-recaptcha-response'),
+            'remoteip' => $request->ip(),
+        ]);
+
+        if (!($response->json()['success'] ?? false)) {
+            throw \Illuminate\Validation\ValidationException::withMessages([
+                'g-recaptcha-response' => 'Verifikasi reCAPTCHA gagal. Coba lagi.'
+            ]);
+        }
 
         $loginInput = $validated['login'];
 
