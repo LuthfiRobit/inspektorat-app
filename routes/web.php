@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Auth\AuthController;
+use App\Http\Controllers\Auth\OtpController;
 use App\Http\Controllers\Dashboard\DashboardController;
 use App\Http\Controllers\Masters\PertanyaanKegiatanController;
 use App\Http\Controllers\Masters\DesaController;
@@ -28,7 +29,8 @@ use App\Http\Controllers\Rbac\UserController;
 use App\Http\Controllers\System\LogActivityController;
 use App\Http\Controllers\System\PermissionSyncController;
 use Illuminate\Support\Facades\Route;
-
+use Illuminate\Support\Facades\Mail;
+use App\Notifications\TrialNotification;
 Route::get('/', function () {
     // return view('welcome');
     return redirect()->route('administrator.dashboard.index');
@@ -38,6 +40,11 @@ Route::get('/', function () {
 Route::middleware('guest')->group(function () {
     Route::get('login', [AuthController::class, 'loginView'])->name('login.view');
     Route::post('login', [AuthController::class, 'login'])->name('login');
+
+    // OTP Routes
+    Route::get('otp/verify', [OtpController::class, 'verifyOtpView'])->name('otp.verify');
+    Route::post('otp/verify', [OtpController::class, 'verifyOtp'])->name('otp.verify.post');
+    Route::post('otp/resend', [OtpController::class, 'resendOtp'])->name('otp.resend');
 });
 
 Route::middleware('auth')->group(function () {
@@ -285,4 +292,16 @@ Route::middleware(['auth'])->prefix('administrator')->name('administrator.')->gr
             Route::post('/store-user-role/{id}', [UserController::class, 'storeUserRole'])->name('store-user-role')->middleware('permission:rbac.user.edit');
         });
     });
+});
+
+
+Route::get('/send-email',function(){
+    $data = [
+        'name' => 'Syahrizal As',
+        'body' => 'Testing Kirim Email di Santri Koding'
+    ];
+   
+    Mail::to('luthfilearndev@gmail.com')->send(new TrialNotification($data));
+   
+    dd("Email Berhasil dikirim.");
 });

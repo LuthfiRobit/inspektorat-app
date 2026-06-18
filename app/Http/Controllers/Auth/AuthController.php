@@ -84,14 +84,35 @@ class AuthController extends Controller
 
             // 5. Verifikasi password
             if (Hash::check($validated['password'], $user->password)) {
-                Auth::login($user, $request->boolean('remember'));
                 RateLimiter::clear($throttleKey);
 
-                $this->logActivityService->log("User {$user->username} logged in.");
+                // Cek Role Pengguna
+                if ($user->isDeveloper()) {
+                    Auth::login($user, $request->boolean('remember'));
+                    $this->logActivityService->log("User {$user->username} logged in.");
 
-                return $this->responseService->success([
-                    'redirect' => route('administrator.dashboard.index')
-                ], 'Login berhasil');
+                    return $this->responseService->success([
+                        'redirect' => route('administrator.dashboard.index')
+                    ], 'Login berhasil');
+                } else {
+                    // Petugas -> OTP Flow
+                    $otpController = app(\App\Http\Controllers\Auth\OtpController::class);
+                    $result = $otpController->requestOtp($user);
+
+                    if ($result['status'] === 'error') {
+                        return $this->responseService->error($result['message'], 429);
+                    }
+
+                    // Simpan ID user dan remember choice secara temporer
+                    session([
+                        'auth_user_id' => $user->id_user,
+                        'auth_remember' => $request->boolean('remember')
+                    ]);
+
+                    return $this->responseService->success([
+                        'redirect' => route('otp.verify')
+                    ], 'Login valid. Meminta verifikasi OTP...');
+                }
             }
         }
 
