@@ -17,7 +17,7 @@ return new class extends Migration
             $table->string('action'); // Jenis aktivitas (create, update, delete, dll)
             $table->text('description')->nullable(); // Deskripsi aktivitas
             $table->string('ip_address')->nullable(); // IP pengguna
-            $table->string('user_agent')->nullable(); // Info browser & device
+            $table->text('user_agent')->nullable(); // Info browser & device (diubah menjadi text agar tidak error data too long)
             $table->timestamps();
         });
     }

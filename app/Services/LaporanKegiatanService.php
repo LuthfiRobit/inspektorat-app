@@ -125,6 +125,9 @@ class LaporanKegiatanService
                     $laporan->tahun,
                     $laporan->bulan
                 );
+
+                // Send Notification to Inspektorat
+                $this->sendNotificationToInspektorat($laporan);
             }
             // ===== END INTEGRASI BARU =====
 
@@ -188,6 +191,11 @@ class LaporanKegiatanService
                     $laporan->tahun,
                     $laporan->bulan
                 );
+
+                // Send Notification to Inspektorat (only if it just changed to submitted, or we can send it anyway. We only send if status changed)
+                if ($oldStatus != 'submitted') {
+                    $this->sendNotificationToInspektorat($laporan);
+                }
             }
             // ===== END INTEGRASI BARU =====
 
@@ -436,5 +444,38 @@ class LaporanKegiatanService
         // Method ini sudah digantikan oleh LaporanKegiatan::calculateTanggalTarget
         // dibiarkan kosong atau throw exception jika dipanggil
         return null;
+    }
+
+    /**
+     * Send notification to Inspektorat when a report is submitted
+     */
+    protected function sendNotificationToInspektorat($laporan)
+    {
+        try {
+            // Find kecamatan_id from desa_id
+            $desa = \App\Models\Desa::find($laporan->desa_id);
+            if (!$desa) return;
+
+            // Find Petugas Inspektorat assigned to this kecamatan
+            $petugasIds = \App\Models\PetugasWilayahBinaan::where('kecamatan_id', $desa->kecamatan_id)
+                ->pluck('petugas_id');
+
+            // Get Users associated with these petugas
+            $users = \App\Models\User::whereIn('id_user', function ($query) use ($petugasIds) {
+                $query->select('user_id')
+                    ->from('petugas')
+                    ->whereIn('id_petugas', $petugasIds)
+                    ->whereNull('kecamatan_id') // Ensure it is inspektorat
+                    ->whereNull('desa_id')
+                    ->whereNotNull('user_id');
+            })->get();
+
+            // Send notification
+            \Illuminate\Support\Facades\Notification::send($users, new \App\Notifications\LaporanSubmittedNotification($laporan));
+            
+            Log::info('Sent LaporanSubmittedNotification to Inspektorat users.', ['laporan_id' => $laporan->id_laporan, 'user_count' => $users->count()]);
+        } catch (\Exception $e) {
+            Log::error('Failed to send notification to Inspektorat: ' . $e->getMessage());
+        }
     }
 }

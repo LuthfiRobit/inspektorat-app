@@ -28,6 +28,7 @@ use App\Http\Controllers\Rbac\RoleController;
 use App\Http\Controllers\Rbac\UserController;
 use App\Http\Controllers\System\LogActivityController;
 use App\Http\Controllers\System\PermissionSyncController;
+use App\Http\Controllers\System\NotificationController;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Mail;
 use App\Notifications\TrialNotification;
@@ -253,6 +254,11 @@ Route::middleware(['auth'])->prefix('administrator')->name('administrator.')->gr
             Route::get('/', [LogActivityController::class, 'index'])->name('index')->middleware('permission:system.log-activity.view');
             Route::get('/list', [LogActivityController::class, 'list'])->name('list')->middleware('permission:system.log-activity.view');
             Route::delete('/clear', [LogActivityController::class, 'clear'])->name('clear')->middleware('permission:system.log-activity.delete');
+        });
+
+        Route::prefix('notifications')->name('notifications.')->group(function () {
+            Route::get('/read/{id}', [NotificationController::class, 'markAsReadAndRedirect'])->name('read');
+            Route::post('/read-all', [NotificationController::class, 'markAllAsRead'])->name('read-all');
         });
     });
 

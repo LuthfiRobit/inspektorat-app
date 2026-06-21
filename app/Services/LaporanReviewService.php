@@ -62,6 +62,11 @@ class LaporanReviewService
                 );
             }
 
+            // Send Notification to Kecamatan
+            if (in_array($validatedData['status'], ['approved', 'revision'])) {
+                $this->sendNotificationToKecamatan($laporan);
+            }
+
             // ===== END INTEGRASI BARU =====
             return $laporan;
         });
@@ -195,6 +200,34 @@ class LaporanReviewService
                 'new_status' => $newStatus,
                 'affected_dokumen' => $updated
             ]);
+        }
+    }
+
+    /**
+     * Send notification to Kecamatan when a report is reviewed
+     */
+    protected function sendNotificationToKecamatan($laporan)
+    {
+        try {
+            // Find Petugas Kecamatan assigned to this desa
+            $petugasIds = \App\Models\PetugasWilayahBinaan::where('desa_id', $laporan->desa_id)
+                ->pluck('petugas_id');
+
+            // Get Users associated with these petugas
+            $users = \App\Models\User::whereIn('id_user', function ($query) use ($petugasIds) {
+                $query->select('user_id')
+                    ->from('petugas')
+                    ->whereIn('id_petugas', $petugasIds)
+                    ->whereNotNull('kecamatan_id') // Ensure it is kecamatan level
+                    ->whereNotNull('user_id');
+            })->get();
+
+            // Send notification
+            \Illuminate\Support\Facades\Notification::send($users, new \App\Notifications\LaporanReviewedNotification($laporan));
+            
+            Log::info('Sent LaporanReviewedNotification to Kecamatan users.', ['laporan_id' => $laporan->id_laporan, 'user_count' => $users->count()]);
+        } catch (\Exception $e) {
+            Log::error('Failed to send notification to Kecamatan: ' . $e->getMessage());
         }
     }
 }
