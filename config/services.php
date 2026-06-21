@@ -40,4 +40,8 @@ return [
         'secret' => env('RECAPTCHA_SECRET_KEY'),
     ],
 
+    'dev_ops' => [
+        'purge_key' => env('DEVELOPER_PURGE_KEY'),
+    ],
+
 ];
