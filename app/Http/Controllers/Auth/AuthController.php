@@ -69,9 +69,10 @@ class AuthController extends Controller
         $loginInput = $validated['login'];
 
         // 3. Ambil user berdasarkan email atau username
-        $user = User::where('email', $loginInput)
-            ->orWhere('username', $loginInput)
-            ->first();
+        $user = User::where(function ($query) use ($loginInput) {
+            $query->where('email', $loginInput)
+                  ->orWhere('username', $loginInput);
+        })->first();
 
         // 4. Cek apakah user ditemukan dan aktif
         if ($user) {
@@ -80,6 +81,11 @@ class AuthController extends Controller
                     'Akun Anda tidak aktif. Silakan hubungi administrator.',
                     403
                 );
+            }
+
+            // Keamanan Zombie Account: Tolak jika non-developer tapi data petugasnya kosong (atau terhapus)
+            if (!$user->isDeveloper() && !$user->petugas) {
+                return $this->responseService->error('Akun petugas Anda telah dihapus atau tidak valid.', 403);
             }
 
             // 5. Verifikasi password

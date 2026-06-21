@@ -160,4 +160,17 @@ class User extends Authenticatable
     {
         return $this->hasOne(Petugas::class, 'user_id', 'id_user');
     }
+
+    /**
+     * Boot method for the model to handle events.
+     */
+    protected static function booted(): void
+    {
+        static::deleting(function ($user) {
+            // Obfuscate kredensial login untuk melepaskan pengunci Unique DB
+            $user->email = $user->email . '-del-' . time();
+            $user->username = $user->username . '-del-' . time();
+            $user->saveQuietly();
+        });
+    }
 }

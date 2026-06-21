@@ -376,24 +376,25 @@ class PetugasDesaController extends Controller
             return $this->responseService->error('Petugas tidak memiliki akun login', 400);
         }
 
+        // 1. Validasi NIP (Mencegah SQL Crash)
+        if (empty($petugas->nip)) {
+            return $this->responseService->error('NIP belum diisi. Gagal melakukan reset password.', 400);
+        }
+
         $user = \App\Models\User::find($petugas->user_id);
         if (!$user) {
             return $this->responseService->error('Akun login tidak ditemukan', ResponseService::STATUS_NOT_FOUND);
         }
 
-        $temporaryPassword = bin2hex(random_bytes(4));
-
+        // 2. Standarisasi Username dan Password menjadi NIP
         $user->update([
             'username' => $petugas->nip,
-            'password' => \Illuminate\Support\Facades\Hash::make($temporaryPassword),
+            'password' => \Illuminate\Support\Facades\Hash::make($petugas->nip),
         ]);
 
         $this->logActivityService->log('Reset Password Petugas Desa', 'ID: ' . $id . ' NIP: ' . $petugas->nip);
 
-        return $this->responseService->success(
-            ['temporary_password' => $temporaryPassword], 
-            'Password berhasil direset.'
-        );
+        return $this->responseService->success(null, 'Password berhasil direset menjadi NIP.');
     }
 
     /**

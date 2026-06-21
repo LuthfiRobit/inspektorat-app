@@ -101,6 +101,19 @@ class Petugas extends Model
                 $model->updated_by = Auth::id();
             }
         });
+
+        static::deleting(function ($petugas) {
+            // 1. Obfuscate NIP untuk melepaskan pengunci Unique DB
+            if ($petugas->nip) {
+                $petugas->nip = $petugas->nip . '-del-' . time();
+                $petugas->saveQuietly(); // Menyimpan tanpa memicu event 'updated'
+            }
+
+            // 2. Cascade Soft-Delete ke akun User terkait
+            if ($petugas->user) {
+                $petugas->user->delete();
+            }
+        });
     }
 
     /**
