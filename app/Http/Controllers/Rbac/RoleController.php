@@ -283,9 +283,10 @@ class RoleController extends Controller
 
         $permissionsQuery = Permission::select('id_permission', 'permission_name');
 
-        // Hide rbac.permission.* permissions from non-developers
+        // Hide rbac.permission.* and rbac.user.* permissions from non-developers
         if (!auth()->user()->isDeveloper()) {
-            $permissionsQuery->where('permission_name', 'not like', 'rbac.permission.%');
+            $permissionsQuery->where('permission_name', 'not like', 'rbac.permission.%')
+                             ->where('permission_name', 'not like', 'rbac.user.%');
         }
 
         $permissions = $permissionsQuery->get();
