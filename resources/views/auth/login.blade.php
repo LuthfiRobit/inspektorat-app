@@ -125,7 +125,7 @@
                         </div>
                         <div class="mb-4">
                             <div class="d-flex justify-content-center">
-                                <div class="g-recaptcha" data-sitekey="{{ env('RECAPTCHA_SITE_KEY') }}"></div>
+                                <div class="g-recaptcha" data-sitekey="{{ config('services.recaptcha.site_key') }}"></div>
                             </div>
                             @error('g-recaptcha-response')
                                 <div class="text-danger small text-center mt-2">
