@@ -55,12 +55,13 @@ class AuthController extends Controller
 
         // Verifikasi reCAPTCHA
         $response = \Illuminate\Support\Facades\Http::asForm()->post('https://www.google.com/recaptcha/api/siteverify', [
-            'secret' => env('RECAPTCHA_SECRET_KEY'),
+            'secret' => config('services.recaptcha.secret_key'),
             'response' => $request->input('g-recaptcha-response'),
             'remoteip' => $request->ip(),
         ]);
 
         if (!($response->json()['success'] ?? false)) {
+            \Illuminate\Support\Facades\Log::error('reCAPTCHA failed', ['response' => $response->json()]);
             throw \Illuminate\Validation\ValidationException::withMessages([
                 'g-recaptcha-response' => 'Verifikasi reCAPTCHA gagal. Coba lagi.'
             ]);
